@@ -1,0 +1,16 @@
+Package: Rlgt
+Maintainer: Christoph Bergmeir <christoph.bergmeir@gmail.com>
+License: TODO
+Title: LGT package
+Type: Package
+LazyLoad: yes
+Author: Slawek Smyl, Christoph Bergmeir
+Description: This package is based on code from Slawek Smyl to implement LGT, an
+    exponential smoothing forecasting method using Rstan for model fitting.
+Version: 0.0-1
+URL: TODO
+Date: 2016-12-10
+Depends:
+    rstan, sn,
+    forecast
+RoxygenNote: 5.0.1

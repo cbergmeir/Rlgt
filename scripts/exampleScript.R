@@ -1,0 +1,52 @@
+
+library("Mcomp")
+library("Rlgt")
+M3.data <- subset(M3,"yearly")
+
+set.seed(12)
+
+curr_series <- 1
+
+sizeTestSet <- length(M3.data[[curr_series]]$xx)
+data.train <- M3.data[[curr_series]]$x
+
+mod <- list()
+forecasts <- list()
+
+
+#fc <- forecast(ets(data.train), h = sizeTestSet)
+#plot(fc)
+
+
+#--------------------------------
+#Fit LGT model
+
+#plot(forecast(fit.lgt(data.train)))
+
+#mod[["lgt"]] <- fit.lgt(data.train)
+
+myMod <- init.lgt()
+
+#mod[["lgt"]] <- fit.lgt(data.train, h = sizeTestSet, stanModel=myMod, ncores=4)
+
+options(error=recover)
+
+mod[["lgt"]] <- fit.lgt(data.train, h = sizeTestSet, stanModel=myMod, ncores=4, 
+    control=lgt.control(MAX_NUM_OF_REPEATS=1, NUM_OF_ITER=500, NUM_OF_TRIALS=500), 
+    verbose=TRUE)
+
+
+forecasts[["lgt"]] <- forecast(mod[["lgt"]], h = sizeTestSet)
+#forecasts[["lgt"]] <- forecast.lgt(mod[["lgt"]], h = sizeTestSet)
+plot(forecasts[["lgt"]])
+
+#--------------------------------
+#Fit Trend model
+myMod <- init.trend()
+
+mod[["trend"]] <- fit.lgt(data.train, h = sizeTestSet, stanModel=myMod, ncores=4)
+
+forecasts[["trend"]] <- forecast(mod[["trend"]], h = sizeTestSet)
+
+forecasts
+
