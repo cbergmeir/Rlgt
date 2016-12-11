@@ -31,8 +31,8 @@ myMod <- init.lgt()
 
 options(error=recover)
 
-mod[["lgt"]] <- fit.lgt(data.train, h = sizeTestSet, stanModel=myMod, ncores=4, 
-    control=lgt.control(MAX_NUM_OF_REPEATS=1, NUM_OF_ITER=500, NUM_OF_TRIALS=500), 
+mod[["lgt"]] <- fit.lgt(data.train, stanModel=myMod, ncores=4, 
+    control=lgt.control(MAX_NUM_OF_REPEATS=1, NUM_OF_ITER=500), 
     verbose=TRUE)
 
 
@@ -44,9 +44,18 @@ plot(forecasts[["lgt"]])
 #Fit Trend model
 myMod <- init.trend()
 
-mod[["trend"]] <- fit.lgt(data.train, h = sizeTestSet, stanModel=myMod, ncores=4)
+mod[["trend"]] <- fit.lgt(data.train, stanModel=myMod, ncores=4)
 
 forecasts[["trend"]] <- forecast(mod[["trend"]], h = sizeTestSet)
 
 forecasts
 
+#-----------------------------------------
+#-----------------------------------------
+y <- data.train
+h <- 6
+ stanModel <- init.lgt()
+ control=lgt.control(MAX_NUM_OF_REPEATS=1, NUM_OF_ITER=500, NUM_OF_TRIALS=500)
+ ncores=4
+ addJitter=TRUE
+ verbose=TRUE

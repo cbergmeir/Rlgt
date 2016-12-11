@@ -163,9 +163,6 @@ init.trend <- function(silent=TRUE){
 #' @param MAX_RHAT_ALLOWED 
 #' @param NUM_OF_ITER 
 #' @param MAX_NUM_OF_REPEATS 
-#' @param MIN_VAL 
-#' @param MAX_VAL 
-#' @param NUM_OF_TRIALS 
 #' @param CAUCHY_SD_DIV 
 #' @param MIN_SIGMA 
 #' @param MIN_NU 
@@ -180,10 +177,6 @@ lgt.control <- function(
     MAX_RHAT_ALLOWED=1.005, #see Stan's manual
     NUM_OF_ITER=5000,
     MAX_NUM_OF_REPEATS=3,
-    MIN_VAL=0.001,
-    MAX_VAL=1e38, # max for real type of SQL Server, hopefully never hit :-) 
-    NUM_OF_TRIALS=5000,
-    
     CAUCHY_SD_DIV=200,
     MIN_SIGMA=0.001, # for numerical stability
     MIN_NU=1.5,
@@ -195,9 +188,6 @@ lgt.control <- function(
       MAX_RHAT_ALLOWED=MAX_RHAT_ALLOWED,
       NUM_OF_ITER=NUM_OF_ITER,
       MAX_NUM_OF_REPEATS=MAX_NUM_OF_REPEATS,
-      MIN_VAL=MIN_VAL,
-      MAX_VAL=MAX_VAL, 
-      NUM_OF_TRIALS=NUM_OF_TRIALS,
       MIN_SIGMA=MIN_SIGMA,
       MIN_NU=MIN_NU,
       MAX_NU=MAX_NU,
@@ -230,22 +220,16 @@ lgt.control <- function(
 #' @importMethodsFrom rstan summary
 #' @importFrom sn rst
 #' @export
-fit.lgt <- function(y,h=6, stanModel=NULL, control=lgt.control(), ncores=1, addJitter=TRUE, verbose=FALSE) {
+fit.lgt <- function(y, stanModel=NULL, control=lgt.control(), ncores=1, addJitter=TRUE, verbose=FALSE) {
   
   if(is.null(stanModel)) {
     warning("No model was provided, generating an LGT model. This is slow, so if you run this function on many series better generate the model once and then supply it as a parameter")
     stanModel <- init.lgt()
   }
   
-  
-  isLGT <- inherits(stanModel, "stanModelLGT")
-  
   MAX_RHAT_ALLOWED=control$MAX_RHAT_ALLOWED
   NUM_OF_ITER=control$NUM_OF_ITER
   MAX_NUM_OF_REPEATS=control$MAX_NUM_OF_REPEATS
-  MIN_VAL=control$MIN_VAL
-  MAX_VAL=control$MAX_VAL 
-  NUM_OF_TRIALS=control$NUM_OF_TRIALS
   
   STAN_CLUSTER_SIZE=ncores
   
@@ -311,102 +295,109 @@ fit.lgt <- function(y,h=6, stanModel=NULL, control=lgt.control(), ncores=1, addJ
     }
     #str(samples, max.level =4)
   }#repeat if needed
-  print(summary(do.call(rbind, args = get_sampler_params(samples1, inc_warmup = F)), digits = 2)) #diagnostics
   
-  l=extract(samples)$l
-  lM=apply(l,2,mean)
-  #plot(lM, type='l')
-  mc_size=dim(l)[1]
-  mc_range=1:mc_size
-  lastDataIndex=dim(l)[2]
-  lastLevel=l[,lastDataIndex]
-  #str(lastLevel); summary(lastLevel)
-  lastLevelM=mean(lastLevel)
-  paste("lastLevel",round(lastLevelM,1))
+  if(verbose) print(summary(do.call(rbind, args = get_sampler_params(samples1, inc_warmup = F)), digits = 2)) #diagnostics
   
-  levSm = extract(samples)$levSm
-  #summary(levSm)
-  levSmM=mean(levSm)
-  paste("levSm",levSmM)
+#  stanModel[["parameters"]] <- c("l", "b", "nu", "sigma", "levSm",  "bSm", 
+#      "powx", "coefTrend",  "powTrend", "offsetSigma", "locTrendFract")
   
-  if(isLGT) {
-    nu = extract(samples)$nu
-    #summary(nu)
-    nuM=mean(nu)
-    paste("nu",nuM)
-    
+  params <- list()
+  paramMeans <- list()
+  
+  for(param in stanModel$parameters) {
+    params[[param]] <- extract(samples)[[param]]
+    paramMeans[[param]] <- if(param %in% c("l", "b")) apply(params[[param]],2,mean) else mean(params[[param]])
   }
   
-  coefTrend = extract(samples)$coefTrend
-  #summary(coefTrend)
-  coefTrendM=mean(coefTrend)
-  paste("coefTrend",coefTrendM)
+  params[["lastLevel"]] <- params[["l"]][,ncol(params[["l"]])]
+  params[["lastB"]] <- params[["b"]][,ncol(params[["b"]])]
   
-  powTrend = extract(samples)$powTrend
-  #summary(powTrend)
-  powTrendM=mean(powTrend)
-  paste("powTrend",powTrendM)
+  paramMeans[["lastLevel"]] <- mean(params[["lastLevel"]])
+  paramMeans[["lastB"]] <- mean(params[["lastB"]])
   
-  sigma = extract(samples)$sigma
-  #summary(sigma)
-  sigmaM=mean(sigma)
-  paste("sigma",sigmaM)
+  out <- list()
+
+  out[["x"]] <- y.orig
+  out[["stanModel"]] <- stanModel
+  out[["params"]] <- params
+  out[["paramMeans"]] <- paramMeans
+  class(out) <- "lgt"
   
-  if(isLGT) {
-    powx = extract(samples)$powx
-    #summary(powx)
-    powxM=mean(powx)
-    paste("powx",powxM)
-    
-    offsetSigma=extract(samples)$offsetSigma
-    #summary(offsetSigma)
-    offsetSigmaM=mean(offsetSigma)
-    paste("offsetSigma",round(offsetSigmaM,2))
-  }
+  out
+
+}
+
+
+
+
+
+#' This function produces forecasts from a model
+#' 
+#' @title produce forecasts
+#' @param object 
+#' @param h 
+#' @param NUM_OF_TRIALS 
+#' @param MIN_VAL 
+#' @param MAX_VAL 
+#' @param ... 
+#' @returnType 
+#' @return returns a forecast object compatible with the forecast package
+#' @S3method forecast lgt
+# @method forecast lgt
+#' @importFrom forecast forecast 
+#' @author bergmeir
+#' @export
+forecast.lgt <- function(object, h=ifelse(frequency(object$x)>1, 2*frequency(object$x), 10), NUM_OF_TRIALS=5000, 
+    MIN_VAL=0.001, MAX_VAL=1e38, ...) {
+
+  #object <- mod[["lgt"]]
   
-  b=extract(samples)$b
-  bM=apply(b,2,mean)
-  lastB=b[,lastDataIndex]
-  lastBM=mean(lastB)
-  paste("lastB",round(lastBM,2))
+  out <- list(model=object,x=object$x)
+  #out <- object
+  tspx <- tsp(out$x)
   
-  bSm = extract(samples)$bSm
-  #summary(bSm)
-  bSmM=mean(bSm)
-  paste("bSm",round(bSmM,2))
+  if(!is.null(tspx))
+    start.f <- tspx[2] + 1/frequency(out$x)
+  else
+    start.f <- length(out$x)+1
   
-  locTrendFract = extract(samples)$locTrendFract
-  #print(summary(locTrendFract))
-  locTrendFractM=mean(locTrendFract)
-  paste("locTrendFract",round(locTrendFractM,2))
+  isLGT <- inherits(object$stanModel, "stanModelLGT")
   
-#  lastDetails=paste("coefT=",round(coefTrendM,2), ", powT=",round(powTrendM,2),
-#      ", sigma=",round(sigmaM,2),", powx=",round(powxM,2),", offsetS=",round(offsetSigmaM,2), 
-#      ", nu=",round(nuM,2), ", lSm=",round(levSmM,2), 
-#      ", lastB=",round(lastBM,1), ", bSm=",round(bSmM,2), 
-#      ", lTFract=", round(locTrendFractM,2), sep='')				
-#  print(lastDetails)
+#  t=1; irun=1
+  yf=matrix(object$paramMeans[["lastLevel"]],nrow=NUM_OF_TRIALS, ncol=h)
   
-  
-  t=1; irun=1
-  yf=matrix(lastLevelM,nrow=NUM_OF_TRIALS, ncol=h)
   for (irun in 1:NUM_OF_TRIALS) {
     
-    indx=sample(mc_range,1)
-    prevLevel=mean(lastLevel[indx], na.rm=T)
+    indx=sample(nrow(object$params[["l"]]),1)
+
+#TODO: I don't understand what is done here...calculating a mean over single numbers?
+#    prevLevel=mean(lastLevel[indx], na.rm=T)
+#    powTrendM=mean(powTrend[indx], na.rm=T)
+#    coefTrendM=mean(coefTrend[indx], na.rm=T)
+#    bM=mean(lastB[indx], na.rm=T)
+#    levSmM=mean(levSm[indx], na.rm=T)
+#    bSmM=mean(bSm[indx], na.rm=T)
+#    sigmaM=mean(sigma[indx], na.rm=T)
+#    locTrendFractM=mean(locTrendFract[indx], na.rm=T)
     
-    powTrendM=mean(powTrend[indx], na.rm=T)
-    coefTrendM=mean(coefTrend[indx], na.rm=T)
-    bM=mean(lastB[indx], na.rm=T)
-    levSmM=mean(levSm[indx], na.rm=T)
-    bSmM=mean(bSm[indx], na.rm=T)
-    sigmaM=mean(sigma[indx], na.rm=T)
-    locTrendFractM=mean(locTrendFract[indx], na.rm=T)
+    prevLevel <- object$params[["lastLevel"]][indx]
+    powTrendM <- object$params[["powTrend"]][indx]
+    coefTrendM <- object$params[["coefTrend"]][indx]
+    bM <- object$params[["lastB"]][indx]
+    levSmM <- object$params[["levSm"]][indx]
+    bSmM <- object$params[["bSm"]][indx]
+    sigmaM <- object$params[["sigma"]][indx]
+    locTrendFractM <- object$params[["locTrendFract"]][indx]
+       
     
     if(isLGT) {
-      powxM=mean(powx[indx], na.rm=T)
-      nuM=mean(nu[indx], na.rm=T)
-      offsetSigmaM=mean(offsetSigma[indx], na.rm=T)
+#      powxM=mean(powx[indx], na.rm=T)
+#      nuM=mean(nu[indx], na.rm=T)
+#      offsetSigmaM=mean(offsetSigma[indx], na.rm=T)
+      
+      powxM <- object$params[["powx"]][indx]
+      nuM <- object$params[["nu"]][indx]
+      offsetSigmaM <- object$params[["offsetSigma"]][indx]
     }
     
     for (t in 1:h) { 
@@ -433,48 +424,13 @@ fit.lgt <- function(y,h=6, stanModel=NULL, control=lgt.control(), ncores=1, addJ
     # yf[irun,]
   } #through trials
   
-  out <- list()
-  out[["yf"]] <- yf
-  out[["x"]] <- y.orig
-  class(out) <- "lgt"
-
-  out
-}
-
-
-
-
-
-#' This function produces forecasts from a model
-#' 
-#' @title produce forecasts
-#' @param object 
-#' @param h 
-#' @param ... 
-#' @returnType 
-#' @return returns a forecast object compatible with the forecast package
-#' @S3method forecast lgt
-# @method forecast lgt
-#' @importFrom forecast forecast 
-#' @author bergmeir
-#' @export
-forecast.lgt <- function(object, h=ifelse(frequency(object$x)>1, 2*frequency(object$x), 10), ...) {
-
-  #object <- mod[["lgt"]]
+  out$yf <- yf
   
-  out <- list(model=object,x=object$x)
-  #out <- object
-  tspx <- tsp(out$x)
   
-  if(!is.null(tspx))
-    start.f <- tspx[2] + 1/frequency(out$x)
-  else
-    start.f <- length(out$x)+1
-  
-  out$mean <- ts(apply(object$yf, 2, mean),frequency=frequency(out$x),start=start.f)
+  out$mean <- ts(apply(yf, 2, mean),frequency=frequency(out$x),start=start.f)
 
   quants=c(0.05, 0.2, 0.5, 0.8, 0.95)
-  avgYfs=apply(object$yf,2,quantile,probs=quants)
+  avgYfs=apply(yf,2,quantile,probs=quants)
   
   out$median <- ts(avgYfs[3,])
   out$lower <- ts(t(avgYfs[c(1,2),]))
@@ -494,21 +450,26 @@ forecast.lgt <- function(object, h=ifelse(frequency(object$x)>1, 2*frequency(obj
 }
 
 
-##' Print out some characteristics of a \code{\link{malschains}} result.
-##' The result shows besides the best solution and its fitness the total number of evaluations spent for both EA and LS, 
-##' the ratio of the spent evaluations (also called effort), the ratio of total improvement of the fitness,
-##' the percentage of times that application of the EA/LS yielded improvement, and some timing results in milliseconds. 
-##'  
-##' @title Generic print function for malschains results
-##' @param x the \code{\link{malschains}} result
-##' @param ... additional function parameters (currently not used)
-##' @export
-##' @S3method print malschains
-##' @method print malschains
-## @rdname malschains
-#print.malschains <- function(x, ...) {
-#  if(!inherits(x, "malschains")) stop("not a legitimate malschains result")
-#  
+#' Print out some characteristics of a \code{\link{lgt}} model.
+#'  
+#' @title Generic print function for lgt models
+#' @param x the \code{\link{lgt}} model
+#' @param ... additional function parameters (currently not used)
+#' @export
+#' @S3method print lgt
+# @method print lgt
+# @rdname lgt
+print.lgt <- function(x, ...) {
+  if(!inherits(x, "lgt")) stop("not a legitimate lgt result")
+  
+ 
+#    lastDetails=paste("coefT=",round(coefTrendM,2), ", powT=",round(powTrendM,2),
+#      ", sigma=",round(sigmaM,2),", powx=",round(powxM,2),", offsetS=",round(offsetSigmaM,2), 
+#      ", nu=",round(nuM,2), ", lSm=",round(levSmM,2), 
+#      ", lastB=",round(lastBM,1), ", bSm=",round(bSmM,2), 
+#      ", lTFract=", round(locTrendFractM,2), sep='')				
+  print(x$paramMeans)
+  
 #  cat(sprintf("NumTotalEvalEA: %d\n", x$numEvalEA))
 #  cat(sprintf("NumTotalEvalLS: %d\n", x$numEvalLS))  
 #  
@@ -535,6 +496,98 @@ forecast.lgt <- function(object, h=ifelse(frequency(object$x)>1, 2*frequency(obj
 #  print(x$fitness)
 #  cat("Solution:\n",sep="") 
 #  print(x$sol)
+  
+  invisible(x)
+}
+
+
+
+
+
+
+
+
+
+
+
+
+#  l=extract(samples)$l
+#  lM=apply(l,2,mean)
+#
+#  b=extract(samples)$b
+#  bM=apply(b,2,mean)
 #  
-#  invisible(x)
-#}
+#  levSm = extract(samples)$levSm
+#  levSmM=mean(levSm)
+#  
+#  coefTrend = extract(samples)$coefTrend
+#  coefTrendM=mean(coefTrend)
+#  
+#  powTrend = extract(samples)$powTrend
+#  powTrendM=mean(powTrend)
+#  
+#  sigma = extract(samples)$sigma
+#  sigmaM=mean(sigma)
+#  
+#  bSm = extract(samples)$bSm
+#  bSmM=mean(bSm)
+#  
+#  locTrendFract = extract(samples)$locTrendFract
+#  locTrendFractM=mean(locTrendFract)
+#
+#  if(isLGT) {
+#    
+#    nu = extract(samples)$nu
+#    nuM=mean(nu)
+#    
+#    powx = extract(samples)$powx
+#    powxM=mean(powx)
+#    
+#    offsetSigma=extract(samples)$offsetSigma
+#    offsetSigmaM=mean(offsetSigma)
+#  }
+
+#  lastDetails=paste("coefT=",round(coefTrendM,2), ", powT=",round(powTrendM,2),
+#      ", sigma=",round(sigmaM,2),", powx=",round(powxM,2),", offsetS=",round(offsetSigmaM,2), 
+#      ", nu=",round(nuM,2), ", lSm=",round(levSmM,2), 
+#      ", lastB=",round(lastBM,1), ", bSm=",round(bSmM,2), 
+#      ", lTFract=", round(locTrendFractM,2), sep='')				
+#  print(lastDetails)
+#
+#paste("lastLevel",round(lastLevelM,1))
+#paste("levSm",levSmM)
+#paste("nu",nuM)
+#paste("coefTrend",coefTrendM)
+#paste("powTrend",powTrendM)
+#paste("sigma",sigmaM)
+#paste("powx",powxM)
+#paste("offsetSigma",round(offsetSigmaM,2))
+#paste("lastB",round(lastBM,2))
+#paste("bSm",round(bSmM,2))
+#paste("locTrendFract",round(locTrendFractM,2))
+
+
+#lastLevelM
+#lastLevel
+#powTrend
+#coefTrend
+#lastB
+#levSm
+#bSm
+#sigma
+#locTrendFract
+#powx
+#nu
+#offsetSigma
+
+#forc(lastLevelM = lastLevelM, NUM_OF_TRIALS = NUM_OF_TRIALS, h = h, mc_range = mc_range, 
+#    lastLevel = lastLevel, powTrend = powTrend, coefTrend = coefTrend, lastB = lastB, 
+#    levSm = levSm, bSm = bSm, sigma = sigma, locTrendFract = locTrendFract, isLGT = isLGT, 
+#    powx = powx, nu = nu, offsetSigma = offsetSigma, MAX_VAL = MAX_VAL, MIN_VAL = MIN_VAL)
+
+#  out <- list()
+#  out[["yf"]] <- yf
+#  out[["x"]] <- y.orig
+#  class(out) <- "lgt"
+
+#  out
