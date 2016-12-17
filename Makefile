@@ -1,20 +1,23 @@
+rPackageName=Rlgt
 newDate=$(shell date +%Y-%m-%d)
+rPackageVersion=$(shell grep "Version:" ./$(rPackageName)/DESCRIPTION | cut -c1-9 --complement)
 
 check: roxy
-	R CMD build Rlgt
-	R CMD check Rlgt_0.0-1.tar.gz
+	R CMD build $(rPackageName)
+	R CMD check $(rPackageName)_$(rPackageVersion).tar.gz
 
 install: roxy
-	R CMD build Rlgt
-	R CMD INSTALL Rlgt_0.0-1.tar.gz
+	R CMD build $(rPackageName)
+	R CMD INSTALL $(rPackageName)_$(rPackageVersion).tar.gz
 
 roxy:
-	rm -f ./Rlgt/man/*.Rd
-	cd ./Rlgt && echo -e "library(roxygen2)\npath <- \"./\"\nroxygenize(package.dir=path)\n" > tmp_roxy.R
-	cd ./Rlgt && R CMD BATCH tmp_roxy.R
-	cd ./Rlgt && sed -i 's/\(Date: \).*/Date: '"$(newDate)"'/' DESCRIPTION
+	rm -f ./$(rPackageName)/man/*.Rd
+	printf "library(roxygen2)\npath <- \"./$(rPackageName)/\"\nroxygenize(package.dir=path)\n" > tmp_roxy.R
+	R CMD BATCH tmp_roxy.R
+	cd ./$(rPackageName) && sed -i 's/\(Date: \).*/Date: '"$(newDate)"'/' DESCRIPTION
+	cd ./$(rPackageName) && sed -i -e 's/\".registration=TRUE\"/.registration=TRUE/' NAMESPACE
 
 clean:
-	rm -rf Rlgt_0.0-1.tar.gz Rlgt.Rcheck
-	rm -rf ./Rlgt/man/*.Rd
-	rm -rf ./Rlgt/tmp_roxy.R ./Rlgt/tmp_roxy.Rout
+	rm -rf $(rPackageName)_$(rPackageVersion).tar.gz $(rPackageName).Rcheck
+	rm -rf ./$(rPackageName)/man/*.Rd
+	rm -rf ./tmp_roxy.R ./tmp_roxy.Rout
