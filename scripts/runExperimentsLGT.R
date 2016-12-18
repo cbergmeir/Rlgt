@@ -18,8 +18,8 @@ mySgeApply <- lapply
 #library(parallel)
 #mySgeApply <- function(...) { mclapply(..., mc.cores=4)}
 
-set.seed(8)
-
+#set.seed(8)
+set.seed(5)
 #stanModLGT <- init.lgt()
 
 #nseries <- 5
@@ -48,12 +48,14 @@ forecasts <- mySgeApply(1:nseries, function(curr_series) {
       mod[["ets"]] <- ets(data.train)
       forecasts[["ets"]] <- forecast(mod[["ets"]], PI=FALSE, h=sizeTestSet)$mean
 
-      mod[["etsLGT"]] <- etsLGT(data.train)
+      mod[["etsLGT"]] <- etsLGT(data.train, bounds="usual")
       forecasts[["etsLGT"]] <- forecast(mod[["etsLGT"]], PI=FALSE, h=sizeTestSet, simulate=TRUE)$mean
       
-      mod[["etsLGTcmaes"]] <- etsLGT(data.train, solver="malschains_c", 
+      mod[["etsLGTcmaes"]] <- etsLGT(data.train, , bounds="usual", solver="malschains_c", 
           control=malschains.control(ls="cmaes", lsOnly=TRUE))
       forecasts[["etsLGTcmaes"]] <- forecast(mod[["etsLGTcmaes"]], PI=FALSE, h=sizeTestSet, simulate=TRUE)$mean
+     
+      
       
 #      mod[["etsDMalsCh"]] <- etsLGT(data.train, model="AAN", damped=TRUE, solver="malschains_c", 
 #          control=malschains.control(popsize = 5000, ls="cmaes"), maxit=50000)

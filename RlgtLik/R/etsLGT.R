@@ -21,9 +21,9 @@ etsLGT <- function(y, model="ZZZ",
     stop("y should be a univariate time series")
   y <- as.ts(y)
 
-  # Check if data is constant
-  if (missing(model) & is.constant(y))
-    return(ses(y, alpha=0.99999, initial='simple')$model)
+#  # Check if data is constant
+#  if (missing(model) & is.constant(y))
+#    return(ses(y, alpha=0.99999, initial='simple')$model)
 
   # Remove missing values near ends
   ny <- length(y)
@@ -222,7 +222,7 @@ etsmodel <- function(y, errortype, trendtype, seasontype, damped,
     m <- 1
 
   # Initialize smoothing parameters
-  par <- initparam(alpha,beta,gamma,phi,lambda, rho, trendtype,seasontype,damped,lower,upper,m)
+  par <- initparam(alpha,beta,gamma,phi,lambda, rho, trendtype,seasontype,lower,upper,m)
   names(alpha) <- names(beta) <- names(gamma) <- names(phi) <- names(lambda) <- names(rho) <- NULL
   par.noopt <- c(alpha=alpha,beta=beta,gamma=gamma,phi=phi, lambda=lambda, rho=rho)
   if(!is.null(par.noopt))
@@ -244,7 +244,7 @@ etsmodel <- function(y, errortype, trendtype, seasontype, damped,
 #        bounds="usual"
   if(!check.param(alpha,beta,gamma,phi,lambda,rho,lower,upper,bounds,m))
   {
-    print(paste("Model: ETS(",errortype,",",trendtype,ifelse(damped,"d",""),",",seasontype,")",sep=""))
+    #print(paste("Model: ETS(",errortype,",",trendtype,ifelse(damped,"d",""),",",seasontype,")",sep=""))
     stop("Parameters out of range")
   }
 
@@ -332,7 +332,7 @@ etsmodel <- function(y, errortype, trendtype, seasontype, damped,
   if(!is.na(fit.par["rho"]))
     rho <- fit.par["rho"]
   
-  e <- pegelsresid.C(y,m,init.state,errortype,trendtype,seasontype,damped,alpha,beta,gamma,phi,lambda,rho,nmse)
+  e <- pegelsresid.C(y,m,init.state,errortype,trendtype,seasontype,alpha,beta,gamma,phi,lambda,rho,nmse)
 
   np <- np + 1
   ny <- length(y)
@@ -393,14 +393,10 @@ etsTargetFunctionInit <- function(par,y,nstate,errortype,trendtype,seasontype,da
     m <- 1
     gamma <- NULL
   }
-  if(damped)
-  {
-    phi <- c(par["phi"],par.noopt["phi"])["phi"]
+
+  phi <- c(par["phi"],par.noopt["phi"])["phi"]
     if(is.na(phi))
       stop("phi Problem!")
-  }
-  else
-    phi <- NULL
 
   #determine which values to optimize and which ones are given by the user/not needed
   optAlpha <- !is.null(alpha)
@@ -442,9 +438,6 @@ etsTargetFunctionInit <- function(par,y,nstate,errortype,trendtype,seasontype,da
       givenRho <- TRUE
     }
   
-
-  if(!damped)
-    phi <- 1;
   if(trendtype == "N")
     beta <- 0;
   if(seasontype == "N")
@@ -477,7 +470,7 @@ etsTargetFunctionInit <- function(par,y,nstate,errortype,trendtype,seasontype,da
 
 
 
-initparam <- function(alpha,beta,gamma,phi,lambda,rho,trendtype,seasontype,damped,lower,upper,m)
+initparam <- function(alpha,beta,gamma,phi,lambda,rho,trendtype,seasontype,lower,upper,m)
 {
   if(any(lower > upper))
     stop("Inconsistent parameter boundaries")
@@ -510,7 +503,7 @@ initparam <- function(alpha,beta,gamma,phi,lambda,rho,trendtype,seasontype,dampe
   }
 
   # Select phi
-  if(damped & is.null(phi))
+  if(is.null(phi))
   {
     phi <- lower[4] + .99*(upper[4]-lower[4])
     par <- c(par,phi=phi)
@@ -533,8 +526,8 @@ initparam <- function(alpha,beta,gamma,phi,lambda,rho,trendtype,seasontype,dampe
 
 check.param <- function(alpha,beta,gamma,phi,lambda,rho,lower,upper,bounds,m)
 {
-  if(bounds != "admissible")
-  {
+#  if(bounds != "admissible")
+#  {
     if(!is.null(alpha))
     {
       if(alpha < lower[1] | alpha > upper[1])
@@ -565,68 +558,68 @@ check.param <- function(alpha,beta,gamma,phi,lambda,rho,lower,upper,bounds,m)
       if(gamma < lower[3] | gamma > 1-alpha | gamma > upper[3])
         return(0)
     }
-  }
-  if(bounds != "usual")
-  {
-    if(!admissible(alpha,beta,gamma,phi,m))
-      return(0)
-  }
+#  }
+#  if(bounds != "usual")
+#  {
+#    if(!admissible(alpha,beta,gamma,phi,m))
+#      return(0)
+#  }
   return(1)
 }
 
 initstate <- function(y,trendtype,seasontype)
 {
-  if(seasontype!="N")
-  {
-    # Do decomposition
-    m <- frequency(y)
-    n <- length(y)
-    if(n < 4)
-      stop("You've got to be joking (not enough data).")
-    else if(n < 3*m) # Fit simple Fourier model.
-    {
-      fouriery <- fourier(y,1)
-      fit <- tslm(y ~ trend + fouriery)
-      if(seasontype=="A")
-        y.d <- list(seasonal=y -fit$coef[1] - fit$coef[2]*(1:n))
-      else # seasontype=="M". Biased method, but we only need a starting point
-        y.d <- list(seasonal=y / (fit$coef[1] + fit$coef[2]*(1:n)))
-    }
-    else # n is large enough to do a decomposition
-      y.d <- decompose(y,type=switch(seasontype, A="additive", M="multiplicative"))
-
-    init.seas <- rev(y.d$seasonal[2:m]) # initial seasonal component
-    names(init.seas) <- paste("s",0:(m-2),sep="")
-    # Seasonally adjusted data
-    if(seasontype=="A")
-      y.sa <- y-y.d$seasonal
-    else
-    {
-      init.seas <- pmax(init.seas, 1e-2) # We do not want negative seasonal indexes
-      if(sum(init.seas) > m)
-      	init.seas <- init.seas/sum(init.seas + 1e-2)
-      y.sa <- y/pmax(y.d$seasonal, 1e-2)
-    }
-  }
-  else # non-seasonal model
-  {
+#  if(seasontype!="N")
+#  {
+#    # Do decomposition
+#    m <- frequency(y)
+#    n <- length(y)
+#    if(n < 4)
+#      stop("You've got to be joking (not enough data).")
+#    else if(n < 3*m) # Fit simple Fourier model.
+#    {
+#      fouriery <- fourier(y,1)
+#      fit <- tslm(y ~ trend + fouriery)
+#      if(seasontype=="A")
+#        y.d <- list(seasonal=y -fit$coef[1] - fit$coef[2]*(1:n))
+#      else # seasontype=="M". Biased method, but we only need a starting point
+#        y.d <- list(seasonal=y / (fit$coef[1] + fit$coef[2]*(1:n)))
+#    }
+#    else # n is large enough to do a decomposition
+#      y.d <- decompose(y,type=switch(seasontype, A="additive", M="multiplicative"))
+#
+#    init.seas <- rev(y.d$seasonal[2:m]) # initial seasonal component
+#    names(init.seas) <- paste("s",0:(m-2),sep="")
+#    # Seasonally adjusted data
+#    if(seasontype=="A")
+#      y.sa <- y-y.d$seasonal
+#    else
+#    {
+#      init.seas <- pmax(init.seas, 1e-2) # We do not want negative seasonal indexes
+#      if(sum(init.seas) > m)
+#      	init.seas <- init.seas/sum(init.seas + 1e-2)
+#      y.sa <- y/pmax(y.d$seasonal, 1e-2)
+#    }
+#  }
+#  else # non-seasonal model
+#  {
     m <- 1
     init.seas <- NULL
     y.sa <- y
-  }
+#  }
 
   maxn <- min(max(10,2*m),length(y.sa))
 
-  if(trendtype=="N")
-  {
-    l0 <- mean(y.sa[1:maxn])
-    b0 <- NULL
-  }
-  else  # Simple linear regression on seasonally adjusted data
-  {
+#  if(trendtype=="N")
+#  {
+#    l0 <- mean(y.sa[1:maxn])
+#    b0 <- NULL
+#  }
+#  else  # Simple linear regression on seasonally adjusted data
+#  {
     fit <- lsfit(1:maxn,y.sa[1:maxn])
-    if(trendtype=="A")
-    {
+#    if(trendtype=="A")
+#    {
       l0 <- fit$coef[1]
       b0 <- fit$coef[2]
       # If error type is "M", then we don't want l0+b0=0.
@@ -636,23 +629,23 @@ initstate <- function(y,trendtype,seasontype)
         l0 <- l0*(1+1e-3)
         b0 <- b0*(1-1e-3)
       }
-    }
-    else #if(trendtype=="M")
-    {
-      l0 <- fit$coef[1]+fit$coef[2] # First fitted value
-      if(abs(l0) < 1e-8)
-        l0 <- 1e-7
-      b0 <- (fit$coef[1] + 2*fit$coef[2])/l0 # Ratio of first two fitted values
-      l0 <- l0/b0 # First fitted value divided by b0
-      if(abs(b0) > 1e10) # Avoid infinite slopes
-        b0 <- sign(b0)*1e10
-      if(l0 < 1e-8 | b0 < 1e-8) # Simple linear approximation didn't work.
-      {
-        l0 <- max(y.sa[1],1e-3)
-        b0 <- max(y.sa[2]/y.sa[1],1e-3)
-      }
-    }
-  }
+#    }
+#    else #if(trendtype=="M")
+#    {
+#      l0 <- fit$coef[1]+fit$coef[2] # First fitted value
+#      if(abs(l0) < 1e-8)
+#        l0 <- 1e-7
+#      b0 <- (fit$coef[1] + 2*fit$coef[2])/l0 # Ratio of first two fitted values
+#      l0 <- l0/b0 # First fitted value divided by b0
+#      if(abs(b0) > 1e10) # Avoid infinite slopes
+#        b0 <- sign(b0)*1e10
+#      if(l0 < 1e-8 | b0 < 1e-8) # Simple linear approximation didn't work.
+#      {
+#        l0 <- max(y.sa[1],1e-3)
+#        b0 <- max(y.sa[2]/y.sa[1],1e-3)
+#      }
+#    }
+#  }
 
   names(l0) <- "l"
   if(!is.null(b0))
@@ -661,96 +654,7 @@ initstate <- function(y,trendtype,seasontype)
 }
 
 
-#lik <- function(par,y,nstate,errortype,trendtype,seasontype,damped,par.noopt,lowerb,upperb,
-#    opt.crit,nmse,bounds,m,pnames,pnames2)
-#{
-#
-#  #browser()
-#
-#  #cat("par: ", par, "\n")
-#
-#  names(par) <- pnames
-#  names(par.noopt) <- pnames2
-#  alpha <- c(par["alpha"],par.noopt["alpha"])["alpha"]
-#  if(is.na(alpha))
-#    stop("alpha problem!")
-#  if(trendtype!="N")
-#  {
-#    beta <- c(par["beta"],par.noopt["beta"])["beta"]
-#    if(is.na(beta))
-#      stop("beta Problem!")
-#    lambda <- c(par["lambda"],par.noopt["lambda"])["lambda"]
-#    rho <- c(par["rho"],par.noopt["rho"])["rho"]
-#  }
-#  else
-#    beta <- NULL
-#  if(seasontype!="N")
-#  {
-#    gamma <- c(par["gamma"],par.noopt["gamma"])["gamma"]
-#    if(is.na(gamma))
-#      stop("gamma Problem!")
-#  }
-#  else
-#  {
-#    m <- 1
-#    gamma <- NULL
-#  }
-#  if(damped)
-#  {
-#    phi <- c(par["phi"],par.noopt["phi"])["phi"]
-#    if(is.na(phi))
-#      stop("phi Problem!")
-#  }
-#  else
-#    phi <- NULL
-#
-#  if(!check.param(alpha,beta,gamma,phi,lambda,rho,lowerb,upperb,bounds,m))
-#    return(Inf)
-#
-#  np <- length(par)
-#
-#  init.state <- par[(np-nstate+1):np]
-#  # Add extra state
-#  if(seasontype!="N")
-#    init.state <- c(init.state, m*(seasontype=="M") - sum(init.state[(2+(trendtype!="N")):nstate]))
-#  # Check states
-#  if(seasontype=="M")
-#  {
-#    seas.states <- init.state[-(1:(1+(trendtype!="N")))]
-#    if(min(seas.states) < 0)
-#      return(Inf)
-#  }
-#
-#  e <- pegelsresid.C(y,m,init.state,errortype,trendtype,seasontype,damped,alpha,beta,gamma,phi,lambda,rho,nmse)
-#
-#  if(is.na(e$lik))
-#    return(Inf)
-#  if(e$lik < -1e10) # Avoid perfect fits
-#    return(-1e10)
-#
-##      cat("lik: ", e$lik, "\n")
-##    points(alpha,e$lik,col=2)
-#
-#  if(opt.crit=="lik")
-#    return(e$lik)
-#  else if(opt.crit=="mse")
-#    return(e$amse[1])
-#  else if(opt.crit=="amse")
-#    return(mean(e$amse))
-#  else if(opt.crit=="sigma")
-#    return(mean(e$e^2))
-#  else if(opt.crit=="mae")
-#    return(mean(abs(e$e)))
-#}
-
-
-
-
-
-
-
-
-pegelsresid.C <- function(y,m,init.state,errortype,trendtype,seasontype,damped,alpha,beta,gamma,phi,lambda,rho,nmse)
+pegelsresid.C <- function(y,m,init.state,errortype,trendtype,seasontype,alpha,beta,gamma,phi,lambda,rho,nmse)
 {
   n <- length(y)
   p <- length(init.state)
@@ -758,8 +662,8 @@ pegelsresid.C <- function(y,m,init.state,errortype,trendtype,seasontype,damped,a
   x[1:p] <- init.state
   e <- numeric(n)
   lik <- 0;
-  if(!damped)
-    phi <- 1;
+#  if(!damped)
+#    phi <- 1;
   if(trendtype == "N")
     beta <- 0;
   if(seasontype == "N")
@@ -798,45 +702,47 @@ pegelsresid.C <- function(y,m,init.state,errortype,trendtype,seasontype,damped,a
   return(list(lik=Cout[[15]], amse=Cout[[16]], e=e, states=matrix(Cout[[3]], nrow=n+1, ncol=p, byrow=TRUE)))
 }
 
-admissible <- function(alpha,beta,gamma,phi,lambda,rho,m)
-{
-  if(is.null(phi))
-    phi <- 1
-  if(phi < 0 | phi > 1+1e-8)
-    return(0)
-  if(is.null(gamma))
-  {
-    if(alpha < 1-1/phi | alpha > 1+1/phi)
-      return(0)
-    if(!is.null(beta))
-    {
-      if(beta < alpha * (phi-1) | beta > (1+phi)*(2-alpha))
-        return(0)
-    }
-  }
-  else if(m > 1) # Seasonal model
-  {
-    if(is.null(beta))
-      beta <- 0
-    if(gamma < max(1-1/phi-alpha,0) | gamma > 1+1/phi-alpha)
-      return(0)
-    if(alpha < 1-1/phi-gamma*(1-m+phi+phi*m)/(2*phi*m))
-      return(0)
-    if(beta < -(1-phi)*(gamma/m+alpha))
-      return(0)
+#admissible <- function(alpha,beta,gamma,phi,lambda,rho,m)
+#{
+#  if(is.null(phi))
+#    phi <- 1
+#  if(phi < 0 | phi > 1+1e-8)
+#    return(0)
+#  if(is.null(gamma))
+#  {
+#    if(alpha < 1-1/phi | alpha > 1+1/phi)
+#      return(0)
+#    if(!is.null(beta))
+#    {
+#      if(beta < alpha * (phi-1) | beta > (1+phi)*(2-alpha))
+#        return(0)
+#    }
+#  }
+#  else if(m > 1) # Seasonal model
+#  {
+#    if(is.null(beta))
+#      beta <- 0
+#    if(gamma < max(1-1/phi-alpha,0) | gamma > 1+1/phi-alpha)
+#      return(0)
+#    if(alpha < 1-1/phi-gamma*(1-m+phi+phi*m)/(2*phi*m))
+#      return(0)
+#    if(beta < -(1-phi)*(gamma/m+alpha))
+#      return(0)
+#
+#    # End of easy tests. Now use characteristic equation
+#    P <- c(phi*(1-alpha-gamma),alpha+beta-alpha*phi+gamma-1,rep(alpha+beta-alpha*phi,m-2),(alpha+beta-phi),1)
+#    roots <- polyroot(P)
+#
+#    #cat("maxpolyroots: ", max(abs(roots)), "\n")
+#
+#    if(max(abs(roots)) > 1+1e-10)
+#      return(0)
+#  }
+#  # Passed all tests
+#  return(1)
+#}
 
-    # End of easy tests. Now use characteristic equation
-    P <- c(phi*(1-alpha-gamma),alpha+beta-alpha*phi+gamma-1,rep(alpha+beta-alpha*phi,m-2),(alpha+beta-phi),1)
-    roots <- polyroot(P)
 
-    #cat("maxpolyroots: ", max(abs(roots)), "\n")
-
-    if(max(abs(roots)) > 1+1e-10)
-      return(0)
-  }
-  # Passed all tests
-  return(1)
-}
 
 
 
