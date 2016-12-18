@@ -1,10 +1,17 @@
-etsLGT <- function(y, model="ZZZ", damped=NULL,
-    alpha=NULL, beta=NULL, gamma=NULL, phi=NULL, lambda=NULL, rho=NULL, additive.only=FALSE, lambdaBC=NULL, biasadj=FALSE,
+etsLGT <- function(y, model="ZZZ", 
+    alpha=NULL, beta=NULL, gamma=NULL, phi=NULL, lambda=NULL, rho=NULL, additive.only=FALSE, 
     lower=c(rep(0.0001,3), 0, -1, 0), upper=c(rep(0.9999,3), 1, 1, 1),
     opt.crit=c("lik","amse","mse","sigma","mae"), nmse=3, bounds=c("both","usual","admissible"),
     ic=c("aicc","aic","bic"),restrict=TRUE, allow.multiplicative.trend=FALSE,
     use.initial.values=FALSE, solver="optim_c", ...)
 {
+  #lambdaBC=NULL,
+  #biasadj=FALSE,
+  #damped=NULL,
+  
+  damped <- TRUE
+  model="AAN"
+
   #dataname <- substitute(y)
   opt.crit <- match.arg(opt.crit)
   bounds <- match.arg(bounds)
@@ -25,13 +32,6 @@ etsLGT <- function(y, model="ZZZ", damped=NULL,
     warning("Missing values encountered. Using longest contiguous portion of time series")
 
   orig.y <- y
-  if(class(model)=="etsLGT" & is.null(lambdaBC))
-    lambdaBC <- model$lambdaBC
-  if(!is.null(lambdaBC))
-  {
-    y <- BoxCox(y,lambdaBC)
-    additive.only=TRUE
-  }
 
   if(nmse < 1 | nmse > 30)
     stop("nmse out of range")
@@ -39,78 +39,6 @@ etsLGT <- function(y, model="ZZZ", damped=NULL,
 
   if(any(upper < lower))
     stop("Lower limits must be less than upper limits")
-
-  # If model is an ets object, re-fit model to new data
-  if(class(model)=="etsLGT")
-  {
-    alpha <- model$par["alpha"]
-    beta <- model$par["beta"]
-    if(is.na(beta))
-      beta <- NULL
-    gamma <- model$par["gamma"]
-    if(is.na(gamma))
-      gamma <- NULL
-    phi <- model$par["phi"]
-    if(is.na(phi))
-      phi <- NULL
-    lambda <- model$par["lambda"]
-    if(is.na(lambda))
-      lambda <- NULL
-    rho <- model$par["rho"]
-    if(is.na(rho))
-      rho <- NULL
-    modelcomponents <- paste(model$components[1],model$components[2],model$components[3],sep="")
-    damped <- (model$components[4]=="TRUE")
-    if(use.initial.values)
-    {
-      errortype  <- substr(modelcomponents,1,1)
-      trendtype  <- substr(modelcomponents,2,2)
-      seasontype <- substr(modelcomponents,3,3)
-
-      # Recompute errors from pegelsresid.C
-      e <- pegelsresid.C(y, m, model$initstate, errortype, trendtype, seasontype, damped, alpha, beta, gamma, phi, lambda, rho, nmse)
-
-      # Compute error measures
-      np <- length(model$par) + 1
-      model$loglik <- -0.5*e$lik
-      model$aic <- e$lik + 2*np
-      model$bic <- e$lik + log(ny)*np
-      model$aicc <- model$aic +  2*np*(np+1)/(ny-np-1)
-      model$mse <- e$amse[1]
-      model$amse <- mean(e$amse)
-
-      # Compute states, fitted values and residuals
-      tsp.y <- tsp(y)
-      model$states=ts(e$states,frequency=tsp.y[3],start=tsp.y[1]-1/tsp.y[3])
-      colnames(model$states)[1] <- "l"
-      if(trendtype!="N")
-        colnames(model$states)[2] <- "b"
-      if(seasontype!="N")
-        colnames(model$states)[(2+(trendtype!="N")):ncol(model$states)] <- paste("s",1:m,sep="")
-      if(errortype=="A")
-        model$fitted <- ts(y-e$e,frequency=tsp.y[3],start=tsp.y[1])
-      else
-        model$fitted <- ts(y/(1+e$e),frequency=tsp.y[3],start=tsp.y[1])
-      model$residuals <- ts(e$e,frequency=tsp.y[3],start=tsp.y[1])
-      model$sigma2 <- mean(model$residuals^2,na.rm=TRUE)
-      model$x <- orig.y
-      if(!is.null(lambdaBC))
-      {
-        model$fitted <- InvBoxCox(model$fitted,lambdaBC)
-        if(biasadj){
-          model$fitted <- InvBoxCoxf(x = model$fitted, fvar = var(model$residuals), lambda = lambdaBC)
-        }
-      }
-      model$lambdaBC <- lambdaBC
-
-      # Return model object
-      return(model)
-    }
-    else
-    {
-      model <- modelcomponents
-    }
-  }
 
   errortype  <- substr(model,1,1)
   trendtype  <- substr(model,2,2)
@@ -161,30 +89,7 @@ etsLGT <- function(y, model="ZZZ", damped=NULL,
   if(!data.positive & errortype=="M")
     stop("Inappropriate model for data with negative or zero values")
 
-  if(!is.null(damped))
-  {
-    if(damped & trendtype=="N")
-      stop("Forbidden model combination")
-  }
-
   n <- length(y)
-  # Return non-optimized SES if 4 or  fewer observations
-  if(n <= 4) 
-  {
-    fit <- HoltWintersZZ(orig.y, beta=FALSE, gamma=FALSE, lambda=lambda, biasadj=biasadj)
-    fit$call <- match.call()
-    return(fit)
-  }
-  # Otherwise proceed to check we have enough data to fit a model
-  npars <- 2L # alpha + l0
-  if(trendtype=="A" | trendtype=="M")
-    npars <- npars + 2L # beta + b0
-  if(seasontype=="A" | seasontype=="M")
-    npars <- npars + m # gamma + s
-  if(!is.null(damped))
-    npars <- npars + as.numeric(damped)
-  if(n <= npars+1)
-    stop("Sorry, but I need more data!")
 
   # Fit model (assuming only one nonseasonal model)
   if(errortype=="Z")
@@ -251,19 +156,11 @@ etsLGT <- function(y, model="ZZZ", damped=NULL,
   model$initstate <- model$states[1,]
   model$sigma2 <- mean(model$residuals^2,na.rm=TRUE)
   model$x <- orig.y
-  model$lambda <- lambdaBC
-  if(!is.null(lambdaBC))
-  {
-    model$fitted <- InvBoxCox(model$fitted,lambdaBC)
-    if(biasadj){
-      model$fitted <- InvBoxCoxf(x = model$fitted, fvar = var(model$residuals), lambda = lambdaBC)
-    }
-  }
-
-  #model$call$data <- dataname
 
   return(structure(model,class="etsLGT"))
 }
+
+
 
 
  myRequire <- function(libName) {
@@ -366,7 +263,7 @@ etsmodel <- function(y, errortype, trendtype, seasontype, damped,
 
   if(is.null(seed)) seed <- 1000*runif(1)
 
-   if(solver=="malschains" || solver=="malschains_c") {
+   if(solver=="malschains_c") {
 
      malschains <- NULL
      if(!myRequire("Rmalschains"))
@@ -375,27 +272,11 @@ etsmodel <- function(y, errortype, trendtype, seasontype, damped,
      func <- NULL
      env <- NULL
 
-     if(solver=="malschains") {
-
-       func <- function(myPar) {
-         names(myPar) <- names(par)
-         res <- lik(myPar,y=y,nstate=nstate, errortype=errortype, trendtype=trendtype,
-             seasontype=seasontype, damped=damped, par.noopt=par.noopt, lowerb=lower, upperb=upper,
-             opt.crit=opt.crit, nmse=nmse, bounds=bounds, m=m,pnames=names(par),pnames2=names(par.noopt))
-         res
-       }
-
-       env <- new.env()
-
-     } else {
-
        env <- etsTargetFunctionInit(par=par, y=y, nstate=nstate, errortype=errortype, trendtype=trendtype,
            seasontype=seasontype, damped=damped, par.noopt=par.noopt, lowerb=lower, upperb=upper,
            opt.crit=opt.crit, nmse=nmse, bounds=bounds, m=m,pnames=names(par),pnames2=names(par.noopt))
 
        func <- .Call("etsGetTargetFunctionRmalschainsPtr", PACKAGE="RlgtLik")
-
-     }
 
      myBounds <- getNewBounds(par, lower, upper, nstate)
 
@@ -428,22 +309,8 @@ etsmodel <- function(y, errortype, trendtype, seasontype, damped,
 
     names(fit.par) <- names(par)
 
-   } else { #if(solver=="optim")
-
-  #   # Optimize parameters and state
-  #   if(length(par)==1)
-  #     method <- "Brent"
-  #   else
-  #   	method <- "Nelder-Mead"
-
-  #   fred <- optim(par,lik,method=method,y=y,nstate=nstate, errortype=errortype, trendtype=trendtype,
-  #       seasontype=seasontype, damped=damped, par.noopt=par.noopt, lowerb=lower, upperb=upper,
-  #       opt.crit=opt.crit, nmse=nmse, bounds=bounds, m=m,pnames=names(par),pnames2=names(par.noopt),
-  #       control=list(maxit=maxit))
-
-  #   fit.par <- fred$par
-  #   names(fit.par) <- names(par)
    }
+
 
 #-------------------------------------------------
 
@@ -483,7 +350,7 @@ etsmodel <- function(y, errortype, trendtype, seasontype, damped,
   if(seasontype!="N")
     colnames(states)[(2+(trendtype!="N")):ncol(states)] <- paste("s",1:m,sep="")
 
-  tmp <- c("alpha",rep("beta",trendtype!="N"),rep("gamma",seasontype!="N"),rep("phi",damped))
+  #tmp <- c("alpha",rep("beta",trendtype!="N"),rep("gamma",seasontype!="N"),rep("phi",damped))
   fit.par <- c(fit.par,par.noopt)
 #    fit.par <- fit.par[order(names(fit.par))]
   if(errortype=="A")
@@ -794,148 +661,93 @@ initstate <- function(y,trendtype,seasontype)
 }
 
 
-lik <- function(par,y,nstate,errortype,trendtype,seasontype,damped,par.noopt,lowerb,upperb,
-    opt.crit,nmse,bounds,m,pnames,pnames2)
-{
-
-  #browser()
-
-  #cat("par: ", par, "\n")
-
-  names(par) <- pnames
-  names(par.noopt) <- pnames2
-  alpha <- c(par["alpha"],par.noopt["alpha"])["alpha"]
-  if(is.na(alpha))
-    stop("alpha problem!")
-  if(trendtype!="N")
-  {
-    beta <- c(par["beta"],par.noopt["beta"])["beta"]
-    if(is.na(beta))
-      stop("beta Problem!")
-    lambda <- c(par["lambda"],par.noopt["lambda"])["lambda"]
-    rho <- c(par["rho"],par.noopt["rho"])["rho"]
-  }
-  else
-    beta <- NULL
-  if(seasontype!="N")
-  {
-    gamma <- c(par["gamma"],par.noopt["gamma"])["gamma"]
-    if(is.na(gamma))
-      stop("gamma Problem!")
-  }
-  else
-  {
-    m <- 1
-    gamma <- NULL
-  }
-  if(damped)
-  {
-    phi <- c(par["phi"],par.noopt["phi"])["phi"]
-    if(is.na(phi))
-      stop("phi Problem!")
-  }
-  else
-    phi <- NULL
-
-  if(!check.param(alpha,beta,gamma,phi,lambda,rho,lowerb,upperb,bounds,m))
-    return(Inf)
-
-  np <- length(par)
-
-  init.state <- par[(np-nstate+1):np]
-  # Add extra state
-  if(seasontype!="N")
-    init.state <- c(init.state, m*(seasontype=="M") - sum(init.state[(2+(trendtype!="N")):nstate]))
-  # Check states
-  if(seasontype=="M")
-  {
-    seas.states <- init.state[-(1:(1+(trendtype!="N")))]
-    if(min(seas.states) < 0)
-      return(Inf)
-  }
-
-  e <- pegelsresid.C(y,m,init.state,errortype,trendtype,seasontype,damped,alpha,beta,gamma,phi,lambda,rho,nmse)
-
-  if(is.na(e$lik))
-    return(Inf)
-  if(e$lik < -1e10) # Avoid perfect fits
-    return(-1e10)
-
-#      cat("lik: ", e$lik, "\n")
-#    points(alpha,e$lik,col=2)
-
-  if(opt.crit=="lik")
-    return(e$lik)
-  else if(opt.crit=="mse")
-    return(e$amse[1])
-  else if(opt.crit=="amse")
-    return(mean(e$amse))
-  else if(opt.crit=="sigma")
-    return(mean(e$e^2))
-  else if(opt.crit=="mae")
-    return(mean(abs(e$e)))
-}
-
-
+#lik <- function(par,y,nstate,errortype,trendtype,seasontype,damped,par.noopt,lowerb,upperb,
+#    opt.crit,nmse,bounds,m,pnames,pnames2)
+#{
+#
+#  #browser()
+#
+#  #cat("par: ", par, "\n")
+#
+#  names(par) <- pnames
+#  names(par.noopt) <- pnames2
+#  alpha <- c(par["alpha"],par.noopt["alpha"])["alpha"]
+#  if(is.na(alpha))
+#    stop("alpha problem!")
+#  if(trendtype!="N")
+#  {
+#    beta <- c(par["beta"],par.noopt["beta"])["beta"]
+#    if(is.na(beta))
+#      stop("beta Problem!")
+#    lambda <- c(par["lambda"],par.noopt["lambda"])["lambda"]
+#    rho <- c(par["rho"],par.noopt["rho"])["rho"]
+#  }
+#  else
+#    beta <- NULL
+#  if(seasontype!="N")
+#  {
+#    gamma <- c(par["gamma"],par.noopt["gamma"])["gamma"]
+#    if(is.na(gamma))
+#      stop("gamma Problem!")
+#  }
+#  else
+#  {
+#    m <- 1
+#    gamma <- NULL
+#  }
+#  if(damped)
+#  {
+#    phi <- c(par["phi"],par.noopt["phi"])["phi"]
+#    if(is.na(phi))
+#      stop("phi Problem!")
+#  }
+#  else
+#    phi <- NULL
+#
+#  if(!check.param(alpha,beta,gamma,phi,lambda,rho,lowerb,upperb,bounds,m))
+#    return(Inf)
+#
+#  np <- length(par)
+#
+#  init.state <- par[(np-nstate+1):np]
+#  # Add extra state
+#  if(seasontype!="N")
+#    init.state <- c(init.state, m*(seasontype=="M") - sum(init.state[(2+(trendtype!="N")):nstate]))
+#  # Check states
+#  if(seasontype=="M")
+#  {
+#    seas.states <- init.state[-(1:(1+(trendtype!="N")))]
+#    if(min(seas.states) < 0)
+#      return(Inf)
+#  }
+#
+#  e <- pegelsresid.C(y,m,init.state,errortype,trendtype,seasontype,damped,alpha,beta,gamma,phi,lambda,rho,nmse)
+#
+#  if(is.na(e$lik))
+#    return(Inf)
+#  if(e$lik < -1e10) # Avoid perfect fits
+#    return(-1e10)
+#
+##      cat("lik: ", e$lik, "\n")
+##    points(alpha,e$lik,col=2)
+#
+#  if(opt.crit=="lik")
+#    return(e$lik)
+#  else if(opt.crit=="mse")
+#    return(e$amse[1])
+#  else if(opt.crit=="amse")
+#    return(mean(e$amse))
+#  else if(opt.crit=="sigma")
+#    return(mean(e$e^2))
+#  else if(opt.crit=="mae")
+#    return(mean(abs(e$e)))
+#}
 
 
 
-print.etsLGT <- function(x,...)
-{
-  cat(paste(x$method, "\n\n"))
-  cat(paste("Call:\n", deparse(x$call), "\n\n"))
-  ncoef <- length(x$initstate)
-  if(!is.null(x$lambda))
-    cat("  Box-Cox transformation: lambda=",round(x$lambda,4), "\n\n")
 
-  cat("  Smoothing parameters:\n")
-  cat(paste("    alpha =", round(x$par["alpha"], 4), "\n"))
-  if(x$components[2]!="N")
-    cat(paste("    beta  =", round(x$par["beta"], 4), "\n"))
-  if(x$components[3]!="N")
-    cat(paste("    gamma =", round(x$par["gamma"], 4), "\n"))
-  if(x$components[4]!="FALSE")
-    cat(paste("    phi   =", round(x$par["phi"], 4), "\n"))
 
-  cat("\n  Initial states:\n")
-  cat(paste("    l =", round(x$initstate[1], 4), "\n"))
-  if (x$components[2]!="N")
-    cat(paste("    b =", round(x$initstate[2], 4), "\n"))
-  else
-  {
-    x$initstate <- c(x$initstate[1], NA, x$initstate[2:ncoef])
-    ncoef <- ncoef+1
-  }
-  if (x$components[3]!="N")
-  {
-    cat("    s=")
-    if (ncoef <= 8)
-      cat(round(x$initstate[3:ncoef], 4))
-    else
-    {
-      cat(round(x$initstate[3:8], 4))
-      cat("\n           ")
-      cat(round(x$initstate[9:ncoef], 4))
-    }
-    cat("\n")
-  }
 
-  cat("\n  sigma:  ")
-  cat(round(sqrt(x$sigma2),4))
-  if(!is.null(x$aic))
-  {
-    stats <- c(x$aic,x$aicc,x$bic)
-    names(stats) <- c("AIC","AICc","BIC")
-    cat("\n\n")
-    print(stats)
-  }
-#    cat("\n  AIC:    ")
-#    cat(round(x$aic,4))
-#    cat("\n  AICc:   ")
-#    cat(round(x$aicc,4))
-#    cat("\n  BIC:    ")
-#    cat(round(x$bic,4))
-}
 
 
 pegelsresid.C <- function(y,m,init.state,errortype,trendtype,seasontype,damped,alpha,beta,gamma,phi,lambda,rho,nmse)
@@ -974,16 +786,16 @@ pegelsresid.C <- function(y,m,init.state,errortype,trendtype,seasontype,damped,a
       as.double(amse),
       as.integer(nmse),
       PACKAGE="RlgtLik")
-  if(!is.na(Cout[[13]]))
+  if(!is.na(Cout[[15]]))
   {
-    if(abs(Cout[[13]]+99999) < 1e-7)
-      Cout[[13]] <- NA
+    if(abs(Cout[[15]]+99999) < 1e-7)
+      Cout[[15]] <- NA
   }
   tsp.y <- tsp(y)
   e <- ts(Cout[[14]])
   tsp(e) <- tsp.y
 
-  return(list(lik=Cout[[13]], amse=Cout[[14]], e=e, states=matrix(Cout[[3]], nrow=n+1, ncol=p, byrow=TRUE)))
+  return(list(lik=Cout[[15]], amse=Cout[[16]], e=e, states=matrix(Cout[[3]], nrow=n+1, ncol=p, byrow=TRUE)))
 }
 
 admissible <- function(alpha,beta,gamma,phi,lambda,rho,m)
@@ -1025,6 +837,66 @@ admissible <- function(alpha,beta,gamma,phi,lambda,rho,m)
   # Passed all tests
   return(1)
 }
+
+
+
+print.etsLGT <- function(x,...)
+{
+  cat(paste(x$method, "\n\n"))
+  cat(paste("Call:\n", deparse(x$call), "\n\n"))
+  ncoef <- length(x$initstate)
+  if(!is.null(x$lambda))
+    cat("  Box-Cox transformation: lambda=",round(x$lambda,4), "\n\n")
+  
+  cat("  Smoothing parameters:\n")
+  cat(paste("    alpha =", round(x$par["alpha"], 4), "\n"))
+  if(x$components[2]!="N")
+    cat(paste("    beta  =", round(x$par["beta"], 4), "\n"))
+  if(x$components[3]!="N")
+    cat(paste("    gamma =", round(x$par["gamma"], 4), "\n"))
+  if(x$components[4]!="FALSE")
+    cat(paste("    phi   =", round(x$par["phi"], 4), "\n"))
+  
+  cat("\n  Initial states:\n")
+  cat(paste("    l =", round(x$initstate[1], 4), "\n"))
+  if (x$components[2]!="N")
+    cat(paste("    b =", round(x$initstate[2], 4), "\n"))
+  else
+  {
+    x$initstate <- c(x$initstate[1], NA, x$initstate[2:ncoef])
+    ncoef <- ncoef+1
+  }
+  if (x$components[3]!="N")
+  {
+    cat("    s=")
+    if (ncoef <= 8)
+      cat(round(x$initstate[3:ncoef], 4))
+    else
+    {
+      cat(round(x$initstate[3:8], 4))
+      cat("\n           ")
+      cat(round(x$initstate[9:ncoef], 4))
+    }
+    cat("\n")
+  }
+  
+  cat("\n  sigma:  ")
+  cat(round(sqrt(x$sigma2),4))
+  if(!is.null(x$aic))
+  {
+    stats <- c(x$aic,x$aicc,x$bic)
+    names(stats) <- c("AIC","AICc","BIC")
+    cat("\n\n")
+    print(stats)
+  }
+#    cat("\n  AIC:    ")
+#    cat(round(x$aic,4))
+#    cat("\n  AICc:   ")
+#    cat(round(x$aicc,4))
+#    cat("\n  BIC:    ")
+#    cat(round(x$bic,4))
+}
+
 
 ### PLOT COMPONENTS
 plot.etsLGT <- function(x,...)
