@@ -1,0 +1,14 @@
+import(Rcpp)
+
+export(forecast.etsLGT, logLik.etsLGT, etsLGT, plot.etsLGT)
+
+S3method(coef,etsLGT)
+S3method(fitted,etsLGT)
+S3method(forecast,etsLGT)
+S3method(logLik,etsLGT)
+S3method(plot,etsLGT)
+S3method(print,etsLGT)
+#S3method(simulate,etsLGT)
+S3method(summary,etsLGT)
+
+useDynLib(RlgtLik)

@@ -1,0 +1,15 @@
+Package: RlgtLik
+Maintainer: Christoph Bergmeir <christoph.bergmeir@gmail.com>
+Type: Package
+LazyLoad: yes
+Author: Slawek Smyl, Christoph Bergmeir, code from RobHyndman's forecast package
+Version: 0.0-1
+Title: Fitting LGT with code from the forecast package
+Description: Fitting LGT with code from the forecast package
+Depends: R (>= 3.0.2), forecast
+Imports: Rcpp (>= 0.11.0), 
+Suggests: testthat
+LinkingTo: Rcpp (>= 0.11.0)
+LazyData: yes
+ByteCompile: TRUE
+
