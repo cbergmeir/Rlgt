@@ -14,47 +14,43 @@
 #' 
 # @importFrom rstan stan_model
 #' @export
-init.lgt <- function(){
+initModel <- function(modelType = NULL){
   
-  stanModel <- list()
+  if(is.null(modelType)) {
+    print("No model type was provided, generating an LGT model.")
+    modelType <- "LGT"
+  }
   
-  stanModel[["parameters"]] <- c("l", "b", "nu", "sigma", "levSm",  "bSm", 
-      "powx", "coefTrend",  "powTrend", "offsetSigma", "locTrendFract")
+  model <- list()
   
-  stanModel[["model"]] <- stanmodels$lgt
+  if(modelType=="LGT") {
+    
+    #(non-seasonal) LGT model
+    
+    model[["parameters"]] <- c("l", "b", "nu", "sigma", "levSm",  "bSm", 
+        "powx", "coefTrend",  "powTrend", "offsetSigma", "locTrendFract")
+    
+    model[["model"]] <- stanmodels$lgt
+    
+    class(model) <- c("RlgtStanModelLGT")
+    
+  } else if (modelType=="Trend") {
+    
+    #trend-only, Gaussian error, homoscedastic version of LGT
+    
+    model[["parameters"]] <- c("l", "b", "sigma", "levSm",  "bSm", "coefTrend", 
+        "powTrend", "locTrendFract")
+    
+    model[["model"]] <- stanmodels$trend
+    
+    class(model) <- c("RlgtStanModelLGT")
+    
+  } 
   
-  class(stanModel) <- c("stanModel", "stanModelLGT")
-  stanModel  
+  class(model) <- c("RlgtStanModel", class(model))
+  model  
   
 } 
-
-
-#' Initialize a stan model that is a trend-only, Gaussian error, homoscedastic version of LGT
-#' 
-#' @title Initialize a stan model that uses trend only
-#' @returnType 
-#' @return 
-#' 
-# @importFrom rstan stan_model
-#' @export
-init.trend <- function(){
-  
-  stanModel <- list()
-  
-  stanModel[["parameters"]] <- c("l", "b", "sigma", "levSm",  "bSm", "coefTrend", 
-      "powTrend", "locTrendFract")
-  
-  stanModel[["model"]] <- stanmodels$trend
-  
-  class(stanModel) <- c("stanModel", "stanModelTrend")
-  stanModel  
-  
-} 
-
-
-#myMod <- initPredictionModel.lgt()
-#length(myMod$output)
-
 
 
 #' This is a function that initializes and sets the parameters of the algorithm. 
@@ -106,7 +102,7 @@ lgt.control <- function(
 #' @title Runs the model fitting
 #' @param y the time series
 #' @param h prediction horizon
-#' @param stanModel a stan model
+#' @param model a stan model
 #' @param control control arguments list
 #' @param ncores number of cores
 #' @param addJitter adding a bit of jitter is helping Stan in case of some flat series
@@ -121,11 +117,10 @@ lgt.control <- function(
 #' @importMethodsFrom rstan summary
 #' @importFrom sn rst
 #' @export
-fit.lgt <- function(y, stanModel=NULL, control=lgt.control(), ncores=1, addJitter=TRUE, verbose=FALSE) {
+fit.lgt <- function(y, model=c("LGT", "Trend"), control=lgt.control(), ncores=1, addJitter=TRUE, verbose=FALSE) {
   
-  if(is.null(stanModel)) {
-    warning("No model was provided, generating an LGT model.")
-    stanModel <- init.lgt()
+  if(!inherits(model, "RlgtStanModel")) {
+    model <- initModel(model)
   }
   
   MAX_RHAT_ALLOWED=control$MAX_RHAT_ALLOWED
@@ -160,10 +155,10 @@ fit.lgt <- function(y, stanModel=NULL, control=lgt.control(), ncores=1, addJitte
 
     samples1=
         sampling(#control=list(adapt_delta = 0.9, max_treedepth=11),
-            stanModel$model,   
+            model$model,   
             data=data, 
             #init=initializations,
-            pars=stanModel$parameters,
+            pars=model$parameters,
             iter=NUM_OF_ITER*2^(irep-1),
             chains=STAN_CLUSTER_SIZE,
             cores=STAN_CLUSTER_SIZE,
@@ -205,7 +200,7 @@ fit.lgt <- function(y, stanModel=NULL, control=lgt.control(), ncores=1, addJitte
   params <- list()
   paramMeans <- list()
   
-  for(param in stanModel$parameters) {
+  for(param in model$parameters) {
     params[[param]] <- extract(samples)[[param]]
     paramMeans[[param]] <- if(param %in% c("l", "b")) apply(params[[param]],2,mean) else mean(params[[param]])
   }
@@ -219,7 +214,7 @@ fit.lgt <- function(y, stanModel=NULL, control=lgt.control(), ncores=1, addJitte
   out <- list()
 
   out[["x"]] <- y.orig
-  out[["stanModel"]] <- stanModel
+  out[["model"]] <- model
   out[["params"]] <- params
   out[["paramMeans"]] <- paramMeans
   class(out) <- "lgt"
@@ -262,7 +257,7 @@ forecast.lgt <- function(object, h=ifelse(frequency(object$x)>1, 2*frequency(obj
   else
     start.f <- length(out$x)+1
   
-  isLGT <- inherits(object$stanModel, "stanModelLGT")
+  isLGT <- inherits(object$model, "RlgtStanModelLGT")
   
 #  t=1; irun=1
   yf=matrix(object$paramMeans[["lastLevel"]],nrow=NUM_OF_TRIALS, ncol=h)
