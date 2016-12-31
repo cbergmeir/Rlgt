@@ -43,7 +43,7 @@ initModel <- function(modelType = NULL){
     
     model[["model"]] <- stanmodels$trend
     
-    class(model) <- c("RlgtStanModelLGT")
+    class(model) <- c("RlgtStanModelTrend")
     
   } 
   
@@ -238,7 +238,7 @@ fit.lgt <- function(y, model=c("LGT", "Trend"), control=lgt.control(), ncores=1,
 #' @param ... 
 #' @returnType 
 #' @return returns a forecast object compatible with the forecast package
-#' @S3method forecast lgt
+# @S3method forecast lgt
 # @method forecast lgt
 #' @importFrom forecast forecast 
 #' @author bergmeir
@@ -339,7 +339,7 @@ forecast.lgt <- function(object, h=ifelse(frequency(object$x)>1, 2*frequency(obj
 #' @param x the \code{\link{lgt}} model
 #' @param ... additional function parameters (currently not used)
 #' @export
-#' @S3method print lgt
+# @S3method print lgt
 # @method print lgt
 # @rdname lgt
 print.lgt <- function(x, ...) {
