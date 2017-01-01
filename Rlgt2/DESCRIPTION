@@ -12,7 +12,7 @@ License: What license is it under?
 Depends:
     R (>= 3.0.2),
     Rcpp (>= 0.12.8),
-    methods (>= 3.4.0)
+    methods
 Imports:
     rstan (>= 2.13.2),
     rstantools (>= 1.1.0), sn, forecast

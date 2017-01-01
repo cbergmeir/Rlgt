@@ -32,7 +32,7 @@ forecasts <- list()
 #options(error=recover)
 #
 mod[["lgt"]] <- fit.lgt(data.train, model="LGT", ncores=4, 
-    control=lgt.control(MAX_NUM_OF_REPEATS=1, NUM_OF_ITER=500), 
+    control=lgt.control(MAX_NUM_OF_REPEATS=1, NUM_OF_ITER=2000), 
     verbose=TRUE)
 forecasts[["lgt"]] <- forecast(mod[["lgt"]], h = sizeTestSet)
 plot(forecasts[["lgt"]])
