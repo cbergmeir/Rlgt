@@ -1,8 +1,9 @@
+#Local and Global Trend, homoscedastic model with Normal distribution of error
+
 data {
 	real<lower=0> CAUCHY_SD;
-	real MIN_POW;  real MAX_POW;
+	real MIN_POW_TREND;  real MAX_POW_TREND;
 	real<lower=0> MIN_SIGMA;
-	//real<lower=1> MIN_NU; real<lower=1> MAX_NU;
 	int<lower=1> N;
 	vector<lower=0>[N] y;
 }
@@ -13,15 +14,15 @@ parameters {
 	real <lower=0,upper=1> bSm;
 	real <lower=0,upper=1> powTrendBeta;
 	real coefTrend;
-	real <lower=-1,upper=1> locTrendFract;
+	real <lower=-0.25,upper=1> locTrendFract;
 }
 
 transformed parameters {
-	real <lower=MIN_POW,upper=MAX_POW>powTrend;
+	real <lower=MIN_POW_TREND,upper=MAX_POW_TREND>powTrend;
 	vector[N] l; vector[N] b;
 
 	l[1] = y[1]; b[1] = 0;
-	powTrend= (MAX_POW-MIN_POW)*powTrendBeta+MIN_POW;
+	powTrend= (MAX_POW_TREND-MIN_POW_TREND)*powTrendBeta+MIN_POW_TREND;
 
 	for (t in 2:N) {
 		l[t]  = levSm*y[t] + (1-levSm)*l[t-1] ;
