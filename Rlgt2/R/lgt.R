@@ -200,12 +200,10 @@ fit.lgt <- function(y, model=c("LGT", "SGT", "LGTe", "SGTe", "Trend"),
   avgRHat=1e200; irep=1
   for (irep in 1:MAX_NUM_OF_REPEATS) {
 		initializations <- list();
-		if (SEASONALITY>1) {
-			for (irr in 1:STAN_CLUSTER_SIZE) {
-				initializations[[irr]]=list( 
-						initSu=rnorm(SEASONALITY,1,0.1)
-				)
-			}
+		for (irr in 1:nChains) {
+			initializations[[irr]]=list( 
+					initSu=rnorm(SEASONALITY,1,0.1) # for non-seasonal models it is not necessary, but makes code simpler and is not a big overhead
+			)
 		}
 
 		numOfIters=NUM_OF_ITER*2^(irep-1)
@@ -242,7 +240,7 @@ fit.lgt <- function(y, model=c("LGT", "SGT", "LGTe", "SGTe", "Trend"),
         print ("worse...")
         print(paste("currRHat",currRHat))
       }
-      print (paste("trying to do better..."))
+      if (MAX_NUM_OF_REPEATS>irep) print (paste("trying to do better..."))
     }
     #str(samples, max.level =4)
   }#repeat if needed
@@ -304,6 +302,9 @@ fit.lgt <- function(y, model=c("LGT", "SGT", "LGTe", "SGTe", "Trend"),
 #' @importFrom forecast forecast 
 #' @author bergmeir
 #' @export
+
+# object=mod[["lgte"]]; level=c(80,95, 98); NUM_OF_TRIALS=2000; MIN_VAL=0.001; MAX_VAL=1e38; h=8
+# library(sn)
 forecast.lgt <- function(object, h=ifelse(frequency(object$x)>1, 2*frequency(object$x), 10),
 		level=c(80,95),
 		NUM_OF_TRIALS=2000, 
@@ -335,12 +336,14 @@ forecast.lgt <- function(object, h=ifelse(frequency(object$x)>1, 2*frequency(obj
   out <- list(model=object,x=object$x)
   tspx <- tsp(out$x)
   
-  if(!is.null(tspx))
-    start.f <- tspx[2] + 1/frequency(out$x)
-  else
-    start.f <- length(out$x)+1
+  if(!is.null(tspx)){
+		start.f <- tspx[2] + 1/frequency(out$x)
+	} else {
+		start.f <- length(out$x)+1
+	}
+    
   
-	nu=object$params[["levSm"]]
+	nu=object$params[["nu"]]
 	lastB <- object$params[["lastB"]]
 	lastSmoothedInnovSize <- object$params[["lastSmoothedInnovSize"]]
 	powx <- object$params[["powx"]]
@@ -349,7 +352,7 @@ forecast.lgt <- function(object, h=ifelse(frequency(object$x)>1, 2*frequency(obj
 	nuS=Inf; bSmS=0; bS=0; locTrendFractS=0;  #these initializations are important, do not remove. 
 	#t=1; irun=1
 	if (SEASONALITY>1) {
-		sS=rep(1,SEASONALITY+MAX_FORECAST_HORIZON)
+		sS=rep(1,SEASONALITY+h)
 	}
 	yf=matrix(object$paramMeans[["lastLevel"]],nrow=NUM_OF_TRIALS, ncol=h)
 	for (irun in 1:NUM_OF_TRIALS) {
@@ -379,10 +382,10 @@ forecast.lgt <- function(object, h=ifelse(frequency(object$x)>1, 2*frequency(obj
 			offsetsigmaS=object$params[["offsetSigma"]][indx]
 		}
 		
-		#t=2
+		#t=1
 		if (SEASONALITY>1) {
 			sS[1:SEASONALITY]=s[indx,(ncol(s)-SEASONALITY+1):ncol(s)]
-			for (t in 1:MAX_FORECAST_HORIZON) {
+			for (t in 1:h) {
 				seasonA=sS[t]
 				expVal=(prevLevel+ coefTrendS*abs(prevLevel)^powTrendS)*seasonA;
 				if (!is.null(powx)) {
@@ -404,7 +407,7 @@ forecast.lgt <- function(object, h=ifelse(frequency(object$x)>1, 2*frequency(obj
 			}	#through horizons
 			# yf[irun,]
 		} else { #nonseasonal
-			for (t in 1:MAX_FORECAST_HORIZON) {
+			for (t in 1:h) {
 				expVal=prevLevel + coefTrendS*(abs(prevLevel))^powTrendS + locTrendFractS*bS
 				if (!is.null(powx)) {
 					omega=sigmaS*(abs(prevLevel))^powxS+offsetsigmaS
@@ -429,21 +432,20 @@ forecast.lgt <- function(object, h=ifelse(frequency(object$x)>1, 2*frequency(obj
 	  
   out$yf <- yf
   
-  
   out$mean <- ts(apply(yf, 2, mean),frequency=frequency(out$x),start=start.f)
 
   avgYfs=apply(yf,2,quantile,probs=quantiles)
   
   out$median <- ts(avgYfs[indexOfMedian,])
 	if (indexOfMedian>1) {
-		out$lower <- ts(t(avgYfs[range(1,indexOfMedian-1),]))
-		out$upper <- ts(t(avgYfs[range(indexOfMedian+1,indexOfMedian+length(upperPercentiles)),]))	
+		out$lower <- ts(t(avgYfs[1:(indexOfMedian-1),]))
+		out$upper <- ts(t(avgYfs[(indexOfMedian+1):(indexOfMedian+length(upperPercentiles)),]))	
 	}
 	
   out$level <- level
   
   tsp(out$median) <- tsp(out$lower) <- tsp(out$upper) <- tsp(out$mean)
-  
+	  
   class(out) <- "forecast"
   out
   
