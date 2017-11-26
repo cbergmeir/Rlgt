@@ -1,4 +1,4 @@
-# Seasonal Global Trend (SGTe) algorithm, smoothed error size
+// Seasonal Global Trend (SGTe) algorithm, smoothed error size
 
 data {  
 	int<lower=2> SEASONALITY;

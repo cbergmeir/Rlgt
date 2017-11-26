@@ -3,19 +3,18 @@ Type: Package
 Title: LGT package
 Version: 0.0-1
 URL: TODO
-Date: 2016-12-28
+Date: 
 Author: Slawek Smyl, Christoph Bergmeir
 Maintainer: Christoph Bergmeir <christoph.bergmeir@gmail.com>
 Description: This package is based on code from Slawek Smyl to implement LGT, an
     exponential smoothing forecasting method using Rstan for model fitting.
-License: What license is it under?
+License: GPL-3
 Depends:
     R (>= 3.0.2),
     Rcpp (>= 0.12.8),
     methods
 Imports:
-    rstan (>= 2.13.2),
-    rstantools (>= 1.1.0), sn, forecast
+    rstan (>= 2.13.2), sn, forecast
 LinkingTo: StanHeaders (>= 2.13.1), rstan (>= 2.13.2), BH (>= 1.62.0.1), Rcpp
     (>= 0.12.8), RcppEigen (>= 0.3.2.9.0)
-RoxygenNote: 5.0.1
+RoxygenNote: 6.0.1

@@ -1,4 +1,4 @@
-#Local and Global Trend, homoscedastic model with Normal distribution of error
+//Local and Global Trend, homoscedastic model with Normal distribution of error
 
 data {
 	real<lower=0> CAUCHY_SD;

@@ -1,4 +1,4 @@
-#Non-Seasonal Local Global Trend (LGTe) algorithm with smoothed error size
+//Non-Seasonal Local Global Trend (LGTe) algorithm with smoothed error size
 
 data {  
 	real<lower=0> CAUCHY_SD;

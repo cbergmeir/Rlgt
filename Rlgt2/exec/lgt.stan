@@ -1,4 +1,4 @@
-# Non-Seasonal Local Global Trend (LGT) algorithm
+// Non-Seasonal Local Global Trend (LGT) algorithm
 
 data {  
 	real<lower=0> CAUCHY_SD;

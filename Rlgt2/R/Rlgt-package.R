@@ -1,4 +1,5 @@
 #' @title Getting started with the Rlgt2 package
+#' @description An implementation of LGT and SGT models as described in ...
 #' @name Rlgt2-package
 #' @aliases Rlgt2
 #' @docType package
@@ -18,5 +19,7 @@
 #'
 #' @examples
 #' x <- 1
+#' @docType package
+#' @name Rlgt2
 NULL
 

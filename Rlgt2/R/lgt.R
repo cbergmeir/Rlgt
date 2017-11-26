@@ -2,10 +2,11 @@
 #' Initialize a stan model that uses the (non-seasonal) LGT
 #' 
 #' @title Initialize a non-seasonal LGT stan model
-#' @returnType 
-#' @return 
+#' @param modelType type of the forecasting model selected
+#' @returnType RlgtStanModelSGT
+#' @return SkeletonModel
 #' 
-# @importFrom rstan stan_model
+#' @importFrom rstan stan_model
 #' @export
 initModel <- function(modelType = NULL){
   
@@ -63,6 +64,26 @@ initModel <- function(modelType = NULL){
 } 
 
 
+#' @title lgt class
+#' @description a constructor function for the "lgt" class
+#' @param y desc 1
+#' @param lgtmodel desc2
+#' @param params desc3
+#' @param paramMean desc4
+#' @param seasonality desc5
+#' @return lgt instance
+
+lgt <- function(y,lgtmodel,params, paramMean, seasonality) {
+  # we can add our own integrity checks
+
+  value <- list(x = y, model = lgtmodel, params = params, paramMeans=paramMean, SEASONALITY=seasonality)
+  
+  # class can be set using class() or attr() function
+  attr(value, "class") <- "lgt"
+  value
+}
+
+
 #' This is a function that initializes and sets the parameters of the algorithm. 
 #' It generates a list of parameters, to be used with the \code{\link{fit.lgt}} function. 
 #'
@@ -89,6 +110,8 @@ initModel <- function(modelType = NULL){
 #' MAX_TREE_DEPTH NUTS maximum tree depth. See Stan manual. Suggested range (10-12).
 #' @param	SEASONALITY E.g. 12 for monthly seasonality. 1 for non-seasonal models
 #' @param	SKEW Skew of error distribution used by manually-skewed models. 0 be default. 
+#' @param MAX_TREE_DEPTH Description
+#' @param ADAPT_DELTA Description
 #' Setting it negative makes negative innovations having smaller impact on the fitting than the positive ones,
 #' which would have the effect of making a model "more optimistic". Suggested range (-0.5, 0.5).
 #' @returnType 
@@ -148,8 +171,8 @@ lgt.control <- function(
 #' but nChains should be smaller or equal to the number of cores on the computer.  
 #' @param addJitter adding a bit of jitter is helping Stan in case of some flat series
 #' @param verbose print verbose information yes/no
-#' @returnType 
-#' @return 
+#' @returnType lgt
+#' @return lgtModel
 #' 
 #' @importFrom rstan rstan_options
 #' @importFrom rstan sampling
@@ -177,11 +200,13 @@ fit.lgt <- function(y, model=c("LGT", "SGT", "LGTe", "SGTe", "Trend"),
   y.orig <- y
   n=length(y)
   
+  #' @importFrom stats rnorm
   if(addJitter) y <- y + rnorm(n,0,sd=abs(min(y))*0.0001)
   
   CauchySd=max(y)/control$CAUCHY_SD_DIV
 	
 	SEASONALITY=control$SEASONALITY
+	#' @importFrom stats frequency
 	if (frequency(y)>1) SEASONALITY=frequency(y) #good idea?
 	
 	data <- list(CAUCHY_SD=CauchySd, SEASONALITY=SEASONALITY,
@@ -269,15 +294,8 @@ fit.lgt <- function(y, model=c("LGT", "SGT", "LGTe", "SGTe", "Trend"),
 	}
 
 	
-  out <- list()
+  out <- lgt(y.orig, model, params, paramMeans, SEASONALITY)
 
-  out[["x"]] <- y.orig
-  out[["model"]] <- model
-  out[["params"]] <- params
-  out[["paramMeans"]] <- paramMeans
-	out[["SEASONALITY"]] <- SEASONALITY
-  class(out) <- "lgt"
-  
   out
 
 }
@@ -288,17 +306,17 @@ fit.lgt <- function(y, model=c("LGT", "SGT", "LGTe", "SGTe", "Trend"),
 #' This function produces forecasts from a model
 #' 
 #' @title produce forecasts
-#' @param object 
+#' @param object description
 #' @param h Forecasting horizon
 #' @param level Confidence levels for prediction intervals a.k.a. coverage percentiles. Beween 0 and 100.
 #' @param NUM_OF_TRIALS Number of simulations to run. Suggested rannge (1000,5000), but it may have to be higher for good coverage of very high levels, e.g. 99.8. 
 #' @param MIN_VAL Minimum value the forecast can take. Must be positive.
 #' @param MAX_VAL Maximum value the forecast can take.
-#' @param ... 
-#' @returnType 
+#' @param ... description
+#' @returnType forecast
 #' @return returns a forecast object compatible with the forecast package
-# @S3method forecast lgt
-# @method forecast lgt
+#' @S3method forecast lgt
+#' @method forecast lgt
 #' @importFrom forecast forecast 
 #' @author bergmeir
 #' @export
@@ -334,6 +352,7 @@ forecast.lgt <- function(object, h=ifelse(frequency(object$x)>1, 2*frequency(obj
 	SEASONALITY <- object$SEASONALITY 
   
   out <- list(model=object,x=object$x)
+  #' @importFrom stats tsp
   tspx <- tsp(out$x)
   
   if(!is.null(tspx)){
@@ -432,8 +451,10 @@ forecast.lgt <- function(object, h=ifelse(frequency(object$x)>1, 2*frequency(obj
 	  
   out$yf <- yf
   
+  #' @importFrom stats ts
   out$mean <- ts(apply(yf, 2, mean),frequency=frequency(out$x),start=start.f)
 
+  #' @importFrom stats quantile
   avgYfs=apply(yf,2,quantile,probs=quantiles)
   
   out$median <- ts(avgYfs[indexOfMedian,])

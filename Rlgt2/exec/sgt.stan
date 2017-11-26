@@ -1,4 +1,4 @@
-# Seasonal Global Trend (SGT) algorithm
+// Seasonal Global Trend (SGT) algorithm
 
 data {  
 	int<lower=2> SEASONALITY;

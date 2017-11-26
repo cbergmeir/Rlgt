@@ -10,12 +10,12 @@ data {
 	real<lower=0> TREND_ALPHA; real<lower=0> TREND_BETA;
 	real<lower=0> POWX_ALPHA;  real<lower=0> POWX_BETA;
 	int<lower=2> S2_SEASONALITY; //must be multiple of 7
-	vector[S2_SEASONALITY] INIT_S2U; #unnormalized
+	vector[S2_SEASONALITY] INIT_S2U; //unnormalized
 }
 
 transformed data {
 	int<lower=2> YEARLY_SEASONALITY;
-	int<lower=1> NWS; #length of vector of yearly seasonalities
+	int<lower=1> NWS; //length of vector of yearly seasonalities
 
 	YEARLY_SEASONALITY=52;
 	NWS=N/7+1+YEARLY_SEASONALITY;
@@ -35,9 +35,9 @@ parameters {
 	real <lower=0,upper=1>sySm;
 	real <lower=0,upper=1> powTrendBeta;
 	real coefTrend;
-	vector[7] initSu; #unnormalized
-	vector[S2_SEASONALITY] initS2u; #unnormalized
-	vector[YEARLY_SEASONALITY] initSyu; #unnormalized
+	vector[7] initSu; //unnormalized
+	vector[S2_SEASONALITY] initS2u; //unnormalized
+	vector[YEARLY_SEASONALITY] initSyu; //unnormalized
 }
 
 transformed parameters {
