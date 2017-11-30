@@ -16,9 +16,14 @@ data {
 transformed data {
 	int<lower=2> YEARLY_SEASONALITY;
 	int<lower=1> NWS; //length of vector of yearly seasonalities
+    real NWS_real; //quick hack to avoid R check warning
 
 	YEARLY_SEASONALITY=52;
-	NWS=N/7+1+YEARLY_SEASONALITY;
+
+	NWS_real =N/7.0+1+YEARLY_SEASONALITY;
+    while (NWS<NWS_real){ //just to convert real back to int
+        NWS=NWS+1;
+    }
 }
 
 parameters {
@@ -117,7 +122,7 @@ transformed parameters {
 }
 
 model {
-	real expVal; int is2; int iy;
+	real expVal;real riy; int is2; int iy;
 
 	powTrendBeta ~ beta(TREND_ALPHA, TREND_BETA);
 	powx ~  beta(POWX_ALPHA, POWX_BETA);
@@ -136,7 +141,10 @@ model {
 
 	is2=0;
 	for (t in 2:N) {
-		iy=(t-1)/7+1;
+		riy=(t-1)/7.0+1;
+        while (iy<riy){ //just to convert real back to int
+            iy=iy+1;
+        }
 		if (S2_INDEX[t]==0) {
 			expVal = (l[t-1]+ coefTrend*fabs(l[t-1])^powTrend)*s[t]*sy[iy];
 			y[t] ~ student_t(nu, expVal, sigma*fabs(expVal)^powx+ offsetSigma);

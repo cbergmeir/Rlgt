@@ -66,11 +66,11 @@ initModel <- function(modelType = NULL){
 
 #' @title lgt class
 #' @description a constructor function for the "lgt" class
-#' @param y desc 1
-#' @param lgtmodel desc2
-#' @param params desc3
-#' @param paramMean desc4
-#' @param seasonality desc5
+#' @param y the time series data
+#' @param lgtmodel type of lgtmodel selected
+#' @param params list of parameters
+#' @param paramMean mean of each parameter
+#' @param seasonality number of seasons, 1 for annual
 #' @return lgt instance
 
 lgt <- function(y,lgtmodel,params, paramMean, seasonality) {
@@ -83,11 +83,12 @@ lgt <- function(y,lgtmodel,params, paramMean, seasonality) {
   value
 }
 
+#### This function is created mainly to provide a default value for each parameter
 
-#' This is a function that initializes and sets the parameters of the algorithm. 
-#' It generates a list of parameters, to be used with the \code{\link{fit.lgt}} function. 
 #'
 #' @title Sets and initializes the main parameters of the algorithm
+#' @description This is a function that initializes and sets the parameters of the algorithm. 
+#' It generates a list of parameters, to be used with the \code{\link{fit.lgt}} function. 
 #' @param MAX_RHAT_ALLOWED Maximum average Rhat that suggests a good fit, see Stan's manual. Suggested range(1.005,1.02), see also MAX_NUM_OF_REPEATS description below.
 #' @param NUM_OF_ITER Number of iterations for each chain. Suggested range(1000,5000). Generally, the longer the series, the smaller the vallue will do. 
 #' See also MAX_NUM_OF_REPEATS description below.
@@ -221,16 +222,18 @@ fit.lgt <- function(y, model=c("LGT", "SGT", "LGTe", "SGTe", "Trend"),
 			POW_TREND_BETA=control$POW_TREND_BETA,
 			y=y, N=n, SKEW=control$SKEW) # to be passed on to Stan
 	
-  
+  ### Repeat until Rhat is in an acceptable range (i.e. convergence is reached)
   avgRHat=1e200; irep=1
   for (irep in 1:MAX_NUM_OF_REPEATS) {
 		initializations <- list();
 		for (irr in 1:nChains) {
 			initializations[[irr]]=list( 
+			  ### Initialise seasonality factors
 					initSu=rnorm(SEASONALITY,1,0.1) # for non-seasonal models it is not necessary, but makes code simpler and is not a big overhead
 			)
 		}
 
+		#Double the number of iterations for the next cycle
 		numOfIters=NUM_OF_ITER*2^(irep-1)
     samples1=
       sampling(
@@ -245,6 +248,7 @@ fit.lgt <- function(y, model=c("LGT", "SGT", "LGTe", "SGTe", "Trend"),
         open_progress=F,
         refresh = if(verbose) numOfIters/5 else -1)
 
+    ### Get the Rhat values
     ainfo=summary(samples1)
     RHats=ainfo$summary[,10]
     RHats=as.numeric(RHats[is.finite(RHats)])
@@ -270,17 +274,21 @@ fit.lgt <- function(y, model=c("LGT", "SGT", "LGTe", "SGTe", "Trend"),
     #str(samples, max.level =4)
   }#repeat if needed
   
-  if(verbose) print(summary(do.call(rbind, args = get_sampler_params(samples1, inc_warmup = F)), digits = 2)) #diagnostics
+  if(verbose) print(summary(do.call(rbind, args = get_sampler_params(samples1, inc_warmup = F)), digits = 2)) #diagnostics including step sizes and tree depths
   
   params <- list()
   paramMeans <- list()
   
+  # Extract all of the parameter means
   for(param in model$parameters) {
     params[[param]] <- extract(samples)[[param]]
+    
+    # Find the mean, but for ETS components average based on each t
     paramMeans[[param]] <- if(param %in% c("l", "b", "s")) apply(params[[param]],2,mean) else mean(params[[param]])
   }
 	
 	#special processing for vector params, where only the last value counts
+  # This includes level, trend, and innov size
   params[["lastLevel"]] <- params[["l"]][,ncol(params[["l"]])]
 	paramMeans[["lastLevel"]] <- mean(params[["lastLevel"]])
 	
@@ -306,8 +314,8 @@ fit.lgt <- function(y, model=c("LGT", "SGT", "LGTe", "SGTe", "Trend"),
 #' This function produces forecasts from a model
 #' 
 #' @title produce forecasts
-#' @param object description
-#' @param h Forecasting horizon
+#' @param object lgt object
+#' @param h Forecasting horizon (10 for annual and 2*periods otherwise)
 #' @param level Confidence levels for prediction intervals a.k.a. coverage percentiles. Beween 0 and 100.
 #' @param NUM_OF_TRIALS Number of simulations to run. Suggested rannge (1000,5000), but it may have to be higher for good coverage of very high levels, e.g. 99.8. 
 #' @param MIN_VAL Minimum value the forecast can take. Must be positive.
@@ -347,21 +355,24 @@ forecast.lgt <- function(object, h=ifelse(frequency(object$x)>1, 2*frequency(obj
 		upperPercentiles=100-lowerPercentiles
 		percentiles=c(lowerPercentiles,50,upperPercentiles) #this follows convention of forecast package where forecast$lower are from higher to lower
 	}
+  
 	quantiles=percentiles/100.
 	
 	SEASONALITY <- object$SEASONALITY 
   
   out <- list(model=object,x=object$x)
   #' @importFrom stats tsp
+  #' @importFrom stats tsp<-
   tspx <- tsp(out$x)
   
+  # start.f is the next(first) forecast period
   if(!is.null(tspx)){
 		start.f <- tspx[2] + 1/frequency(out$x)
 	} else {
 		start.f <- length(out$x)+1
 	}
     
-  
+  # extracting all of the params
 	nu=object$params[["nu"]]
 	lastB <- object$params[["lastB"]]
 	lastSmoothedInnovSize <- object$params[["lastSmoothedInnovSize"]]
@@ -373,8 +384,13 @@ forecast.lgt <- function(object, h=ifelse(frequency(object$x)>1, 2*frequency(obj
 	if (SEASONALITY>1) {
 		sS=rep(1,SEASONALITY+h)
 	}
+	
+	# Initialise a matrix which contains the last level value
 	yf=matrix(object$paramMeans[["lastLevel"]],nrow=NUM_OF_TRIALS, ncol=h)
+	
+	# For each forecasting trial
 	for (irun in 1:NUM_OF_TRIALS) {
+	  # Obtain the relevant parameters
 		indx=sample(nrow(object$params[["l"]]),1)
 		prevLevel=object$params[["lastLevel"]][indx]
 		levSmS=object$params[["levSm"]][indx]
@@ -406,6 +422,7 @@ forecast.lgt <- function(object, h=ifelse(frequency(object$x)>1, 2*frequency(obj
 			sS[1:SEASONALITY]=s[indx,(ncol(s)-SEASONALITY+1):ncol(s)]
 			for (t in 1:h) {
 				seasonA=sS[t]
+				## From eq.6.a
 				expVal=(prevLevel+ coefTrendS*abs(prevLevel)^powTrendS)*seasonA;
 				if (!is.null(powx)) {
 					omega=sigmaS*(abs(prevLevel))^powxS+offsetsigmaS
@@ -415,8 +432,13 @@ forecast.lgt <- function(object, h=ifelse(frequency(object$x)>1, 2*frequency(obj
 					omega=sigmaS
 				}
 				
+				# Find the t-dist error
 				error=rst(n=1, xi=0 ,	omega=omega, alpha=0, nu=nuS)
+				
+				# Fill in the matrix of predicted value
 				yf[irun,t]=min(MAX_VAL,max(MIN_VAL,expVal+error))
+				
+				# find the currLevel
 				currLevel=max(MIN_VAL,levSmS*yf[irun,t]/seasonA + (1-levSmS)*prevLevel) ;
 				
 				if (currLevel>MIN_VAL) {
@@ -452,7 +474,7 @@ forecast.lgt <- function(object, h=ifelse(frequency(object$x)>1, 2*frequency(obj
   out$yf <- yf
   
   #' @importFrom stats ts
-  out$mean <- ts(apply(yf, 2, mean),frequency=frequency(out$x),start=start.f)
+  out$mean <- ts(apply(yf, 2, mean),frequency=frequency(out$x),start=start.f   )
 
   #' @importFrom stats quantile
   avgYfs=apply(yf,2,quantile,probs=quantiles)
@@ -465,61 +487,11 @@ forecast.lgt <- function(object, h=ifelse(frequency(object$x)>1, 2*frequency(obj
 	
   out$level <- level
   
+  # Assign tsp attributes for consistency
   tsp(out$median) <- tsp(out$lower) <- tsp(out$upper) <- tsp(out$mean)
 	  
   class(out) <- "forecast"
   out
   
-}
-
-
-#' Print out some characteristics of a \code{\link{lgt}} model.
-#'  
-#' @title Generic print function for lgt models
-#' @param x the \code{\link{lgt}} model
-#' @param ... additional function parameters (currently not used)
-#' @export
-# @S3method print lgt
-# @method print lgt
-# @rdname lgt
-print.lgt <- function(x, ...) {
-  if(!inherits(x, "lgt")) stop("not a legitimate lgt result")
-  
- 
-#    lastDetails=paste("coefT=",round(coefTrendM,2), ", powT=",round(powTrendM,2),
-#      ", sigma=",round(sigmaM,2),", powx=",round(powxM,2),", offsetS=",round(offsetSigmaM,2), 
-#      ", nu=",round(nuM,2), ", lSm=",round(levSmM,2), 
-#      ", lastB=",round(lastBM,1), ", bSm=",round(bSmM,2), 
-#      ", lTFract=", round(locTrendFractM,2), sep='')				
-  print(x$paramMeans)
-  
-#  cat(sprintf("NumTotalEvalEA: %d\n", x$numEvalEA))
-#  cat(sprintf("NumTotalEvalLS: %d\n", x$numEvalLS))  
-#  
-#  ratio_effort <- x$numEvalEA/(x$numEvalEA+x$numEvalLS)
-#  cat(sprintf("RatioEffort EA/LS: [%.0f/%.0f]\n", 100*ratio_effort, 100*(1-ratio_effort)))
-#  
-#  ratio_alg <- x$improvementEA/(x$improvementEA+x$improvementLS)
-#  cat(sprintf("RatioImprovement EA/LS: [%.0f/%.0f]\n", 100*ratio_alg, 100*(1-ratio_alg)))
-#  #cat(sprintf(("Restarts: %d\n", restarts))
-#  
-#  if((x$numTotalEA != 0) && (x$numTotalLS != 0)) {
-#    cat(sprintf("PercentageNumImprovement[EA]: %d%%\n", round((x$numImprovementEA*100)/x$numTotalEA)))
-#    cat(sprintf("PercentageNumImprovement[LS]: %d%%\n", round((x$numImprovementLS*100)/x$numTotalLS)))    
-#  }
-#  
-#  cat(sprintf("Time[EA]: %.2f\n", x$timeMsEA))
-#  cat(sprintf("Time[LS]: %.2f\n", x$timeMsLS))
-#  cat(sprintf("Time[MA]: %.2f\n", x$timeMsMA))
-#  cat(sprintf("RatioTime[EA/MA]: %.2f\n", 100*x$timeMsEA/x$timeMsMA))
-#  cat(sprintf("RatioTime[LS/MA]: %.2f\n", 100*x$timeMsLS/x$timeMsMA))
-#  
-#  
-#  cat("Fitness:\n",sep="")
-#  print(x$fitness)
-#  cat("Solution:\n",sep="") 
-#  print(x$sol)
-  
-  invisible(x)
 }
 

@@ -7,15 +7,15 @@
 lgt(y, lgtmodel, params, paramMean, seasonality)
 }
 \arguments{
-\item{y}{desc 1}
+\item{y}{the time series data}
 
-\item{lgtmodel}{desc2}
+\item{lgtmodel}{type of lgtmodel selected}
 
-\item{params}{desc3}
+\item{params}{list of parameters}
 
-\item{paramMean}{desc4}
+\item{paramMean}{mean of each parameter}
 
-\item{seasonality}{desc5}
+\item{seasonality}{number of seasons, 1 for annual}
 }
 \value{
 lgt instance

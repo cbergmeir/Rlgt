@@ -9,9 +9,9 @@
   MIN_VAL = 0.001, MAX_VAL = 1e+38, ...)
 }
 \arguments{
-\item{object}{description}
+\item{object}{lgt object}
 
-\item{h}{Forecasting horizon}
+\item{h}{Forecasting horizon (10 for annual and 2*periods otherwise)}
 
 \item{level}{Confidence levels for prediction intervals a.k.a. coverage percentiles. Beween 0 and 100.}
 
