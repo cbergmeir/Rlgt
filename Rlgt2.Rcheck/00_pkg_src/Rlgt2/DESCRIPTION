@@ -15,4 +15,4 @@ LinkingTo: StanHeaders (>= 2.13.1), rstan (>= 2.13.2), BH (>=
         1.62.0.1), Rcpp (>= 0.12.8), RcppEigen (>= 0.3.2.9.0)
 RoxygenNote: 6.0.1
 NeedsCompilation: yes
-Packaged: 2017-12-01 05:04:38 UTC; rwinwibowo
+Packaged: 2017-12-01 05:41:26 UTC; rwinwibowo

@@ -61,4 +61,4 @@ Writing print.lgt.Rd
 > 
 > proc.time()
    user  system elapsed 
-  1.424   0.032   1.453 
+  1.616   0.036   1.651 
