@@ -1,6 +1,6 @@
-rPackageName=Rlgt
-newDate=$(shell date +%Y-%m-%d)
-rPackageVersion=$(shell grep "Version:" ./$(rPackageName)/DESCRIPTION | cut -c1-9 --complement)
+rPackageName=Rlgt2
+newDate=$(date +%Y-%m-%d)
+rPackageVersion=0.0-1
 
 check: roxy
 	R CMD build $(rPackageName)

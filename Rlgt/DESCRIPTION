@@ -9,8 +9,8 @@ Description: This package is based on code from Slawek Smyl to implement LGT, an
     exponential smoothing forecasting method using Rstan for model fitting.
 Version: 0.0-1
 URL: TODO
-Date: 2016-12-17
+Date: 
 Depends:
     rstan, sn,
     forecast
-RoxygenNote: 5.0.1
+RoxygenNote: 6.0.1

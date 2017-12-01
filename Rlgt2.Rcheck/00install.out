@@ -1,0 +1,18 @@
+* installing *source* package ‘Rlgt2’ ...
+** libs
+make[1]: Entering directory '/home/rwinwibowo/Documents/Git/rlgt/Rlgt2.Rcheck/00_pkg_src/Rlgt2/src'
+g++  -I/usr/share/R/include -DNDEBUG -I"`"/usr/lib/R/bin/Rscript" --vanilla -e "cat(system.file('include', 'src', package = 'StanHeaders'))"`" -DBOOST_RESULT_OF_USE_TR1 -DBOOST_NO_DECLTYPE -DBOOST_DISABLE_ASSERTS -DEIGEN_NO_DEBUG -I"/home/rwinwibowo/R/x86_64-pc-linux-gnu-library/3.4/StanHeaders/include" -I"/home/rwinwibowo/R/x86_64-pc-linux-gnu-library/3.4/rstan/include" -I"/home/rwinwibowo/R/x86_64-pc-linux-gnu-library/3.4/BH/include" -I"/home/rwinwibowo/R/x86_64-pc-linux-gnu-library/3.4/Rcpp/include" -I"/home/rwinwibowo/R/x86_64-pc-linux-gnu-library/3.4/RcppEigen/include"    -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c Modules.cpp -o Modules.o
+g++ -shared -L/usr/lib/R/lib -Wl,-Bsymbolic-functions -Wl,-z,relro -o Rlgt2.so Modules.o -L/usr/lib/R/lib -lR
+make[1]: Leaving directory '/home/rwinwibowo/Documents/Git/rlgt/Rlgt2.Rcheck/00_pkg_src/Rlgt2/src'
+make[1]: Entering directory '/home/rwinwibowo/Documents/Git/rlgt/Rlgt2.Rcheck/00_pkg_src/Rlgt2/src'
+make[1]: Leaving directory '/home/rwinwibowo/Documents/Git/rlgt/Rlgt2.Rcheck/00_pkg_src/Rlgt2/src'
+installing to /home/rwinwibowo/Documents/Git/rlgt/Rlgt2.Rcheck/Rlgt2/libs
+** R
+** exec
+** inst
+** preparing package for lazy loading
+** help
+*** installing help indices
+** building package indices
+** testing if installed package can be loaded
+* DONE (Rlgt2)

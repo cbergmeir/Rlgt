@@ -1,0 +1,10 @@
+Rlgt2-package           Getting started with the Rlgt2 package
+fit.lgt                 Runs the model fitting
+forecast.lgt            produce forecasts
+initModel               Initialize a non-seasonal LGT stan model
+lgt                     lgt class
+lgt.control             Sets and initializes the main parameters of the
+                        algorithm
+posterior_interval.lgt
+                        Posterior uncertainty intervals
+print.lgt               Generic print function for lgt models
