@@ -4,7 +4,7 @@
 \alias{lgt}
 \title{lgt class}
 \usage{
-lgt(y, lgtmodel, params, paramMean, seasonality)
+lgt(y, lgtmodel, params, paramMean, seasonality, samples)
 }
 \arguments{
 \item{y}{the time series data}
@@ -16,6 +16,8 @@ lgt(y, lgtmodel, params, paramMean, seasonality)
 \item{paramMean}{mean of each parameter}
 
 \item{seasonality}{number of seasons, 1 for annual}
+
+\item{samples}{stanfit object representing the MCMC samples}
 }
 \value{
 lgt instance

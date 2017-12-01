@@ -71,12 +71,13 @@ initModel <- function(modelType = NULL){
 #' @param params list of parameters
 #' @param paramMean mean of each parameter
 #' @param seasonality number of seasons, 1 for annual
+#' @param samples stanfit object representing the MCMC samples
 #' @return lgt instance
 
-lgt <- function(y,lgtmodel,params, paramMean, seasonality) {
+lgt <- function(y,lgtmodel,params, paramMean, seasonality, samples) {
   # we can add our own integrity checks
 
-  value <- list(x = y, model = lgtmodel, params = params, paramMeans=paramMean, SEASONALITY=seasonality)
+  value <- list(x = y, model = lgtmodel, params = params, paramMeans=paramMean, SEASONALITY=seasonality, samples=samples)
   
   # class can be set using class() or attr() function
   attr(value, "class") <- "lgt"
@@ -302,7 +303,7 @@ fit.lgt <- function(y, model=c("LGT", "SGT", "LGTe", "SGTe", "Trend"),
 	}
 
 	
-  out <- lgt(y.orig, model, params, paramMeans, SEASONALITY)
+  out <- lgt(y.orig, model, params, paramMeans, SEASONALITY, samples)
 
   out
 
