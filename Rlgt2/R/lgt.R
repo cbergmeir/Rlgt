@@ -22,7 +22,7 @@ initModel <- function(modelType = NULL){
 		model[["parameters"]] <- c("l", "b", "nu", "sigma", "levSm",  "bSm", 
 				"powx", "coefTrend",  "powTrend", "offsetSigma", "locTrendFract")
     
-    model[["model"]] <- stanmodels$LGT
+    model[["model"]] <- stanmodels$lgt
     class(model) <- c("RlgtStanModelLGT")
     
   } else if (modelType=="LGTe") {
