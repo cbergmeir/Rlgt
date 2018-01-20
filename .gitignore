@@ -1,0 +1,11 @@
+exec/*.rda
+Rlgt2.Rcheck/*
+Rlgt/*
+RlgtLik/*
+Rlgt2/man/*.Rd
+.Rhistory
+Rlgt2_0.0-1.tar.gz
+Rlgt_0.0-1.tar.gz
+originalCode/*
+
+
