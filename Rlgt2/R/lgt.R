@@ -116,8 +116,8 @@ lgt <- function(y,lgtmodel,params, paramMean, seasonality, samples) {
 #' @param ADAPT_DELTA Description
 #' Setting it negative makes negative innovations having smaller impact on the fitting than the positive ones,
 #' which would have the effect of making a model "more optimistic". Suggested range (-0.5, 0.5).
-#' @returnType 
-#' @return 
+#' @returnType list
+#' @return list of control parameters
 #' @export
 lgt.control <- function(
     MAX_RHAT_ALLOWED=1.005, 

@@ -25,7 +25,7 @@
 #' fact that wider intervals correspond to greater uncertainty.
 #'
 #' @aliases posterior_interval
-#' @export
+
 #' 
 #' @param prob A number \eqn{p \in (0,1)}{p (0 < p < 1)} indicating the desired
 #'   probability mass to include in the intervals. The default is to report
@@ -77,7 +77,7 @@
 #' can estimate. Additional possibilities may be provided in future releases as
 #' more models become available.
 #' }
-
+#' @export
 
 posterior_interval.lgt <-
   function(object,
@@ -87,7 +87,7 @@ posterior_interval.lgt <-
     if (!identical(type, "central"))
       stop("Currently the only option for 'type' is 'central'.",
         call. = FALSE)
-    mat <- as.matrix(object[["samples"]], pars = object[["params"]])
+    mat <- as.matrix(object[["samples"]])
     #' @importFrom rstantools posterior_interval
     rstantools::posterior_interval(mat, prob = prob)
   }

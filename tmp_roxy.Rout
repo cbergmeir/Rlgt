@@ -45,7 +45,6 @@ This is rstantools version 1.3.0
 Warning: @returnType [lgt.R#7]: unknown tag
 Warning: @details [lgt.R#1]: requires a value
 Warning: @returnType [lgt.R#120]: unknown tag
-Warning: @return [lgt.R#121]: requires a value
 Warning: @returnType [lgt.R#177]: unknown tag
 Warning: @returnType [lgt.R#326]: unknown tag
 Warning: lgt.R:335: @S3method is deprecated. Please use @export instead
@@ -61,4 +60,4 @@ Writing print.lgt.Rd
 > 
 > proc.time()
    user  system elapsed 
-  1.472   0.024   2.814 
+  1.456   0.020   1.481 
