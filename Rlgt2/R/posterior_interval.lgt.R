@@ -78,6 +78,7 @@
 #' more models become available.
 #' }
 #' @export
+# @method print lgt
 
 posterior_interval.lgt <-
   function(object,
