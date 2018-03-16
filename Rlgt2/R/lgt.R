@@ -493,6 +493,87 @@ forecast.lgt <- function(object, h=ifelse(frequency(object$x)>1, 2*frequency(obj
 	  
   class(out) <- "forecast"
   out
-  
 }
 
+
+## Moved from print.lgt.R
+
+#' Print out some characteristics of a \code{\link{lgt}} model.
+#'  
+#' @title Generic print function for lgt models
+#' @param x the \code{\link{lgt}} model
+#' @param ... additional function parameters (currently not used)
+#' @aliases summary.lgt
+#' @export
+# @S3method print lgt
+# @method print lgt
+# @rdname lgt
+print.lgt <- function(x, ...) {
+  if(!inherits(x, "lgt")) stop("not a legitimate lgt result")
+  
+  
+  #    lastDetails=paste("coefT=",round(coefTrendM,2), ", powT=",round(powTrendM,2),
+  #      ", sigma=",round(sigmaM,2),", powx=",round(powxM,2),", offsetS=",round(offsetSigmaM,2), 
+  #      ", nu=",round(nuM,2), ", lSm=",round(levSmM,2), 
+  #      ", lastB=",round(lastBM,1), ", bSm=",round(bSmM,2), 
+  #      ", lTFract=", round(locTrendFractM,2), sep='')				
+  print(x$paramMeans)
+  
+  #  cat(sprintf("NumTotalEvalEA: %d\n", x$numEvalEA))
+  #  cat(sprintf("NumTotalEvalLS: %d\n", x$numEvalLS))  
+  #  
+  #  ratio_effort <- x$numEvalEA/(x$numEvalEA+x$numEvalLS)
+  #  cat(sprintf("RatioEffort EA/LS: [%.0f/%.0f]\n", 100*ratio_effort, 100*(1-ratio_effort)))
+  #  
+  #  ratio_alg <- x$improvementEA/(x$improvementEA+x$improvementLS)
+  #  cat(sprintf("RatioImprovement EA/LS: [%.0f/%.0f]\n", 100*ratio_alg, 100*(1-ratio_alg)))
+  #  #cat(sprintf(("Restarts: %d\n", restarts))
+  #  
+  #  if((x$numTotalEA != 0) && (x$numTotalLS != 0)) {
+  #    cat(sprintf("PercentageNumImprovement[EA]: %d%%\n", round((x$numImprovementEA*100)/x$numTotalEA)))
+  #    cat(sprintf("PercentageNumImprovement[LS]: %d%%\n", round((x$numImprovementLS*100)/x$numTotalLS)))    
+  #  }
+  #  
+  #  cat(sprintf("Time[EA]: %.2f\n", x$timeMsEA))
+  #  cat(sprintf("Time[LS]: %.2f\n", x$timeMsLS))
+  #  cat(sprintf("Time[MA]: %.2f\n", x$timeMsMA))
+  #  cat(sprintf("RatioTime[EA/MA]: %.2f\n", 100*x$timeMsEA/x$timeMsMA))
+  #  cat(sprintf("RatioTime[LS/MA]: %.2f\n", 100*x$timeMsLS/x$timeMsMA))
+  #  
+  #  
+  #  cat("Fitness:\n",sep="")
+  #  print(x$fitness)
+  #  cat("Solution:\n",sep="") 
+  #  print(x$sol)
+  
+  invisible(x)
+}
+
+
+### Moved from posterior_interval.lgt.R
+#' This is a method of lgt object to produce posterior interval
+#' 
+#' @title lgt posterior interval
+#' @param prob percentile level
+#' @param type Currently only central is available
+#' @param level Confidence levels for prediction intervals a.k.a. coverage percentiles. Beween 0 and 100.
+
+#' @return confidence interval
+#' @returnType interval
+#' @S3method posterior_interval lgt
+#' @method posterior_interval lgt
+#' @importFrom rstantools posterior_interval 
+#' @author wibowo
+#' @export
+
+posterior_interval.lgt <- function(object,
+    prob = 0.9,
+    type = "central",
+    ...) {
+    if (!identical(type, "central"))
+      stop("Currently the only option for 'type' is 'central'.",
+        call. = FALSE)
+    mat <- as.matrix(object[["samples"]])
+    
+    posterior_interval(mat, prob = prob)
+  }

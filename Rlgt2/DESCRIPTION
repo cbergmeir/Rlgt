@@ -4,15 +4,15 @@ Title: LGT package
 Version: 0.0-1
 URL: TODO
 Date: 
-Author: Slawek Smyl, Christoph Bergmeir
-Maintainer: Christoph Bergmeir <christoph.bergmeir@gmail.com>
-Description: This package is based on code from Slawek Smyl to implement LGT, an
-    exponential smoothing forecasting method using Rstan for model fitting.
+Author: Slawek Smyl, Christoph Bergmeir, Erwin Wibowo
+Maintainer: Christoph Bergmeir <christoph.bergmeir@gmail.com>, Erwin Wibowo <rwinwibowo@gmail.com>
+Description: This package implements various Bayesian Exponential Smoothing models as described in the paper by Smyl.These models include LGT (Local-Global Trend), SGT (Seasonal Global Trend), and their variations. The Bayesian model fitting is based on RStan package.
 License: GPL-3
 Depends:
     R (>= 3.0.2),
     Rcpp (>= 0.12.8),
-    methods
+    methods,
+    rstantools
 Imports:
     rstan (>= 2.13.2), sn, forecast, rstantools
 LinkingTo: StanHeaders (>= 2.13.1), rstan (>= 2.13.2), BH (>= 1.62.0.1), Rcpp
