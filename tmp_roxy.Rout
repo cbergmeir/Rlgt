@@ -47,10 +47,8 @@ Warning: @details [lgt.R#1]: requires a value
 Warning: @returnType [lgt.R#120]: unknown tag
 Warning: @returnType [lgt.R#177]: unknown tag
 Warning: @returnType [lgt.R#326]: unknown tag
-Warning: @returnType [lgt.R#563]: unknown tag
 Warning: lgt.R:335: @S3method is deprecated. Please use @export instead
-Warning: lgt.R:569: @S3method is deprecated. Please use @export instead
-Writing NAMESPACE
+Warning: lgt.R:568: @S3method is deprecated. Please use @export instead
 Writing Rlgt2-package.Rd
 Writing initModel.Rd
 Writing lgt.Rd
@@ -62,4 +60,4 @@ Writing posterior_interval.lgt.Rd
 > 
 > proc.time()
    user  system elapsed 
-  1.460   0.024   1.477 
+  1.428   0.044   1.533 

@@ -554,12 +554,11 @@ print.lgt <- function(x, ...) {
 #' This is a method of lgt object to produce posterior interval
 #' 
 #' @title lgt posterior interval
-#' @param prob percentile level
-#' @param type Currently only central is available
-#' @param level Confidence levels for prediction intervals a.k.a. coverage percentiles. Beween 0 and 100.
-
+#' @param object an object of class lgt
+#' @param prob percentile level to be generated (multiple values can be accepted as a vector)
+#' @param type currently only central is available
+#' @param ... currently not in use
 #' @return confidence interval
-#' @returnType interval
 #' @S3method posterior_interval lgt
 #' @method posterior_interval lgt
 #' @importFrom rstantools posterior_interval 

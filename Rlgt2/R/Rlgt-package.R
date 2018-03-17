@@ -9,11 +9,11 @@
 #' @author Slawek Smyl \email{slaweks@@hotmail.co.uk} 
 #'
 #' Christoph Bergmeir \email{christoph.bergmeir@@gmail.com} 
-#' 
+#' Erwin Wibowo \email{rwinwibowo@@gmail.com} 
 #' 
 #' @keywords forecasting, exponential smoothing
 # @exportPattern "^[[:alpha:]]+"
-#' @useDynLib Rlgt2 .registration=TRUE
+#' @useDynLib Rlgt2, .registration=TRUE
 #' @import methods
 #' @import Rcpp
 #'
