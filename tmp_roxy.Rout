@@ -20,11 +20,12 @@ Type 'q()' to quit R.
 [Previously saved workspace restored]
 
 > library(roxygen2)
-> path <- "./Rlgt2/"
+> path <- "./Rlgt/"
 > roxygenize(package.dir=path)
 Loading required package: Rcpp
 Loading required package: rstantools
 This is rstantools version 1.3.0
+Loading required package: forecast
 Loading required package: rstan
 Loading required package: ggplot2
 Loading required package: StanHeaders
@@ -41,7 +42,6 @@ The following object is masked from ‘package:stats’:
 
     sd
 
-Loading required package: forecast
 Warning: @returnType [lgt.R#7]: unknown tag
 Warning: @details [lgt.R#1]: requires a value
 Warning: @returnType [lgt.R#120]: unknown tag
@@ -49,7 +49,7 @@ Warning: @returnType [lgt.R#177]: unknown tag
 Warning: @returnType [lgt.R#326]: unknown tag
 Warning: lgt.R:335: @S3method is deprecated. Please use @export instead
 Warning: lgt.R:568: @S3method is deprecated. Please use @export instead
-Writing Rlgt2-package.Rd
+Writing Rlgt-package.Rd
 Writing initModel.Rd
 Writing lgt.Rd
 Writing lgt.control.Rd
@@ -60,4 +60,4 @@ Writing posterior_interval.lgt.Rd
 > 
 > proc.time()
    user  system elapsed 
-  1.428   0.044   1.533 
+  1.428   0.036   1.463 

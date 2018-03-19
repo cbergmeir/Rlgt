@@ -1,188 +1,145 @@
-# Author: Slawek Smyl 
-# Oct 2016
-# An example fitting the (non-seasonal) LGT to one of the M3 yearly curves
-###############################################################################
-# install.packages("Mcomp")
-# install.packages("rstan") #but first install RTools
-
 
 #' Initialize a stan model that uses the (non-seasonal) LGT
 #' 
+#' This function is only used as a building block for the main functions
+#' 
 #' @title Initialize a non-seasonal LGT stan model
-#' @param silent output stan compiler messages yes/no
-#' @returnType 
-#' @return 
+#' @param modelType type of the forecasting model selected
+#' @returnType RlgtStanModelSGT
+#' @return SkeletonModel
 #' 
 #' @importFrom rstan stan_model
 #' @export
-init.lgt <- function(silent=TRUE){
+initModel <- function(modelType = NULL){
   
-#non-seasonal model
-  modString = '
-      data {  
-      real<lower=0> CAUCHY_SD;
-      real MIN_POW;  real MAX_POW;
-      real<lower=0> MIN_SIGMA;
-      real<lower=1> MIN_NU; real<lower=1> MAX_NU;
-      int<lower=1> N;
-      vector<lower=0>[N] y;
-      }
-      parameters {
-      real<lower=MIN_NU,upper=MAX_NU> nu; 
-      real<lower=0> sigma;
-      real <lower=0,upper=1>levSm;
-      real <lower=0,upper=1> bSm;
-      real <lower=0,upper=1> powx;
-      real <lower=0,upper=1> powTrendBeta;
-      real coefTrend;
-      real <lower=MIN_SIGMA> offsetSigma;
-      real <lower=-1,upper=1> locTrendFract;
-      } 
-      transformed parameters {
-      real <lower=MIN_POW,upper=MAX_POW>powTrend;
-      vector[N] l; vector[N] b;
-      
-      l[1] = y[1]; b[1] = 0;
-      powTrend= (MAX_POW-MIN_POW)*powTrendBeta+MIN_POW;
-      
-      for (t in 2:N) {
-      l[t]  = levSm*y[t] + (1-levSm)*l[t-1] ;
-      b[t]  = bSm*(l[t]-l[t-1]) + (1-bSm)*b[t-1] ;
-      }
-      }
-      model {
-      sigma ~ cauchy(0,CAUCHY_SD) T[0,];
-      offsetSigma ~ cauchy(MIN_SIGMA,CAUCHY_SD) T[MIN_SIGMA,];
-      coefTrend ~ cauchy(0,CAUCHY_SD);
-      
-      for (t in 2:N) {
-      y[t] ~ student_t(nu, l[t-1]+coefTrend*fabs(l[t-1])^powTrend+locTrendFract*b[t-1], 
-      sigma*fabs(l[t-1])^powx+ offsetSigma);
-      }
-      }
-      '  
+  if(is.null(modelType)) {
+    print("No model type was provided, generating an LGT model.")
+    modelType <- "LGT"
+  }
   
-  stanModel <- list()
+  model <- list()
+	
+  if(modelType=="LGT") {
+    #Non-Seasonal Local Global Trend model
+		model[["parameters"]] <- c("l", "b", "nu", "sigma", "levSm",  "bSm", 
+				"powx", "coefTrend",  "powTrend", "offsetSigma", "locTrendFract")
+    
+    model[["model"]] <- stanmodels$lgt
+    class(model) <- c("RlgtStanModelLGT")
+    
+  } else if (modelType=="LGTe") {
+    #Non-Seasonal Local Global Trend model with smoothed error size
+    model[["parameters"]] <- c("l", "b", "smoothedInnovSize", 
+				"coefTrend",  "powTrend", "sigma", "offsetSigma",
+				"bSm", "locTrendFract", "levSm", "innovSm", "nu")
+    
+    model[["model"]] <- stanmodels$LGTe
+    class(model) <- c("RlgtStanModelLGTe")
+  } else if(modelType=="SGT") {
+		#Seasonal Global Trend model
+		model[["parameters"]] <- c("l", "s", "sSm","nu", "sigma", "levSm", 
+				"powx", "coefTrend", "powTrend", "offsetSigma")
+		
+		model[["model"]] <- stanmodels$sgt
+		class(model) <- c("RlgtStanModelSGT")
+		
+	} else if (modelType=="SGTe") {
+		#Seasonal Global Trend model with smoothed error size 
+		model[["parameters"]] <- c("l", "s", "smoothedInnovSize", 
+				"coefTrend", "powTrend", "sigma", "offsetSigma",
+				"levSm", "sSm", "innovSm", "nu")
+		
+		model[["model"]] <- stanmodels$SGTe
+		class(model) <- c("RlgtStanModelSGTe")
+	}	else if (modelType=="Trend") {
+		#trend-only, Gaussian error, homoscedastic version of LGT
+		model[["parameters"]] <- c("l", "b", "sigma", "levSm",  "bSm", "coefTrend", 
+				"powTrend", "locTrendFract")
+		
+		model[["model"]] <- stanmodels$trend
+		class(model) <- c("RlgtStanModelTrend")
+	} 
   
-  stanModel[["parameters"]] <- c("l", "b", "nu", "sigma", "levSm",  "bSm", 
-      "powx", "coefTrend",  "powTrend", "offsetSigma", "locTrendFract")
-  
-  out <- capture.output(stanModel[["model"]] <- stan_model(model_code=modString))
-  #stanModel[["mod_output"]]
-  
-  if(!silent) print(out)
-  
-  class(stanModel) <- c("stanModel", "stanModelLGT")
-  stanModel  
+  class(model) <- c("RlgtStanModel", class(model))
+  model  
   
 } 
 
 
-#' Initialize a stan model that is a trend-only, Gaussian error, homoscedastic version of LGT
-#' 
-#' @title Initialize a stan model that uses trend only
-#' @param silent output stan compiler messages yes/no
-#' @returnType 
-#' @return 
-#' 
-#' @importFrom rstan stan_model
-#' @export
-init.trend <- function(silent=TRUE){
+#' @title lgt class
+#' @description Another building block: a constructor function for the "lgt" class
+#' @param y the time series data
+#' @param lgtmodel type of lgtmodel selected
+#' @param params list of parameters
+#' @param paramMean mean of each parameter
+#' @param seasonality number of seasons, 1 for annual
+#' @param samples stanfit object representing the MCMC samples
+#' @return lgt instance
+
+lgt <- function(y,lgtmodel,params, paramMean, seasonality, samples) {
+  # we can add our own integrity checks
+
+  value <- list(x = y, model = lgtmodel, params = params, paramMeans=paramMean, SEASONALITY=seasonality, samples=samples)
   
-  modString = '
-      data {  
-      real<lower=0> CAUCHY_SD;
-      real MIN_POW;  real MAX_POW;
-      real<lower=0> MIN_SIGMA;
-      //real<lower=1> MIN_NU; real<lower=1> MAX_NU;
-      int<lower=1> N;
-      vector<lower=0>[N] y;
-      }
-      parameters {
-      real<lower=MIN_SIGMA> sigma;
-      real <lower=0,upper=1>levSm;
-      real <lower=0,upper=1> bSm;
-      real <lower=0,upper=1> powTrendBeta;
-      real coefTrend;
-      real <lower=-1,upper=1> locTrendFract;
-      } 
-      transformed parameters {
-      real <lower=MIN_POW,upper=MAX_POW>powTrend;
-      vector[N] l; vector[N] b;
-      
-      l[1] = y[1]; b[1] = 0;
-      powTrend= (MAX_POW-MIN_POW)*powTrendBeta+MIN_POW;
-      
-      for (t in 2:N) {
-      l[t]  = levSm*y[t] + (1-levSm)*l[t-1] ;
-      b[t]  = bSm*(l[t]-l[t-1]) + (1-bSm)*b[t-1] ;
-      }
-      }
-      model {
-      sigma ~ cauchy(MIN_SIGMA,CAUCHY_SD) T[MIN_SIGMA,];
-      coefTrend ~ cauchy(0,CAUCHY_SD);
-      
-      for (t in 2:N) {
-      y[t] ~ normal(l[t-1]+coefTrend*fabs(l[t-1])^powTrend+locTrendFract*b[t-1], sigma);
-      }
-      }
-      '   
-  
-  stanModel <- list()
-  
-  stanModel[["parameters"]] <- c("l", "b", "sigma", "levSm",  "bSm", "coefTrend", 
-      "powTrend", "locTrendFract")
-  
-  out <- capture.output(stanModel[["model"]] <- stan_model(model_code=modString))
-  #stanModel[["mod_output"]]
-  
-  if(!silent) print(out)
-  
-  class(stanModel) <- c("stanModel", "stanModelTrend")
-  stanModel  
-  
-} 
+  # class can be set using class() or attr() function
+  attr(value, "class") <- "lgt"
+  value
+}
 
+#### 
 
-
-
-
-
-
-
-
-#myMod <- initPredictionModel.lgt()
-#length(myMod$output)
-
-
-
-#' This is a function that initializes and sets the parameters of the algorithm. 
-#' It generates a list of parameters, to be used with the \code{\link{fit.lgt}} function. 
 #'
 #' @title Sets and initializes the main parameters of the algorithm
-#' @param MAX_RHAT_ALLOWED 
-#' @param NUM_OF_ITER 
-#' @param MAX_NUM_OF_REPEATS 
-#' @param CAUCHY_SD_DIV 
-#' @param MIN_SIGMA 
-#' @param MIN_NU 
-#' @param MAX_NU 
-#' @param MIN_POW 
-#' @param MAX_POW 
-#' @returnType 
-#' @return 
+#' @description ANother building block: This function initialize and set the parameters of the algorithm. This function is created mainly to provide a default value for each parameter.
+#' It generates a list of parameters, to be used with the \code{\link{fit.lgt}} function. 
+#' @param MAX_RHAT_ALLOWED Maximum average Rhat that suggests a good fit, see Stan's manual. Suggested range(1.005,1.02), see also MAX_NUM_OF_REPEATS description below.
+#' @param NUM_OF_ITER Number of iterations for each chain. Suggested range(1000,5000). Generally, the longer the series, the smaller the vallue will do. 
+#' See also MAX_NUM_OF_REPEATS description below.
+#' @param MAX_NUM_OF_REPEATS Maximum number of the sampling procedure repeats if the fit is unsatisfactorily (avgRHat>MAX_RHAT_ALLOWED).
+#' Each round doubles the number of iterations. Suggested range(2,4)
+#' @param CAUCHY_SD_DIV For parameters with non-obvious range Cauchy distribution is used. The error size of this distribution 
+#' is calculated by dividing max value of the time series by this constant. Suggested range(100,300)
+#' @param MIN_SIGMA Minimum size of the fitted sigma, applied for numerical stability. Must bve positive. 
+#' @param MIN_NU Minimum degrees of freedom of the Student's distribution, that is used in most models. Suggested range(1.2, 5)
+#' @param MAX_NU Maximum degrees of freedom of the Student's distribution. Suggested range(15,30) 
+#' @param MIN_POW_TREND Minimum value of power of trend coefficient. Suggested range(-1,0) 
+#' @param MAX_POW_TREND Maximum value of power of trend coefficient. It should stay 1 to allow the model to approach exponential growth when needed.
+#' @param POW_TREND_ALPHA Alpha parameter of Beta distribution that is the prior of the power coefficient in the formula of trend parameter.
+#' To make the forecast more curved, make it larger. Suggested range(1,6)
+#' @param	POW_TREND_BETA Beta parameter of Beta distribution that is the prior of the power of trend parameter. 1 by default, see also above.
+#' @param	POW_SIGMA_ALPHA Alpha parameter of Beta distribution that is the prior of the power coefficient in the formula of the error size. 1 by default, see also below.
+#' @param	POW_SIGMA_BETA Beta parameter of Beta distribution that is the prior of the power coefficient in the formula of the error size.
+#' If the powSigma fitted is considered too often too high (i.e.> 0.7) you can attempt to tame it down by increasing POW_SIGMA_BETA.  Suggested range(1,4).
+#' ADAPT_DELTA Target Metropolis acceptance rate. See Stan manual. Suggested range (0.8-0.97). 
+#' MAX_TREE_DEPTH NUTS maximum tree depth. See Stan manual. Suggested range (10-12).
+#' @param	SEASONALITY E.g. 12 for monthly seasonality. 1 for non-seasonal models
+#' @param	SKEW Skew of error distribution used by manually-skewed models. 0 be default. 
+#' @param MAX_TREE_DEPTH Description
+#' @param ADAPT_DELTA Description
+#' Setting it negative makes negative innovations having smaller impact on the fitting than the positive ones,
+#' which would have the effect of making a model "more optimistic". Suggested range (-0.5, 0.5).
+#' @returnType list
+#' @return list of control parameters
 #' @export
 lgt.control <- function(
-    
-    MAX_RHAT_ALLOWED=1.005, #see Stan's manual
-    NUM_OF_ITER=5000,
+    MAX_RHAT_ALLOWED=1.005, 
+    NUM_OF_ITER=2500,
     MAX_NUM_OF_REPEATS=3,
     CAUCHY_SD_DIV=200,
-    MIN_SIGMA=0.001, # for numerical stability
-    MIN_NU=1.5,
+    MIN_SIGMA=0.001, 
+    MIN_NU=2,
     MAX_NU=20,
-    MIN_POW=-0.5,
-    MAX_POW=1) {
+    MIN_POW_TREND=-0.5,
+    MAX_POW_TREND=1,
+		POW_TREND_ALPHA=1,
+		POW_TREND_BETA=1,
+		POW_SIGMA_ALPHA=1,  
+		POW_SIGMA_BETA=1, 
+		ADAPT_DELTA=0.9, 
+		MAX_TREE_DEPTH=11,
+		SEASONALITY=1,
+		SKEW=0 
+) {
   
   list(CAUCHY_SD_DIV=CAUCHY_SD_DIV,
       MAX_RHAT_ALLOWED=MAX_RHAT_ALLOWED,
@@ -191,11 +148,18 @@ lgt.control <- function(
       MIN_SIGMA=MIN_SIGMA,
       MIN_NU=MIN_NU,
       MAX_NU=MAX_NU,
-      MIN_POW=MIN_POW,
-      MAX_POW=MAX_POW)
+      MIN_POW_TREND=MIN_POW_TREND,
+      MAX_POW_TREND=MAX_POW_TREND,
+			POW_TREND_ALPHA=POW_TREND_ALPHA,
+			POW_TREND_BETA=POW_TREND_BETA,
+			POW_SIGMA_ALPHA=POW_SIGMA_ALPHA,
+			POW_SIGMA_BETA=POW_SIGMA_BETA,
+			ADAPT_DELTA=ADAPT_DELTA,
+			MAX_TREE_DEPTH=MAX_TREE_DEPTH,
+			SEASONALITY=SEASONALITY,
+			SKEW=SKEW
+			)
 }
-
-
 
 
 
@@ -204,15 +168,27 @@ lgt.control <- function(
 #' 
 #' @title Runs the model fitting
 #' @param y the time series
-#' @param h prediction horizon
-#' @param stanModel a stan model
+#' @param model a stan model
 #' @param control control arguments list
-#' @param ncores number of cores
+#' @param nChains number of MCMC chains . Must >=1. Perhaps optimal number is 4.
+#' @param nCores number of cores to be used. For performance reasons it should be equal to nChains, 
+#' but nChains should be smaller or equal to the number of cores on the computer.  
 #' @param addJitter adding a bit of jitter is helping Stan in case of some flat series
 #' @param verbose print verbose information yes/no
-#' @returnType 
-#' @return 
-#' 
+#' @returnType lgt
+#' @return lgtModel
+#' @examples
+#'\dontrun{
+#' lgt_model <- fit.lgt(Lynx, model="LGT", nCores=4, nChains=4,
+#' control=lgt.control(MAX_NUM_OF_REPEATS=1, NUM_OF_ITER=2000), 
+#' verbose=TRUE)
+
+#' # print the model details
+#' print(lgt_model)
+#'}
+#'
+#'\dontrun{demo(exampleScript)}
+#'
 #' @importFrom rstan rstan_options
 #' @importFrom rstan sampling
 #' @importFrom rstan get_sampler_params
@@ -220,57 +196,73 @@ lgt.control <- function(
 #' @importMethodsFrom rstan summary
 #' @importFrom sn rst
 #' @export
-fit.lgt <- function(y, stanModel=NULL, control=lgt.control(), ncores=1, addJitter=TRUE, verbose=FALSE) {
+fit.lgt <- function(y, model=c("LGT", "SGT", "LGTe", "SGTe", "Trend"), 
+	control=lgt.control(), nChains=2, nCores=2, addJitter=TRUE, verbose=FALSE) {
   
-  if(is.null(stanModel)) {
-    warning("No model was provided, generating an LGT model. This is slow, so if you run this function on many series better generate the model once and then supply it as a parameter")
-    stanModel <- init.lgt()
+  if(!inherits(model, "RlgtStanModel")) {
+    model <- initModel(model)
   }
   
   MAX_RHAT_ALLOWED=control$MAX_RHAT_ALLOWED
   NUM_OF_ITER=control$NUM_OF_ITER
   MAX_NUM_OF_REPEATS=control$MAX_NUM_OF_REPEATS
   
-  STAN_CLUSTER_SIZE=ncores
-  
-  if(ncores>1) {
+  if(nCores>1) {
     rstan_options(auto_write = TRUE)
-    options(mc.cores = STAN_CLUSTER_SIZE)    
+    options(mc.cores = nCores)    
   }
   
   y.orig <- y
   n=length(y)
   
+  #' @importFrom stats rnorm
   if(addJitter) y <- y + rnorm(n,0,sd=abs(min(y))*0.0001)
   
-  
   CauchySd=max(y)/control$CAUCHY_SD_DIV
-  data = list(CAUCHY_SD=CauchySd,
-      MIN_SIGMA=control$MIN_SIGMA,
-      MIN_NU=control$MIN_NU,
-      MAX_NU=control$MAX_NU,
-      MIN_POW=control$MIN_POW,
-      MAX_POW=control$MAX_POW,
-      y=y, N=n) # to be passed on to Stan  
-  
-  avgRHat=1e20; irep=1
+	
+	SEASONALITY=control$SEASONALITY
+	#' @importFrom stats frequency
+	if (frequency(y)>1) SEASONALITY=frequency(y) #good idea?
+	
+	data <- list(CAUCHY_SD=CauchySd, SEASONALITY=SEASONALITY,
+			MIN_POW_TREND=control$MIN_POW_TREND, 
+			MAX_POW_TREND=control$MAX_POW_TREND, 
+			MIN_SIGMA=control$MIN_SIGMA,  
+			MIN_NU=control$MIN_NU,  
+			MAX_NU=control$MAX_NU, 
+			POW_SIGMA_ALPHA=control$POW_SIGMA_ALPHA, 
+			POW_SIGMA_BETA=control$POW_SIGMA_BETA,
+			POW_TREND_ALPHA=control$POW_TREND_ALPHA, 
+			POW_TREND_BETA=control$POW_TREND_BETA,
+			y=y, N=n, SKEW=control$SKEW) # to be passed on to Stan
+	
+  ### Repeat until Rhat is in an acceptable range (i.e. convergence is reached)
+  avgRHat=1e200; irep=1
   for (irep in 1:MAX_NUM_OF_REPEATS) {
-    #initializations = list();
+		initializations <- list();
+		for (irr in 1:nChains) {
+			initializations[[irr]]=list( 
+			  ### Initialise seasonality factors
+					initSu=rnorm(SEASONALITY,1,0.1) # for non-seasonal models it is not necessary, but makes code simpler and is not a big overhead
+			)
+		}
 
+		#Double the number of iterations for the next cycle
+		numOfIters=NUM_OF_ITER*2^(irep-1)
     samples1=
-        sampling(#control=list(adapt_delta = 0.9, max_treedepth=11),
-            stanModel$model,   
-            data=data, 
-            #init=initializations,
-            pars=stanModel$parameters,
-            iter=NUM_OF_ITER*2^(irep-1),
-            chains=STAN_CLUSTER_SIZE,
-            cores=STAN_CLUSTER_SIZE,
-            open_progress=F,
-            refresh = if(verbose) 1000 else -1)
+      sampling(
+				control=list(adapt_delta = control$ADAPT_DELTA, max_treedepth=control$MAX_TREE_DEPTH),
+        model$model,   
+        data=data, 
+        init=initializations,
+        pars=model$parameters,
+        iter=numOfIters,
+        chains=nChains,
+        cores=nCores,
+        open_progress=F,
+        refresh = if(verbose) numOfIters/5 else -1)
 
-    #samples1
-    
+    ### Get the Rhat values
     ainfo=summary(samples1)
     RHats=ainfo$summary[,10]
     RHats=as.numeric(RHats[is.finite(RHats)])
@@ -291,42 +283,44 @@ fit.lgt <- function(y, stanModel=NULL, control=lgt.control(), ncores=1, addJitte
         print ("worse...")
         print(paste("currRHat",currRHat))
       }
-      print (paste("trying to do better..."))
+      if (MAX_NUM_OF_REPEATS>irep) print (paste("trying to do better..."))
     }
     #str(samples, max.level =4)
   }#repeat if needed
   
-  if(verbose) print(summary(do.call(rbind, args = get_sampler_params(samples1, inc_warmup = F)), digits = 2)) #diagnostics
-  
-#  stanModel[["parameters"]] <- c("l", "b", "nu", "sigma", "levSm",  "bSm", 
-#      "powx", "coefTrend",  "powTrend", "offsetSigma", "locTrendFract")
+  if(verbose) print(summary(do.call(rbind, args = get_sampler_params(samples1, inc_warmup = F)), digits = 2)) #diagnostics including step sizes and tree depths
   
   params <- list()
   paramMeans <- list()
   
-  for(param in stanModel$parameters) {
+  # Extract all of the parameter means
+  for(param in model$parameters) {
     params[[param]] <- extract(samples)[[param]]
-    paramMeans[[param]] <- if(param %in% c("l", "b")) apply(params[[param]],2,mean) else mean(params[[param]])
+    
+    # Find the mean, but for ETS components average based on each t
+    paramMeans[[param]] <- if(param %in% c("l", "b", "s")) apply(params[[param]],2,mean) else mean(params[[param]])
   }
-  
+	
+	#special processing for vector params, where only the last value counts
+  # This includes level, trend, and innov size
   params[["lastLevel"]] <- params[["l"]][,ncol(params[["l"]])]
-  params[["lastB"]] <- params[["b"]][,ncol(params[["b"]])]
-  
-  paramMeans[["lastLevel"]] <- mean(params[["lastLevel"]])
-  paramMeans[["lastB"]] <- mean(params[["lastB"]])
-  
-  out <- list()
+	paramMeans[["lastLevel"]] <- mean(params[["lastLevel"]])
+	
+	if ("b" %in% model$parameters) {
+		params[["lastB"]] <- params[["b"]][,ncol(params[["b"]])]
+		paramMeans[["lastB"]] <- mean(params[["lastB"]])
+	}
+	if ("smoothedInnovSize" %in% model$parameters) {
+		params[["lastSmoothedInnovSize"]] <- params[["smoothedInnovSize"]][,ncol(params[["smoothedInnovSize"]])]
+		paramMeans[["lastSmoothedInnovSize"]] <- mean(params[["lastSmoothedInnovSize"]])
+	}
 
-  out[["x"]] <- y.orig
-  out[["stanModel"]] <- stanModel
-  out[["params"]] <- params
-  out[["paramMeans"]] <- paramMeans
-  class(out) <- "lgt"
-  
+	
+  out <- lgt(y.orig, model, params, paramMeans, SEASONALITY, samples)
+
   out
 
 }
-
 
 
 
@@ -334,260 +328,264 @@ fit.lgt <- function(y, stanModel=NULL, control=lgt.control(), ncores=1, addJitte
 #' This function produces forecasts from a model
 #' 
 #' @title produce forecasts
-#' @param object 
-#' @param h 
-#' @param NUM_OF_TRIALS 
-#' @param MIN_VAL 
-#' @param MAX_VAL 
-#' @param ... 
-#' @returnType 
+#' @param object lgt object
+#' @param h Forecasting horizon (10 for annual and 2*periods otherwise)
+#' @param level Confidence levels for prediction intervals a.k.a. coverage percentiles. Beween 0 and 100.
+#' @param NUM_OF_TRIALS Number of simulations to run. Suggested rannge (1000,5000), but it may have to be higher for good coverage of very high levels, e.g. 99.8. 
+#' @param MIN_VAL Minimum value the forecast can take. Must be positive.
+#' @param MAX_VAL Maximum value the forecast can take.
+#' @param ... description
+#' @returnType forecast
 #' @return returns a forecast object compatible with the forecast package
 #' @S3method forecast lgt
-# @method forecast lgt
+#' @method forecast lgt
 #' @importFrom forecast forecast 
 #' @author bergmeir
 #' @export
-forecast.lgt <- function(object, h=ifelse(frequency(object$x)>1, 2*frequency(object$x), 10), NUM_OF_TRIALS=5000, 
+
+# object=mod[["lgte"]]; level=c(80,95, 98); NUM_OF_TRIALS=2000; MIN_VAL=0.001; MAX_VAL=1e38; h=8
+# library(sn)
+forecast.lgt <- function(object, h=ifelse(frequency(object$x)>1, 2*frequency(object$x), 10),
+		level=c(80,95),
+		NUM_OF_TRIALS=2000, 
     MIN_VAL=0.001, MAX_VAL=1e38, ...) {
 
   #object <- mod[["lgt"]]
+	
+	if (any(level>100) || any(level<0)) {
+		print(paste("Warning: levels mus be between 0 and 100. Assuming defaults."))
+		level=c(80,95)
+	}
+	
+	if(length(level)==1 && level==50) {
+		percentiles=level
+		indexOfMedian=1
+	} else {
+		if (50 %in% level) {
+		  level=level[level!=50]
+	  } 
+		lowerPercentiles=(100-level)/2
+		indexOfMedian=length(lowerPercentiles)+1
+		upperPercentiles=100-lowerPercentiles
+		percentiles=c(lowerPercentiles,50,upperPercentiles) #this follows convention of forecast package where forecast$lower are from higher to lower
+	}
+  
+	quantiles=percentiles/100.
+	
+	SEASONALITY <- object$SEASONALITY 
   
   out <- list(model=object,x=object$x)
-  #out <- object
+  #' @importFrom stats tsp
+  #' @importFrom stats tsp<-
   tspx <- tsp(out$x)
   
-  if(!is.null(tspx))
-    start.f <- tspx[2] + 1/frequency(out$x)
-  else
-    start.f <- length(out$x)+1
-  
-  isLGT <- inherits(object$stanModel, "stanModelLGT")
-  
-#  t=1; irun=1
-  yf=matrix(object$paramMeans[["lastLevel"]],nrow=NUM_OF_TRIALS, ncol=h)
-  
-  for (irun in 1:NUM_OF_TRIALS) {
+  # start.f is the next(first) forecast period
+  if(!is.null(tspx)){
+		start.f <- tspx[2] + 1/frequency(out$x)
+	} else {
+		start.f <- length(out$x)+1
+	}
     
-    indx=sample(nrow(object$params[["l"]]),1)
-
-#TODO: I don't understand what is done here...calculating a mean over single numbers?
-#    prevLevel=mean(lastLevel[indx], na.rm=T)
-#    powTrendM=mean(powTrend[indx], na.rm=T)
-#    coefTrendM=mean(coefTrend[indx], na.rm=T)
-#    bM=mean(lastB[indx], na.rm=T)
-#    levSmM=mean(levSm[indx], na.rm=T)
-#    bSmM=mean(bSm[indx], na.rm=T)
-#    sigmaM=mean(sigma[indx], na.rm=T)
-#    locTrendFractM=mean(locTrendFract[indx], na.rm=T)
-    
-    prevLevel <- object$params[["lastLevel"]][indx]
-    powTrendM <- object$params[["powTrend"]][indx]
-    coefTrendM <- object$params[["coefTrend"]][indx]
-    bM <- object$params[["lastB"]][indx]
-    levSmM <- object$params[["levSm"]][indx]
-    bSmM <- object$params[["bSm"]][indx]
-    sigmaM <- object$params[["sigma"]][indx]
-    locTrendFractM <- object$params[["locTrendFract"]][indx]
-       
-    
-    if(isLGT) {
-#      powxM=mean(powx[indx], na.rm=T)
-#      nuM=mean(nu[indx], na.rm=T)
-#      offsetSigmaM=mean(offsetSigma[indx], na.rm=T)
-      
-      powxM <- object$params[["powx"]][indx]
-      nuM <- object$params[["nu"]][indx]
-      offsetSigmaM <- object$params[["offsetSigma"]][indx]
-    }
-    
-    for (t in 1:h) { 
-      
-      if(isLGT) {
-        error=rst(n=1, 
-            xi=coefTrendM*(abs(prevLevel))^powTrendM + locTrendFractM*bM , 
-            omega=sigmaM*(abs(prevLevel))^powxM+offsetSigmaM, alpha=0, nu=nuM)
-        yf[irun,t]=min(MAX_VAL,max(MIN_VAL,prevLevel+error))
-        
-      } else {
-        expVal=prevLevel+coefTrendM*(abs(prevLevel))^powTrendM + locTrendFractM*bM
-        error=rnorm(n=1, mean=0, sd=sigmaM)
-        yf[irun,t]=min(MAX_VAL,max(MIN_VAL,expVal+error))        
-      }     
-      
-      currLevel=max(MIN_VAL,levSmM*yf[irun,t] + (1-levSmM)*prevLevel) ;
-      
-      if (currLevel>MIN_VAL) {
-        bM= bSmM*(currLevel-prevLevel)+(1-bSmM)*bM
-        prevLevel=currLevel
-      } 
-    }
-    # yf[irun,]
-  } #through trials
-  
+  # extracting all of the params
+	nu=object$params[["nu"]]
+	lastB <- object$params[["lastB"]]
+	lastSmoothedInnovSize <- object$params[["lastSmoothedInnovSize"]]
+	powx <- object$params[["powx"]]
+	s <- object$params[["s"]]
+	
+	nuS=Inf; bSmS=0; bS=0; locTrendFractS=0;  #these initializations are important, do not remove. 
+	#t=1; irun=1
+	if (SEASONALITY>1) {
+		sS=rep(1,SEASONALITY+h)
+	}
+	
+	# Initialise a matrix which contains the last level value
+	yf=matrix(object$paramMeans[["lastLevel"]],nrow=NUM_OF_TRIALS, ncol=h)
+	
+	# For each forecasting trial
+	for (irun in 1:NUM_OF_TRIALS) {
+	  # Obtain the relevant parameters
+		indx=sample(nrow(object$params[["l"]]),1)
+		prevLevel=object$params[["lastLevel"]][indx]
+		levSmS=object$params[["levSm"]][indx]
+		if (!is.null(nu)) {
+			nuS=nu[indx]
+		} 
+		
+		powTrendS=object$params[["powTrend"]][indx]
+		coefTrendS=object$params[["coefTrend"]][indx]
+		
+		if(!is.null(lastB)) {
+			bS=lastB[indx]
+			bSmS= object$params[["bSm"]][indx]
+			locTrendFractS=object$params[["locTrendFract"]][indx]
+		}
+		
+		sigmaS <- object$params[["sigma"]][indx]
+		if (!is.null(lastSmoothedInnovSize)) {
+			innovSize=lastSmoothedInnovSize[indx]
+			innovSmS=object$params[["innovSm"]][indx]
+			offsetsigmaS=object$params[["offsetSigma"]][indx]
+		} else if (!is.null(powx)) {
+			powxS=powx[indx]
+			offsetsigmaS=object$params[["offsetSigma"]][indx]
+		}
+		
+		#t=1
+		if (SEASONALITY>1) {
+			sS[1:SEASONALITY]=s[indx,(ncol(s)-SEASONALITY+1):ncol(s)]
+			for (t in 1:h) {
+				seasonA=sS[t]
+				## From eq.6.a
+				expVal=(prevLevel+ coefTrendS*abs(prevLevel)^powTrendS)*seasonA;
+				if (!is.null(powx)) {
+					omega=sigmaS*(abs(prevLevel))^powxS+offsetsigmaS
+				} else if (!is.null(lastSmoothedInnovSize)) {
+					omega=sigmaS*innovSize + offsetsigmaS
+				} else {
+					omega=sigmaS
+				}
+				
+				# Find the t-dist error
+				error=rst(n=1, xi=0 ,	omega=omega, alpha=0, nu=nuS)
+				
+				# Fill in the matrix of predicted value
+				yf[irun,t]=min(MAX_VAL,max(MIN_VAL,expVal+error))
+				
+				# find the currLevel
+				currLevel=max(MIN_VAL,levSmS*yf[irun,t]/seasonA + (1-levSmS)*prevLevel) ;
+				
+				if (currLevel>MIN_VAL) {
+					prevLevel=currLevel
+				} 
+				sS[t+SEASONALITY] <- sS[t];
+			}	#through horizons
+			# yf[irun,]
+		} else { #nonseasonal
+			for (t in 1:h) {
+				expVal=prevLevel + coefTrendS*(abs(prevLevel))^powTrendS + locTrendFractS*bS
+				if (!is.null(powx)) {
+					omega=sigmaS*(abs(prevLevel))^powxS+offsetsigmaS
+				} else if (!is.null(lastSmoothedInnovSize)) {
+					omega=sigmaS*innovSize + offsetsigmaS
+				} else {
+					omega=sigmaS
+				}
+				error=rst(n=1, xi=0, omega=omega, alpha=0, nu=nuS)
+				
+				yf[irun,t]=min(MAX_VAL,max(MIN_VAL, expVal+error))
+				currLevel=max(MIN_VAL,levSmS*yf[irun,t] + (1-levSmS)*prevLevel) ;
+				
+				if (currLevel>MIN_VAL) {
+					bS= bSmS*(currLevel-prevLevel)+(1-bSmS)*bS #but bSmS and bS may be==0 so then noop
+					prevLevel=currLevel
+				} 
+			} #through horizons
+			# yf[irun,]
+		}
+	} #through trials (simulations)
+	  
   out$yf <- yf
   
-  
-  out$mean <- ts(apply(yf, 2, mean),frequency=frequency(out$x),start=start.f)
+  #' @importFrom stats ts
+  out$mean <- ts(apply(yf, 2, mean),frequency=frequency(out$x),start=start.f   )
 
-  quants=c(0.05, 0.2, 0.5, 0.8, 0.95)
-  avgYfs=apply(yf,2,quantile,probs=quants)
+  #' @importFrom stats quantile
+  avgYfs=apply(yf,2,quantile,probs=quantiles)
   
-  out$median <- ts(avgYfs[3,])
-  out$lower <- ts(t(avgYfs[c(1,2),]))
-  out$upper <- ts(t(avgYfs[c(4,5),]))
-  out$level <- c(80,95)
+  out$median <- ts(avgYfs[indexOfMedian,])
+	if (indexOfMedian>1) {
+		out$lower <- ts(t(avgYfs[1:(indexOfMedian-1),]))
+		out$upper <- ts(t(avgYfs[(indexOfMedian+1):(indexOfMedian+length(upperPercentiles)),]))	
+	}
+	
+  out$level <- level
   
-#  out$median <- ts(apply(object$yf, 2, median))
-#  out$lower <- ts(apply(object$yf, 2, min))
-#  out$upper <- ts(apply(object$yf, 2, max))
-#  out$level <- 100
-  
+  # Assign tsp attributes for consistency
   tsp(out$median) <- tsp(out$lower) <- tsp(out$upper) <- tsp(out$mean)
-  
+	  
   class(out) <- "forecast"
   out
-  
 }
 
+
+## Moved from print.lgt.R
 
 #' Print out some characteristics of a \code{\link{lgt}} model.
 #'  
 #' @title Generic print function for lgt models
 #' @param x the \code{\link{lgt}} model
 #' @param ... additional function parameters (currently not used)
+#' @aliases summary.lgt
 #' @export
-#' @S3method print lgt
+# @S3method print lgt
 # @method print lgt
 # @rdname lgt
 print.lgt <- function(x, ...) {
   if(!inherits(x, "lgt")) stop("not a legitimate lgt result")
   
- 
-#    lastDetails=paste("coefT=",round(coefTrendM,2), ", powT=",round(powTrendM,2),
-#      ", sigma=",round(sigmaM,2),", powx=",round(powxM,2),", offsetS=",round(offsetSigmaM,2), 
-#      ", nu=",round(nuM,2), ", lSm=",round(levSmM,2), 
-#      ", lastB=",round(lastBM,1), ", bSm=",round(bSmM,2), 
-#      ", lTFract=", round(locTrendFractM,2), sep='')				
+  
+  #    lastDetails=paste("coefT=",round(coefTrendM,2), ", powT=",round(powTrendM,2),
+  #      ", sigma=",round(sigmaM,2),", powx=",round(powxM,2),", offsetS=",round(offsetSigmaM,2), 
+  #      ", nu=",round(nuM,2), ", lSm=",round(levSmM,2), 
+  #      ", lastB=",round(lastBM,1), ", bSm=",round(bSmM,2), 
+  #      ", lTFract=", round(locTrendFractM,2), sep='')				
   print(x$paramMeans)
   
-#  cat(sprintf("NumTotalEvalEA: %d\n", x$numEvalEA))
-#  cat(sprintf("NumTotalEvalLS: %d\n", x$numEvalLS))  
-#  
-#  ratio_effort <- x$numEvalEA/(x$numEvalEA+x$numEvalLS)
-#  cat(sprintf("RatioEffort EA/LS: [%.0f/%.0f]\n", 100*ratio_effort, 100*(1-ratio_effort)))
-#  
-#  ratio_alg <- x$improvementEA/(x$improvementEA+x$improvementLS)
-#  cat(sprintf("RatioImprovement EA/LS: [%.0f/%.0f]\n", 100*ratio_alg, 100*(1-ratio_alg)))
-#  #cat(sprintf(("Restarts: %d\n", restarts))
-#  
-#  if((x$numTotalEA != 0) && (x$numTotalLS != 0)) {
-#    cat(sprintf("PercentageNumImprovement[EA]: %d%%\n", round((x$numImprovementEA*100)/x$numTotalEA)))
-#    cat(sprintf("PercentageNumImprovement[LS]: %d%%\n", round((x$numImprovementLS*100)/x$numTotalLS)))    
-#  }
-#  
-#  cat(sprintf("Time[EA]: %.2f\n", x$timeMsEA))
-#  cat(sprintf("Time[LS]: %.2f\n", x$timeMsLS))
-#  cat(sprintf("Time[MA]: %.2f\n", x$timeMsMA))
-#  cat(sprintf("RatioTime[EA/MA]: %.2f\n", 100*x$timeMsEA/x$timeMsMA))
-#  cat(sprintf("RatioTime[LS/MA]: %.2f\n", 100*x$timeMsLS/x$timeMsMA))
-#  
-#  
-#  cat("Fitness:\n",sep="")
-#  print(x$fitness)
-#  cat("Solution:\n",sep="") 
-#  print(x$sol)
+  #  cat(sprintf("NumTotalEvalEA: %d\n", x$numEvalEA))
+  #  cat(sprintf("NumTotalEvalLS: %d\n", x$numEvalLS))  
+  #  
+  #  ratio_effort <- x$numEvalEA/(x$numEvalEA+x$numEvalLS)
+  #  cat(sprintf("RatioEffort EA/LS: [%.0f/%.0f]\n", 100*ratio_effort, 100*(1-ratio_effort)))
+  #  
+  #  ratio_alg <- x$improvementEA/(x$improvementEA+x$improvementLS)
+  #  cat(sprintf("RatioImprovement EA/LS: [%.0f/%.0f]\n", 100*ratio_alg, 100*(1-ratio_alg)))
+  #  #cat(sprintf(("Restarts: %d\n", restarts))
+  #  
+  #  if((x$numTotalEA != 0) && (x$numTotalLS != 0)) {
+  #    cat(sprintf("PercentageNumImprovement[EA]: %d%%\n", round((x$numImprovementEA*100)/x$numTotalEA)))
+  #    cat(sprintf("PercentageNumImprovement[LS]: %d%%\n", round((x$numImprovementLS*100)/x$numTotalLS)))    
+  #  }
+  #  
+  #  cat(sprintf("Time[EA]: %.2f\n", x$timeMsEA))
+  #  cat(sprintf("Time[LS]: %.2f\n", x$timeMsLS))
+  #  cat(sprintf("Time[MA]: %.2f\n", x$timeMsMA))
+  #  cat(sprintf("RatioTime[EA/MA]: %.2f\n", 100*x$timeMsEA/x$timeMsMA))
+  #  cat(sprintf("RatioTime[LS/MA]: %.2f\n", 100*x$timeMsLS/x$timeMsMA))
+  #  
+  #  
+  #  cat("Fitness:\n",sep="")
+  #  print(x$fitness)
+  #  cat("Solution:\n",sep="") 
+  #  print(x$sol)
   
   invisible(x)
 }
 
 
+### Moved from posterior_interval.lgt.R
+#' This is a method of lgt object to produce posterior interval
+#' 
+#' @title lgt posterior interval
+#' @param object an object of class lgt
+#' @param prob percentile level to be generated (multiple values can be accepted as a vector)
+#' @param type currently only central is available
+#' @param ... currently not in use
+#' @return confidence interval
+#' @S3method posterior_interval lgt
+#' @method posterior_interval lgt
+#' @importFrom rstantools posterior_interval 
+#' @author wibowo
+#' @export
 
-
-
-
-
-
-
-
-
-
-#  l=extract(samples)$l
-#  lM=apply(l,2,mean)
-#
-#  b=extract(samples)$b
-#  bM=apply(b,2,mean)
-#  
-#  levSm = extract(samples)$levSm
-#  levSmM=mean(levSm)
-#  
-#  coefTrend = extract(samples)$coefTrend
-#  coefTrendM=mean(coefTrend)
-#  
-#  powTrend = extract(samples)$powTrend
-#  powTrendM=mean(powTrend)
-#  
-#  sigma = extract(samples)$sigma
-#  sigmaM=mean(sigma)
-#  
-#  bSm = extract(samples)$bSm
-#  bSmM=mean(bSm)
-#  
-#  locTrendFract = extract(samples)$locTrendFract
-#  locTrendFractM=mean(locTrendFract)
-#
-#  if(isLGT) {
-#    
-#    nu = extract(samples)$nu
-#    nuM=mean(nu)
-#    
-#    powx = extract(samples)$powx
-#    powxM=mean(powx)
-#    
-#    offsetSigma=extract(samples)$offsetSigma
-#    offsetSigmaM=mean(offsetSigma)
-#  }
-
-#  lastDetails=paste("coefT=",round(coefTrendM,2), ", powT=",round(powTrendM,2),
-#      ", sigma=",round(sigmaM,2),", powx=",round(powxM,2),", offsetS=",round(offsetSigmaM,2), 
-#      ", nu=",round(nuM,2), ", lSm=",round(levSmM,2), 
-#      ", lastB=",round(lastBM,1), ", bSm=",round(bSmM,2), 
-#      ", lTFract=", round(locTrendFractM,2), sep='')				
-#  print(lastDetails)
-#
-#paste("lastLevel",round(lastLevelM,1))
-#paste("levSm",levSmM)
-#paste("nu",nuM)
-#paste("coefTrend",coefTrendM)
-#paste("powTrend",powTrendM)
-#paste("sigma",sigmaM)
-#paste("powx",powxM)
-#paste("offsetSigma",round(offsetSigmaM,2))
-#paste("lastB",round(lastBM,2))
-#paste("bSm",round(bSmM,2))
-#paste("locTrendFract",round(locTrendFractM,2))
-
-
-#lastLevelM
-#lastLevel
-#powTrend
-#coefTrend
-#lastB
-#levSm
-#bSm
-#sigma
-#locTrendFract
-#powx
-#nu
-#offsetSigma
-
-#forc(lastLevelM = lastLevelM, NUM_OF_TRIALS = NUM_OF_TRIALS, h = h, mc_range = mc_range, 
-#    lastLevel = lastLevel, powTrend = powTrend, coefTrend = coefTrend, lastB = lastB, 
-#    levSm = levSm, bSm = bSm, sigma = sigma, locTrendFract = locTrendFract, isLGT = isLGT, 
-#    powx = powx, nu = nu, offsetSigma = offsetSigma, MAX_VAL = MAX_VAL, MIN_VAL = MIN_VAL)
-
-#  out <- list()
-#  out[["yf"]] <- yf
-#  out[["x"]] <- y.orig
-#  class(out) <- "lgt"
-
-#  out
+posterior_interval.lgt <- function(object,
+    prob = 0.9,
+    type = "central",
+    ...) {
+    if (!identical(type, "central"))
+      stop("Currently the only option for 'type' is 'central'.",
+        call. = FALSE)
+    mat <- as.matrix(object[["samples"]])
+    
+    posterior_interval(mat, prob = prob)
+  }

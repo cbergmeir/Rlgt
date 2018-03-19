@@ -1,3 +1,3 @@
 library(roxygen2)
-path <- "./Rlgt2/"
+path <- "./Rlgt/"
 roxygenize(package.dir=path)

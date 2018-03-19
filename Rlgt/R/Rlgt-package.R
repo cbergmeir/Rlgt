@@ -1,4 +1,5 @@
 #' @title Getting started with the Rlgt package
+#' @description An implementation of LGT and SGT models as described in ...
 #' @name Rlgt-package
 #' @aliases Rlgt
 #' @docType package
@@ -8,11 +9,17 @@
 #' @author Slawek Smyl \email{slaweks@@hotmail.co.uk} 
 #'
 #' Christoph Bergmeir \email{christoph.bergmeir@@gmail.com} 
-#' 
+#' Erwin Wibowo \email{rwinwibowo@@gmail.com} 
 #' 
 #' @keywords forecasting, exponential smoothing
 # @exportPattern "^[[:alpha:]]+"
+#' @useDynLib Rlgt, .registration=TRUE
+#' @import methods
+#' @import Rcpp
+#'
 #' @examples
 #' x <- 1
+#' @docType package
+#' @name Rlgt
 NULL
 

@@ -1,4 +1,4 @@
-rPackageName=Rlgt2
+rPackageName=Rlgt
 newDate=$(date +%Y-%m-%d)
 rPackageVersion=0.0-1
 
