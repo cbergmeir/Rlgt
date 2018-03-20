@@ -42,13 +42,13 @@ The following object is masked from ‘package:stats’:
 
     sd
 
-Warning: @returnType [lgt.R#7]: unknown tag
+Warning: @returnType [lgt.R#9]: unknown tag
 Warning: @details [lgt.R#1]: requires a value
-Warning: @returnType [lgt.R#120]: unknown tag
-Warning: @returnType [lgt.R#177]: unknown tag
-Warning: @returnType [lgt.R#326]: unknown tag
-Warning: lgt.R:335: @S3method is deprecated. Please use @export instead
-Warning: lgt.R:568: @S3method is deprecated. Please use @export instead
+Warning: @returnType [lgt.R#122]: unknown tag
+Warning: @returnType [lgt.R#179]: unknown tag
+Warning: @returnType [lgt.R#339]: unknown tag
+Warning: lgt.R:348: @S3method is deprecated. Please use @export instead
+Warning: lgt.R:581: @S3method is deprecated. Please use @export instead
 Writing Rlgt-package.Rd
 Writing initModel.Rd
 Writing lgt.Rd
@@ -60,4 +60,4 @@ Writing posterior_interval.lgt.Rd
 > 
 > proc.time()
    user  system elapsed 
-  1.428   0.036   1.463 
+  1.700   0.064   8.093 

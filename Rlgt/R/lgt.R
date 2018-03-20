@@ -179,7 +179,7 @@ lgt.control <- function(
 #' @return lgtModel
 #' @examples
 #'\dontrun{
-#' lgt_model <- fit.lgt(Lynx, model="LGT", nCores=4, nChains=4,
+#' lgt_model <- fit.lgt(lynx, model="LGT", nCores=4, nChains=4,
 #' control=lgt.control(MAX_NUM_OF_REPEATS=1, NUM_OF_ITER=2000), 
 #' verbose=TRUE)
 
@@ -340,6 +340,22 @@ fit.lgt <- function(y, model=c("LGT", "SGT", "LGTe", "SGTe", "Trend"),
 #' @S3method forecast lgt
 #' @method forecast lgt
 #' @importFrom forecast forecast 
+#' @examples 
+#' #'\dontrun{
+#' lgt_model <- fit.lgt(lynx, model="LGT", nCores=4, nChains=4,
+#' control=lgt.control(MAX_NUM_OF_REPEATS=1, NUM_OF_ITER=2000), 
+#' verbose=TRUE)
+
+#' # print the model details
+#' print(lgt_model)
+#' 
+#' # Produce Forecasts for the next 10 years
+#' forecast_result <- forecast(lgt_model, h = 10, level=c(80, 95, 98))
+#' 
+#' plot(forecast_result,main="Forecasting lynx dataset with LGT model")
+#'}
+#'
+#'\dontrun{demo(exampleScript)}
 #' @author bergmeir
 #' @export
 
@@ -523,47 +539,14 @@ forecast.lgt <- function(object, h=ifelse(frequency(object$x)>1, 2*frequency(obj
 # @rdname lgt
 print.lgt <- function(x, ...) {
   if(!inherits(x, "lgt")) stop("not a legitimate lgt result")
-  
-  
-  #    lastDetails=paste("coefT=",round(coefTrendM,2), ", powT=",round(powTrendM,2),
-  #      ", sigma=",round(sigmaM,2),", powx=",round(powxM,2),", offsetS=",round(offsetSigmaM,2), 
-  #      ", nu=",round(nuM,2), ", lSm=",round(levSmM,2), 
-  #      ", lastB=",round(lastBM,1), ", bSm=",round(bSmM,2), 
-  #      ", lTFract=", round(locTrendFractM,2), sep='')				
+	
   print(x$paramMeans)
-  
-  #  cat(sprintf("NumTotalEvalEA: %d\n", x$numEvalEA))
-  #  cat(sprintf("NumTotalEvalLS: %d\n", x$numEvalLS))  
-  #  
-  #  ratio_effort <- x$numEvalEA/(x$numEvalEA+x$numEvalLS)
-  #  cat(sprintf("RatioEffort EA/LS: [%.0f/%.0f]\n", 100*ratio_effort, 100*(1-ratio_effort)))
-  #  
-  #  ratio_alg <- x$improvementEA/(x$improvementEA+x$improvementLS)
-  #  cat(sprintf("RatioImprovement EA/LS: [%.0f/%.0f]\n", 100*ratio_alg, 100*(1-ratio_alg)))
-  #  #cat(sprintf(("Restarts: %d\n", restarts))
-  #  
-  #  if((x$numTotalEA != 0) && (x$numTotalLS != 0)) {
-  #    cat(sprintf("PercentageNumImprovement[EA]: %d%%\n", round((x$numImprovementEA*100)/x$numTotalEA)))
-  #    cat(sprintf("PercentageNumImprovement[LS]: %d%%\n", round((x$numImprovementLS*100)/x$numTotalLS)))    
-  #  }
-  #  
-  #  cat(sprintf("Time[EA]: %.2f\n", x$timeMsEA))
-  #  cat(sprintf("Time[LS]: %.2f\n", x$timeMsLS))
-  #  cat(sprintf("Time[MA]: %.2f\n", x$timeMsMA))
-  #  cat(sprintf("RatioTime[EA/MA]: %.2f\n", 100*x$timeMsEA/x$timeMsMA))
-  #  cat(sprintf("RatioTime[LS/MA]: %.2f\n", 100*x$timeMsLS/x$timeMsMA))
-  #  
-  #  
-  #  cat("Fitness:\n",sep="")
-  #  print(x$fitness)
-  #  cat("Solution:\n",sep="") 
-  #  print(x$sol)
   
   invisible(x)
 }
 
 
-### Moved from posterior_interval.lgt.R
+
 #' This is a method of lgt object to produce posterior interval
 #' 
 #' @title lgt posterior interval
@@ -576,6 +559,15 @@ print.lgt <- function(x, ...) {
 #' @method posterior_interval lgt
 #' @importFrom rstantools posterior_interval 
 #' @author wibowo
+#' @examples 
+#'\dontrun{
+#' lgt_model <- fit.lgt(lynx, model="LGT", nCores=4, nChains=4,
+#' control=lgt.control(MAX_NUM_OF_REPEATS=1, NUM_OF_ITER=2000), 
+#' verbose=TRUE)
+
+#' # print the model details
+#' posterior_interval(lgt_model)
+#'}
 #' @export
 
 posterior_interval.lgt <- function(object,
