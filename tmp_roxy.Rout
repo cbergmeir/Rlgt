@@ -1,6 +1,6 @@
 
-R version 3.4.2 (2017-09-28) -- "Short Summer"
-Copyright (C) 2017 The R Foundation for Statistical Computing
+R version 3.4.4 (2018-03-15) -- "Someone to Lean On"
+Copyright (C) 2018 The R Foundation for Statistical Computing
 Platform: x86_64-pc-linux-gnu (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
@@ -42,22 +42,36 @@ The following object is masked from ‘package:stats’:
 
     sd
 
+Warning: @details [Stancontrol.R#1]: requires a value
+Warning: @returnType [Stancontrol.R#34]: unknown tag
+Warning: @returnType [fit.dampen.R#14]: unknown tag
+Warning: @returnType [fit.lgt.R#14]: unknown tag
+Warning: @returnType [forecast.dampen.R#13]: unknown tag
+Warning: @returnType [forecast.lgt.R#13]: unknown tag
+Warning: @returnType [initialisation.R#9]: unknown tag
 Warning: @returnType [lgt.R#9]: unknown tag
 Warning: @details [lgt.R#1]: requires a value
 Warning: @returnType [lgt.R#122]: unknown tag
 Warning: @returnType [lgt.R#179]: unknown tag
 Warning: @returnType [lgt.R#339]: unknown tag
-Warning: lgt.R:348: @S3method is deprecated. Please use @export instead
-Warning: lgt.R:581: @S3method is deprecated. Please use @export instead
+Warning: forecast.dampen.R:37: @S3method is deprecated. Please use @export instead
+Warning: forecast.lgt.R:37: @S3method is deprecated. Please use @export instead
+Warning: lgt.R:364: @S3method is deprecated. Please use @export instead
+Warning: lgt.R:573: @S3method is deprecated. Please use @export instead
+Warning: posterior_interval.dampen.R:26: @S3method is deprecated. Please use @export instead
+Warning: posterior_interval.lgt.R:26: @S3method is deprecated. Please use @export instead
 Writing Rlgt-package.Rd
+Writing lgt.control.Rd
+Writing fit.dampen.Rd
+Writing fit.lgt.Rd
+Writing forecast.dampen.Rd
+Writing forecast.lgt.Rd
 Writing initModel.Rd
 Writing lgt.Rd
-Writing lgt.control.Rd
-Writing fit.lgt.Rd
-Writing forecast.lgt.Rd
 Writing print.lgt.Rd
 Writing posterior_interval.lgt.Rd
+Writing posterior_interval.dampen.Rd
 > 
 > proc.time()
    user  system elapsed 
-  1.700   0.064   8.093 
+  1.648   0.032   2.039 
