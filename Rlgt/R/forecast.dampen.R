@@ -27,9 +27,9 @@
 #' forecast_result <- forecast(dampen_model, h = 10, level=c(80, 95, 98))
 #' 
 #' plot(forecast_result,main="Forecasting lynx dataset with dampen model")
-#'}
+#' }
 #'
-#'\dontrun{demo(exampleScript)}
+#' \dontrun{demo(exampleScript)}
 #' @export
 
 # object=mod[["dampene"]]; level=c(80,95, 98); NUM_OF_TRIALS=2000; MIN_VAL=0.001; MAX_VAL=1e38; h=8

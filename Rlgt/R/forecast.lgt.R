@@ -15,7 +15,7 @@
 #' @method forecast lgt
 #' @importFrom forecast forecast 
 #' @examples 
-#' #'\dontrun{
+#' \dontrun{
 #' lgt_model <- fit.lgt(lynx, model="LGT", nCores=4, nChains=4,
 #' control=lgt.control(MAX_NUM_OF_REPEATS=1, NUM_OF_ITER=2000), 
 #' verbose=TRUE)
@@ -27,9 +27,9 @@
 #' forecast_result <- forecast(lgt_model, h = 10, level=c(80, 95, 98))
 #' 
 #' plot(forecast_result,main="Forecasting lynx dataset with LGT model")
-#'}
+#' }
 #'
-#'\dontrun{demo(exampleScript)}
+#' \dontrun{demo(exampleScript)}
 #' @export
 
 # object=mod[["lgte"]]; level=c(80,95, 98); NUM_OF_TRIALS=2000; MIN_VAL=0.001; MAX_VAL=1e38; h=8
