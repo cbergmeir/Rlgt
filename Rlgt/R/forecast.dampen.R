@@ -15,7 +15,7 @@
 #' @method forecast dampen
 #' @importFrom forecast forecast 
 #' @examples 
-#' #'\dontrun{
+#' \dontrun{
 #' dampen_model <- fit.dampen(lynx, model="dampen", nCores=4, nChains=4,
 #' control=dampen.control(MAX_NUM_OF_REPEATS=1, NUM_OF_ITER=2000), 
 #' verbose=TRUE)

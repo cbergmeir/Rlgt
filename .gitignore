@@ -1,9 +1,9 @@
 exec/*.rda
 Rlgt.Rcheck/*
-RlgtLik/*
 .Rhistory
+.RData
 Rlgt_0.0-1.tar.gz
-originalCode/*
 Rlgt/man/*
 tmp_roxy.Rout
+tmp_roxy.R
 
