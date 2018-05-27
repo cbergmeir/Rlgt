@@ -140,13 +140,15 @@ forecast.dampen <- function(object, h=ifelse(frequency(object$x)>1, 2*frequency(
         # Find the t-dist error
         if (is.null(nu)) {
           error=rnorm(n=1, mean=0, sd=sigmaS)
+
         } 
         else {
           error=rst(n=1, xi=0 ,	omega=omega, alpha=0, nu=nuS)
         }
         
+
         # Fill in the matrix of predicted value
-        yf[irun,t]=min(MAX_VAL,max(MIN_VAL,expVal*(1+error)))
+        yf[irun,t]=min(MAX_VAL,max(MIN_VAL,expVal+error))
         
         # find the currLevel
         currLevel=max(MIN_VAL,levSmS*yf[irun,t]/seasonA + (1-levSmS)*prevLevel) ;
