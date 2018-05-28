@@ -24,7 +24,8 @@ parameters {
 } 
 transformed parameters {
 	real <lower=MIN_POW_TREND,upper=MAX_POW_TREND>powTrend;
-	vector[N] l; vector[N] b;
+	vector<lower=0>[N] l;
+	vector[N] b;
 	
 	l[1] = y[1]; b[1] = bInit;
 	powTrend= (MAX_POW_TREND-MIN_POW_TREND)*powTrendBeta+MIN_POW_TREND;
@@ -43,8 +44,8 @@ model {
   bInit ~ normal(0,CAUCHY_SD);
 	
 	for (t in 2:N) {
-		y[t] ~ student_t(nu, l[t-1]+coefTrend*fabs(l[t-1])^powTrend+locTrendFract*b[t-1], 
-			sigma*fabs(l[t-1])^powx+ offsetSigma);
+		y[t] ~ student_t(nu, l[t-1]+coefTrend*l[t-1]^powTrend+locTrendFract*b[t-1], 
+			sigma*l[t-1]^powx+ offsetSigma);
 	}
 }
 
