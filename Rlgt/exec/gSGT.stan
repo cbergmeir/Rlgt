@@ -29,7 +29,7 @@ parameters {
 transformed parameters {
   vector<lower=0>[N] l;
   vector<lower=0>[N+SEASONALITY] s;
-  real <lower=MIN_TREND_POW,upper=MAX_TREND_POW> globTrendPow;
+  real <lower=MIN_POW_TREND,upper=MAX_POW_TREND> globTrendPow;
   
   for (i in 1:SEASONALITY) 
     s[i] = initSu[i];
