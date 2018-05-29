@@ -24,9 +24,9 @@ parameters {
 } 
 transformed parameters {
 	real <lower=MIN_POW_TREND,upper=MAX_POW_TREND>powTrend;
-	vector[N] l;
-	vector[N] expVal; 
-	vector[N] smoothedInnovSize;
+	vector<lower=0>[N] l;
+	vector<lower=0>[N] expVal; 
+	vector<lower=0>[N] smoothedInnovSize;
 	vector[SEASONALITY] inits;
 	vector[N+SEASONALITY] s;
 	real sumsu;
@@ -58,10 +58,10 @@ model {
 	offsetSigma ~ cauchy(MIN_SIGMA,CAUCHY_SD) T[MIN_SIGMA,];	
 	coefTrend ~ cauchy(0, CAUCHY_SD);
 	powTrendBeta ~ beta(POW_TREND_ALPHA, POW_TREND_BETA);
-  innovSizeInit~ normal(0,CAUCHY_SD) T[0,];
+  	innovSizeInit~ normal(0,CAUCHY_SD) T[0,];
 
 	for (t in 1:SEASONALITY) {
-		initSu[t] ~ normal (1, 0.3) T[0.01,];
+		initSu[t] ~ cauchy (1, 0.3) T[0.01,];
 	}
 	
 	for (t in 2:N) {

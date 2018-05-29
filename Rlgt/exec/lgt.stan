@@ -20,7 +20,7 @@ parameters {
 	real <lower=0,upper=1> powTrendBeta;
 	real coefTrend;
 	real <lower=MIN_SIGMA> offsetSigma;
-	real <lower=0.8,upper=0.98> locTrendFract;
+	real <lower=0,upper=1> locTrendFract;
 } 
 transformed parameters {
 	real <lower=MIN_POW_TREND,upper=MAX_POW_TREND>powTrend;
@@ -40,8 +40,8 @@ model {
 	offsetSigma ~ cauchy(MIN_SIGMA,CAUCHY_SD) T[MIN_SIGMA,];
 	coefTrend ~ cauchy(0,CAUCHY_SD);
 	powTrendBeta ~ beta(POW_TREND_ALPHA, POW_TREND_BETA);
-  powx ~ beta(POW_SIGMA_ALPHA, POW_SIGMA_BETA);
-  bInit ~ normal(0,CAUCHY_SD);
+	powx ~ beta(POW_SIGMA_ALPHA, POW_SIGMA_BETA);
+	bInit ~ normal(0,CAUCHY_SD);
 	
 	for (t in 2:N) {
 		y[t] ~ student_t(nu, l[t-1]+coefTrend*l[t-1]^powTrend+locTrendFract*b[t-1], 

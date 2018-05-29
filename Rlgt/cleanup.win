@@ -7,7 +7,7 @@ sed -i.bak '/current_statement_begin__ = [0-9]/d' src/include/models.hpp
 cat src/*.cc > src/Modules.cpp
 rm src/*.cc
 "${R_HOME}/bin/R" --vanilla --slave -e 'roxygen2::roxygenize(clean = TRUE)'
-sed -i -e 's/\".registration=TRUE\"/.registration=TRUE/' NAMESPACE
+#sed -i.bak -e 's/\".registration=TRUE\"/.registration=TRUE/' NAMESPACE
 exit $?
 
 

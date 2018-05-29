@@ -33,7 +33,9 @@
 #' @export
 fit.lgt <- function(y, model=c("LGT", "SGT", "LGTe", "SGTe", "Trend", "Dampen", "SDampen"), 
   control=lgt.control(), nChains=2, nCores=2, addJitter=TRUE, verbose=FALSE) {
-  
+
+	modelIsSeasonal=model %in% c("SGT", "SGTe","SDampen")
+
   if(!inherits(model, "RlgtStanModel")) {
     model <- initModel(model)
   }
@@ -57,8 +59,11 @@ fit.lgt <- function(y, model=c("LGT", "SGT", "LGTe", "SGTe", "Trend", "Dampen", 
   
   SEASONALITY=control$SEASONALITY
   #' @importFrom stats frequency
-  if (frequency(y)>1) SEASONALITY=frequency(y) #good idea?
-  
+  if (SEASONALITY<=1 && frequency(y)>1 && modelIsSeasonal) {
+		SEASONALITY=frequency(y)
+		print(paste0("Seasonality not specified, but the data is seasonal. Inferring seasonality equal to ",SEASONALITY))
+	}
+	
   data <- list(CAUCHY_SD=CauchySd, SEASONALITY=SEASONALITY,
     MIN_POW_TREND=control$MIN_POW_TREND, 
     MAX_POW_TREND=control$MAX_POW_TREND, 
