@@ -169,6 +169,12 @@ forecast.lgt <- function(object, h=ifelse(frequency(object$x)>1, 2*frequency(obj
           bS= bSmS*(currLevel-prevLevel)+(1-bSmS)*bS #but bSmS and bS may be==0 so then noop
           prevLevel=currLevel
         } 
+        
+        if (inherits(object$model, "RlgtStanModelLGT2")) {
+          bS= bSmS*(currLevel-prevLevel)+(1-bSmS)*coefTrendS*bS #but bSmS and bS may be==0 so then noop
+          prevLevel=currLevel
+        } 
+        
       } #through horizons
       # yf[irun,]
     }

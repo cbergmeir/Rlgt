@@ -11,7 +11,7 @@ forecast_dampen <- list()
 
 
 #length(M3.data)
-for (iter in 1:1) {
+for (iter in 1:length(M3.data)) {
   data.train <- M3.data[[iter]]$x
   data.test <- M3.data[[iter]]$xx
   rstanmodel <- fit.dampen(data.train, model="Dampen", nCores=1, nChains=4,
@@ -40,6 +40,6 @@ for (iter in 1:1) {
 
 #saveRDS(c(forecast_dampen, forecast_sdampen), "result1.rds")
 
-myPath <- "/home/ubuntu/Documents/Experiment/"
+myPath <- "/home/rwinwibowo/Documents/Experiments"
 
-saveRDS(forecast_dampen, file.path(myPath, "dampen.rds"))
+saveRDS(forecast_dampen, file.path(myPath, "dampenall.rds"))

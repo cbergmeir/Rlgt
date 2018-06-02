@@ -19,13 +19,21 @@ initModel <- function(modelType = NULL){
   
   model <- list()
   
-  if(modelType=="LGT") {
+  if(modelType=="LGT"  {
     #Non-Seasonal Local Global Trend model
     model[["parameters"]] <- c("l", "b", "nu", "sigma", "levSm",  "bSm", 
       "powx", "coefTrend",  "powTrend", "offsetSigma", "locTrendFract")
     
     model[["model"]] <- stanmodels$lgt
     class(model) <- c("RlgtStanModelLGT")
+  }
+  else if(modelType=="LGT2"  {
+    #Non-Seasonal Local Global Trend model
+    model[["parameters"]] <- c("l", "b", "nu", "sigma", "levSm",  "bSm", 
+                               "powx", "coefTrend",  "powTrend", "offsetSigma", "locTrendFract")
+    
+    model[["model"]] <- stanmodels$lgt2
+    class(model) <- c("RlgtStanModelLGT2")
   }
   else if (modelType=="Dampen") {
     #dampen ETS fitted with Bayesian method

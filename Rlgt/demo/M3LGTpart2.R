@@ -11,18 +11,18 @@ forecast_lgt <- list()
 
 iter<-1
 
-for (iter in 172:400) {
+for (iter in 401:length(M3.data)) {
   data.train <- M3.data[[iter]]$x
   data.test <- M3.data[[iter]]$xx
-  rstanmodel <- fit.lgt(data.train, model="LGT", nCores=2, nChains=4,
-                          control=lgt.control(MAX_NUM_OF_REPEATS=10, NUM_OF_ITER=1000), 
-                          verbose=FALSE)
+  rstanmodel <- fit.lgt(data.train, model="LGT", nCores=1, nChains=4,
+                        control=lgt.control(MAX_NUM_OF_REPEATS=10, NUM_OF_ITER=1000), 
+                        verbose=FALSE)
   sizeTestSet <- length(data.test)
   forecast_lgt[[iter]] <- forecast(rstanmodel, h = sizeTestSet, level=c(80, 95, 98))$mean
 }
 
 
 
-myPath <- "/home/rwinwibowo/Documents/Experiments"
+myPath <- "/home/ubuntu/Documents/Experiment"
 
-saveRDS(forecast_lgt, file.path(myPath, "lgt3a.rds"))
+saveRDS(forecast_lgt, file.path(myPath, "lgt4.rds"))
