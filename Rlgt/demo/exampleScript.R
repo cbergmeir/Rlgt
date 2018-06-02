@@ -1,6 +1,6 @@
 
 library("Mcomp")
-library("Rlgt2")
+library("Rlgt")
 M3.data <- subset(M3,"yearly")
 
 set.seed(12)
@@ -64,7 +64,7 @@ data.train <- M3.data[[curr_series]]$x
 
 ##--------------------------------
 ##Fit SGT model
-mod[["sgt"]] <- fit.lgt(data.train, model="SGT", nCores=4, nChains=4,
+mod[["sgt"]] <- fit.lgt(data.train, model="SGT2", nCores=2, nChains=4,
 		control=lgt.control(MAX_NUM_OF_REPEATS=2), 
 		verbose=TRUE)
 forecasts[["sgt"]] <- forecast(mod[["sgt"]], h = sizeTestSet, level=c(80, 95, 98))

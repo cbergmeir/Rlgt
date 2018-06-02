@@ -1,6 +1,7 @@
-// Non-Seasonal Local Global Trend (LGT) algorithm
+// Seasonal Global Trend (SGT) algorithm
 
 data {  
+	int<lower=2> SEASONALITY;
 	real<lower=0> CAUCHY_SD;
 	real MIN_POW_TREND;  real MAX_POW_TREND;
 	real<lower=0> MIN_SIGMA;
@@ -14,38 +15,48 @@ parameters {
 	real<lower=MIN_NU,upper=MAX_NU> nu; 
 	real<lower=0> sigma;
 	real <lower=0,upper=1>levSm;
-	real <lower=0,upper=1> bSm;
-	real <lower=0,upper=1> powx;
-	real bInit;
+	real <lower=0,upper=1>sSm;
+	real <lower=0,upper=1>powx;
 	real <lower=0,upper=1> powTrendBeta;
 	real coefTrend;
 	real <lower=MIN_SIGMA> offsetSigma;
-	real <lower=-1,upper=1> locTrendFract;
+	vector[SEASONALITY] initSu; //unnormalized
 } 
 transformed parameters {
 	real <lower=MIN_POW_TREND,upper=MAX_POW_TREND>powTrend;
 	vector<lower=0>[N] l;
-	vector[N] b;
+	vector<lower=0>[N+SEASONALITY] s;
+	real sumsu;
 	
-	l[1] = y[1]; b[1] = bInit;
+	sumsu = 0;
+	for (i in 1:SEASONALITY) 
+		sumsu = sumsu+ initSu[i];
+	for (i in 1:SEASONALITY) 
+		s[i] = initSu[i]*SEASONALITY/sumsu;
+	s[SEASONALITY+1] = s[1];
+	
+	l[1] = y[1]/s[1];
 	powTrend= (MAX_POW_TREND-MIN_POW_TREND)*powTrendBeta+MIN_POW_TREND;
 	
 	for (t in 2:N) {
-		l[t]  = levSm*y[t] + (1-levSm)*l[t-1] ;
-		b[t]  = bSm*(l[t]-l[t-1]) + (1-bSm)*b[t-1] ;
+		l[t]  = levSm*y[t]/(s[t]) + (1-levSm)*(l[t-1]+ coefTrend*l[t-1]^powTrend) ;  
+		s[t+SEASONALITY] = sSm*y[t]/l[t]+(1-sSm)*s[t];
 	}
 }
 model {
+	real expVal;
+
 	sigma ~ cauchy(0,CAUCHY_SD) T[0,];
-	offsetSigma ~ cauchy(MIN_SIGMA,CAUCHY_SD) T[MIN_SIGMA,];
-	coefTrend ~ cauchy(0,CAUCHY_SD);
+	offsetSigma ~ cauchy(MIN_SIGMA,CAUCHY_SD) T[MIN_SIGMA,];	
+	coefTrend ~ cauchy(0, CAUCHY_SD);
 	powTrendBeta ~ beta(POW_TREND_ALPHA, POW_TREND_BETA);
 	powx ~ beta(POW_SIGMA_ALPHA, POW_SIGMA_BETA);
-	bInit ~ normal(0,CAUCHY_SD);
+
+	for (t in 1:SEASONALITY)
+		initSu[t] ~ cauchy (1, 0.3) T[0.01,];
 	
 	for (t in 2:N) {
-		y[t] ~ student_t(nu, l[t-1]+coefTrend*l[t-1]^powTrend+locTrendFract*b[t-1], 
-			sigma*l[t-1]^powx+ offsetSigma);
+	  expVal = (l[t-1]+ coefTrend*l[t-1]^powTrend)*s[t];
+	  y[t] ~ student_t(nu, expVal, sigma*expVal^powx+ offsetSigma);
 	}
 }
-

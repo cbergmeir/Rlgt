@@ -121,7 +121,7 @@ forecast.lgt <- function(object, h=ifelse(frequency(object$x)>1, 2*frequency(obj
     }
     
     #t=1
-    if (SEASONALITY>1) {
+    if (SEASONALITY>1) { #seasonal
       sS[1:SEASONALITY]=s[indx,(ncol(s)-SEASONALITY+1):ncol(s)]
       for (t in 1:h) {
         seasonA=sS[t]
@@ -142,8 +142,12 @@ forecast.lgt <- function(object, h=ifelse(frequency(object$x)>1, 2*frequency(obj
         yf[irun,t]=min(MAX_VAL,max(MIN_VAL,expVal+error))
         
         # find the currLevel
-        currLevel=max(MIN_VAL,levSmS*yf[irun,t]/seasonA + (1-levSmS)*prevLevel) ;
-        
+        if (inherits(object$model, "RlgtStanModelSGT2")) {
+          currLevel=max(MIN_VAL,levSmS*yf[irun,t]/seasonA + (1-levSmS)*expVal/seasonA) ;
+        }
+        else{
+          currLevel=max(MIN_VAL,levSmS*yf[irun,t]/seasonA + (1-levSmS)*prevLevel) ;
+        }
         if (currLevel>MIN_VAL) {
           prevLevel=currLevel
         } 
@@ -163,14 +167,22 @@ forecast.lgt <- function(object, h=ifelse(frequency(object$x)>1, 2*frequency(obj
         error=rst(n=1, xi=0, omega=omega, alpha=0, nu=nuS)
         
         yf[irun,t]=min(MAX_VAL,max(MIN_VAL, expVal+error))
-        currLevel=max(MIN_VAL,levSmS*yf[irun,t] + (1-levSmS)*prevLevel) ;
         
-        if (currLevel>MIN_VAL) {
+        ## update level equation
+        if (inherits(object$model, "RlgtStanModelLGT2")) {
+        currLevel=max(MIN_VAL,levSmS*yf[irun,t] + (1-levSmS)*expVal) ;
+        }
+        else {
+        currLevel=max(MIN_VAL,levSmS*yf[irun,t] + (1-levSmS)*prevLevel) ;
+        }
+        
+        ## update trend equations
+        if (currLevel>MIN_VAL & !inherits(object$model, "RlgtStanModelLGT2")) {
           bS= bSmS*(currLevel-prevLevel)+(1-bSmS)*bS #but bSmS and bS may be==0 so then noop
           prevLevel=currLevel
         } 
         
-        if (inherits(object$model, "RlgtStanModelLGT2")) {
+        else if (currLevel>MIN_VAL){
           bS= bSmS*(currLevel-prevLevel)+(1-bSmS)*coefTrendS*bS #but bSmS and bS may be==0 so then noop
           prevLevel=currLevel
         } 

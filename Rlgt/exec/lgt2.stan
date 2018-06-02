@@ -30,8 +30,8 @@ transformed parameters {
 	powTrend= (MAX_POW_TREND-MIN_POW_TREND)*powTrendBeta+MIN_POW_TREND;
 	
 	for (t in 2:N) {
-		l[t]  = levSm*y[t] + (1-levSm)*l[t-1] ;
-		b[t]  = bSm*(l[t]-l[t-1]) + (1-bSm)*locTrendFract*b[t-1] ;
+		l[t]  = levSm*y[t] + (1-levSm)*(l[t-1]+coefTrend*fabs(l[t-1])^powTrend+locTrendFract*b[t-1]) ;
+		b[t]  = bSm*(l[t]-l[t-1]-coefTrend*fabs(l[t-1])^powTrend) + (1-bSm)*locTrendFract*b[t-1] ;
 	}
 }
 model {

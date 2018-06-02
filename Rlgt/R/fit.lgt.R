@@ -31,10 +31,10 @@
 #' @importMethodsFrom rstan summary
 #' @importFrom sn rst
 #' @export
-fit.lgt <- function(y, model=c("LGT", "SGT", "LGTe", "SGTe", "Trend", "Dampen", "SDampen"), 
+fit.lgt <- function(y, model=c("LGT", "SGT", "LGT2", "SGT2", "LGTe", "SGTe", "Trend", "Dampen", "SDampen"), 
   control=lgt.control(), nChains=2, nCores=2, addJitter=TRUE, verbose=FALSE) {
 
-	modelIsSeasonal=model %in% c("SGT", "SGTe","SDampen")
+	modelIsSeasonal=model %in% c("SGT", "SGT2", "SGTe","SDampen")
 
   if(!inherits(model, "RlgtStanModel")) {
     model <- initModel(model)
