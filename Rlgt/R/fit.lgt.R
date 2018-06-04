@@ -3,7 +3,7 @@
 #' 
 #' @title Runs the model fitting
 #' @param y the time series
-#' @param model a stan model
+#' @param model a Stan model
 #' @param control control arguments list
 #' @param nChains number of MCMC chains . Must >=1. Perhaps optimal number is 4.
 #' @param nCores number of cores to be used. For performance reasons it should be equal to nChains, 
@@ -31,10 +31,10 @@
 #' @importMethodsFrom rstan summary
 #' @importFrom sn rst
 #' @export
-fit.lgt <- function(y, model=c("LGT", "SGT", "LGT2", "SGT2", "LGTe", "SGTe", "Trend", "Dampen", "SDampen"), 
+fit.lgt <- function(y, model=c("LGT", "LGTe", "SGT", "S2GT", "SGTe", "gSGT", "Trend", "Dampen", "SDampen"), 
   control=lgt.control(), nChains=2, nCores=2, addJitter=TRUE, verbose=FALSE) {
 
-	modelIsSeasonal=model %in% c("SGT", "SGT2", "SGTe","SDampen")
+	modelIsSeasonal=model %in% c("SGT", "S2GT", "SGTe", "gSGT","SDampen")
 
   if(!inherits(model, "RlgtStanModel")) {
     model <- initModel(model)
@@ -70,8 +70,8 @@ fit.lgt <- function(y, model=c("LGT", "SGT", "LGT2", "SGT2", "LGTe", "SGTe", "Tr
     MIN_SIGMA=control$MIN_SIGMA,  
     MIN_NU=control$MIN_NU,  
     MAX_NU=control$MAX_NU, 
-    POW_SIGMA_ALPHA=control$POW_SIGMA_ALPHA, 
-    POW_SIGMA_BETA=control$POW_SIGMA_BETA,
+    POW_SEASON_ALPHA=control$POW_SEASON_ALPHA, 
+    POW_SEASON_BETA=control$POW_SEASON_BETA,
     POW_TREND_ALPHA=control$POW_TREND_ALPHA, 
     POW_TREND_BETA=control$POW_TREND_BETA,
     y=y, N=n, SKEW=control$SKEW) # to be passed on to Stan

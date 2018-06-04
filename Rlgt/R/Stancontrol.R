@@ -19,9 +19,9 @@
 #' @param POW_TREND_ALPHA Alpha parameter of Beta distribution that is the prior of the power coefficient in the formula of trend parameter.
 #' To make the forecast more curved, make it larger. Suggested range(1,6)
 #' @param	POW_TREND_BETA Beta parameter of Beta distribution that is the prior of the power of trend parameter. 1 by default, see also above.
-#' @param	POW_SIGMA_ALPHA Alpha parameter of Beta distribution that is the prior of the power coefficient in the formula of the error size. 1 by default, see also below.
-#' @param	POW_SIGMA_BETA Beta parameter of Beta distribution that is the prior of the power coefficient in the formula of the error size.
-#' If the powSigma fitted is considered too often too high (i.e.> 0.7) you can attempt to tame it down by increasing POW_SIGMA_BETA.  Suggested range(1,4).
+#' @param	POW_SEASON_ALPHA Alpha parameter of Beta distribution that is the prior of the power coefficient in the formula of the generalized seasonality in gSGT model. 1 by default, see also below.
+#' @param	POW_SEASON_BETA Beta parameter of Beta distribution that is the prior of the power coefficient in the formula of the generalized seasonality in gSGT model. 1 by default.
+#' To push the seasonality to resemble more multiplicative seasonality, encourage larger power coefficient by increasing POW_SEASON_ALPHA, say, to 3 or 5.
 #' ADAPT_DELTA Target Metropolis acceptance rate. See Stan manual. Suggested range (0.8-0.97). 
 #' MAX_TREE_DEPTH NUTS maximum tree depth. See Stan manual. Suggested range (10-12).
 #' @param	SEASONALITY E.g. 12 for monthly seasonality. 1 for non-seasonal models
@@ -45,8 +45,8 @@ lgt.control <- function(
   MAX_POW_TREND=1,
   POW_TREND_ALPHA=1,
   POW_TREND_BETA=1,
-  POW_SIGMA_ALPHA=1,  
-  POW_SIGMA_BETA=1, 
+  POW_SEASON_ALPHA=1,  
+  POW_SEASON_BETA=1, 
   ADAPT_DELTA=0.9, 
   MAX_TREE_DEPTH=11,
   SEASONALITY=1,
@@ -64,8 +64,8 @@ lgt.control <- function(
     MAX_POW_TREND=MAX_POW_TREND,
     POW_TREND_ALPHA=POW_TREND_ALPHA,
     POW_TREND_BETA=POW_TREND_BETA,
-    POW_SIGMA_ALPHA=POW_SIGMA_ALPHA,
-    POW_SIGMA_BETA=POW_SIGMA_BETA,
+    POW_SEASON_ALPHA=POW_SEASON_ALPHA,
+    POW_SEASON_BETA=POW_SEASON_BETA,
     ADAPT_DELTA=ADAPT_DELTA,
     MAX_TREE_DEPTH=MAX_TREE_DEPTH,
     SEASONALITY=SEASONALITY,

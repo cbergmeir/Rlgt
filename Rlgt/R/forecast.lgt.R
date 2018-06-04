@@ -9,7 +9,6 @@
 #' @param MIN_VAL Minimum value the forecast can take. Must be positive.
 #' @param MAX_VAL Maximum value the forecast can take.
 #' @param ... description
-#' @returnType forecast
 #' @return returns a forecast object compatible with the forecast package
 #' @S3method forecast lgt
 #' @method forecast lgt
