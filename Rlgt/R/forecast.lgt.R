@@ -205,7 +205,7 @@ forecast.lgt <- function(object, h=ifelse(frequency(object$x)>1, 2*frequency(obj
         } 
         
         else if (currLevel>MIN_VAL){
-          bS= bSmS*(currLevel-prevLevel)+(1-bSmS)*coefTrendS*bS #but bSmS and bS may be==0 so then noop
+          bS= bSmS*(currLevel-prevLevel)+(1-bSmS)*locTrendFractS*bS #but bSmS and bS may be==0 so then noop
           prevLevel=currLevel
         } 
         

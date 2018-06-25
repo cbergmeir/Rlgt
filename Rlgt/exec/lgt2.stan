@@ -20,7 +20,7 @@ parameters {
 	real <lower=0,upper=1> powTrendBeta;
 	real coefTrend;
 	real <lower=MIN_SIGMA> offsetSigma;
-	real <lower=0.8,upper=0.98> locTrendFract;
+	real <lower=-1,upper=1> locTrendFract;
 } 
 transformed parameters {
 	real <lower=MIN_POW_TREND,upper=MAX_POW_TREND>powTrend;

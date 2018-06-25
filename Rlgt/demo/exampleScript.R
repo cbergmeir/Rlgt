@@ -31,7 +31,7 @@ forecasts <- list()
 #
 #options(error=recover)
 #
-mod[["lgt"]] <- fit.lgt(data.train, model="LGT", nCores=4, nChains=4,
+mod[["lgt"]] <- fit.lgt(data.train, model="LGT2", nCores=4, nChains=4,
     control=lgt.control(MAX_NUM_OF_REPEATS=1, NUM_OF_ITER=2000), 
     verbose=TRUE)
 forecasts[["lgt"]] <- forecast(mod[["lgt"]], h = sizeTestSet, level=c(80, 95, 98))

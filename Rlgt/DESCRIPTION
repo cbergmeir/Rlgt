@@ -4,8 +4,10 @@ Title: LGT Package
 Version: 0.0-1
 URL: TODO
 Date: 
-Author: Slawek Smyl, Christoph Bergmeir, Erwin Wibowo
-Maintainer: Christoph Bergmeir <christoph.bergmeir@gmail.com>
+Authors@R: c(
+    person("Slawek", "Smyl", email = "slaweks@hotmail.co.uk", role = "aut"),
+    person("Christoph", "Bergmeir", email = "christoph.bergmeir@gmail.com", role = c("aut", "cre")),
+    person("Erwin", "Wibowo", email = "rwinwibowo@gmail.com", role = "aut"))
 Description: An implementation of various Bayesian Exponential Smoothing models
     as described in the paper by Smyl.These models include LGT (Local-Global Trend),
     SGT (Seasonal Global Trend), and their variations. The Bayesian model fitting is
