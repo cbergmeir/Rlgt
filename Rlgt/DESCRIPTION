@@ -1,17 +1,17 @@
 Package: Rlgt
 Type: Package
-Title: LGT Package
+Title: Innovative Bayesian Exponential Smoothing Models with Trend Modifications
 Version: 0.0-1
 URL: TODO
 Date: 
 Authors@R: c(
     person("Slawek", "Smyl", email = "slaweks@hotmail.co.uk", role = "aut"),
-    person("Christoph", "Bergmeir", email = "christoph.bergmeir@gmail.com", role = c("aut", "cre")),
-    person("Erwin", "Wibowo", email = "rwinwibowo@gmail.com", role = "aut"))
-Description: An implementation of various Bayesian Exponential Smoothing models
-    as described in the paper by Smyl.These models include LGT (Local-Global Trend),
-    SGT (Seasonal Global Trend), and their variations. The Bayesian model fitting is
-    based on RStan package.
+    person("Christoph", "Bergmeir", email = "christoph.bergmeir@monash.edu", role = c("aut", "cre")),
+    person("Erwin", "Wibowo", email = "rwinwibowo@gmail.com", role = "aut"),
+    person("To Wang", "Ng", email = "edwinnglabs@gmail.com", role = "aut"))
+Description: An implementation of various innovative Bayesian ETS models which have been found to outperform all of the original models in M3-competition.
+    These models include LGT (Local-Global Trend), SGT (Seasonal Global Trend), and their variations. The Bayesian model fitting is
+    based on RStan package. Detailed information can be found on ...
 License: GPL-3
 Depends:
     R (>= 3.0.2),
