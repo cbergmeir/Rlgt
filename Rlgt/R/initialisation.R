@@ -43,6 +43,14 @@ initModel <- function(modelType = NULL){
 		model[["model"]] <- stanmodels$sgt
 		class(model) <- c("RlgtStanModelSGT")
 	} 
+	else if(modelType=="gSGT") {
+		#generalized Seasonality Global Trend model
+		model[["parameters"]] <- c("l", "s", "sSm","nu", "sigma", "levSm", 
+				"powx", "coefTrend", "powTrend", "offsetSigma", "powSeason")
+		
+		model[["model"]] <- stanmodels$gSGT
+		class(model) <- c("RlgtStanModelgSGT")
+	} 
 	else if(modelType=="S2GT")  {
 		#Non-Seasonal Local Global Trend model
 		model[["parameters"]] <- c("l", "s", "sSm", "s2", "s2Sm", "nu", "sigma", "levSm", 
@@ -106,16 +114,15 @@ initModel <- function(modelType = NULL){
 #' @description Another building block: a constructor function for the "lgt" class
 #' @param y the time series data
 #' @param lgtmodel type of lgtmodel selected
-#' @param params list of parameters
-#' @param paramMean mean of each parameter
-#' @param seasonality number of seasons, 1 for annual
+#' @param params list of parameters of the models (to be fitted)
+#' @param control list of control parameters (chosen by the user)
 #' @param samples stanfit object representing the MCMC samples
 #' @return lgt instance
 
-lgt <- function(y,lgtmodel,params, paramMean, seasonality, samples) {
+lgt <- function(y,lgtmodel,params, control, samples) {
 	# we can add our own integrity checks
 	
-	value <- list(x = y, model = lgtmodel, params = params, paramMeans=paramMean, SEASONALITY=seasonality, samples=samples)
+	value <- list(x = y, model = lgtmodel, params = params, control=control, samples=samples)
 	
 	# class can be set using class() or attr() function
 	attr(value, "class") <- "lgt"

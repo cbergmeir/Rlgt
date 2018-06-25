@@ -24,12 +24,8 @@
 #' To push the seasonality to resemble more multiplicative seasonality, encourage larger power coefficient by increasing POW_SEASON_ALPHA, say, to 3 or 5.
 #' ADAPT_DELTA Target Metropolis acceptance rate. See Stan manual. Suggested range (0.8-0.97). 
 #' MAX_TREE_DEPTH NUTS maximum tree depth. See Stan manual. Suggested range (10-12).
-#' @param	SEASONALITY E.g. 12 for monthly seasonality. 1 for non-seasonal models
-#' @param	SKEW Skew of error distribution used by manually-skewed models. 0 be default. 
-#' @param MAX_TREE_DEPTH Description
-#' @param ADAPT_DELTA Description
-#' Setting it negative makes negative innovations having smaller impact on the fitting than the positive ones,
-#' which would have the effect of making a model "more optimistic". Suggested range (-0.5, 0.5).
+#' @param	SEASONALITY E.g. 24 for hourly seasonality. Used only by seasonal models.
+#' @param	SEASONALITY2 E.g. 168 for hourly seasonality. Used only by dual-seasonality models.
 #' @returnType list
 #' @return list of control parameters
 #' @export
@@ -50,7 +46,7 @@ lgt.control <- function(
   ADAPT_DELTA=0.9, 
   MAX_TREE_DEPTH=11,
   SEASONALITY=1,
-  SKEW=0 
+	SEASONALITY2=1
 ) {
   
   list(CAUCHY_SD_DIV=CAUCHY_SD_DIV,
@@ -69,6 +65,6 @@ lgt.control <- function(
     ADAPT_DELTA=ADAPT_DELTA,
     MAX_TREE_DEPTH=MAX_TREE_DEPTH,
     SEASONALITY=SEASONALITY,
-    SKEW=SKEW
+		SEASONALITY2=SEASONALITY2
   )
 }

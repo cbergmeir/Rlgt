@@ -1,4 +1,4 @@
-// Non-Seasonal Local Global Trend (LGT) algorithm
+// non-seasonal Local and Global Trend (LGT) algorithm
 
 data {  
 	real<lower=0> CAUCHY_SD;
@@ -8,7 +8,6 @@ data {
 	int<lower=1> N;
 	vector<lower=0>[N] y;
 	real<lower=0> POW_TREND_ALPHA; real<lower=0> POW_TREND_BETA; 
-	real<lower=0> POW_SIGMA_ALPHA; real<lower=0> POW_SIGMA_BETA; 
 }
 parameters {
 	real<lower=MIN_NU,upper=MAX_NU> nu; 
@@ -20,7 +19,7 @@ parameters {
 	real <lower=0,upper=1> powTrendBeta;
 	real coefTrend;
 	real <lower=MIN_SIGMA> offsetSigma;
-	real <lower=-1,upper=1> locTrendFract;
+	real <lower=0,upper=1> locTrendFract;
 } 
 transformed parameters {
 	real <lower=MIN_POW_TREND,upper=MAX_POW_TREND>powTrend;
@@ -31,7 +30,7 @@ transformed parameters {
 	powTrend= (MAX_POW_TREND-MIN_POW_TREND)*powTrendBeta+MIN_POW_TREND;
 	
 	for (t in 2:N) {
-		l[t]  = levSm*y[t] + (1-levSm)*l[t-1] ;
+		l[t]  = levSm*y[t] + (1-levSm)*l[t-1] ;  //E(y[t])=l[t]=l[t-1]+coefTrend*l[t-1]^powTrend+locTrendFract*b[t-1]
 		b[t]  = bSm*(l[t]-l[t-1]) + (1-bSm)*b[t-1] ;
 	}
 }
@@ -40,7 +39,6 @@ model {
 	offsetSigma ~ cauchy(MIN_SIGMA,CAUCHY_SD) T[MIN_SIGMA,];
 	coefTrend ~ cauchy(0,CAUCHY_SD);
 	powTrendBeta ~ beta(POW_TREND_ALPHA, POW_TREND_BETA);
-	powx ~ beta(POW_SIGMA_ALPHA, POW_SIGMA_BETA);
 	bInit ~ normal(0,CAUCHY_SD);
 	
 	for (t in 2:N) {
@@ -48,4 +46,3 @@ model {
 			sigma*l[t-1]^powx+ offsetSigma);
 	}
 }
-

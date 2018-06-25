@@ -1,4 +1,4 @@
-// Dual Seasonal Global Trend (SGT) algorithm
+// Dual Seasonal Global Trend (S2GT) algorithm
 
 data {  
 	int<lower=2> SEASONALITY;
@@ -10,7 +10,6 @@ data {
 	int<lower=1> N;
 	vector<lower=0>[N] y;
 	real<lower=0> POW_TREND_ALPHA; real<lower=0> POW_TREND_BETA; 
-	real<lower=0> POW_SIGMA_ALPHA; real<lower=0> POW_SIGMA_BETA; 
 }
 parameters {
 	real<lower=MIN_NU,upper=MAX_NU> nu; 
@@ -44,7 +43,7 @@ transformed parameters {
 		sumsu = sumsu+ initSu2[i];
 	for (i in 1:SEASONALITY2) 
 		s2[i] = initSu2[i]*SEASONALITY2/sumsu;
-	s2[SEASONALITY+1] = s2[1];
+	s2[SEASONALITY2+1] = s2[1];
 	
 	l[1] = y[1]/(s[1]*s2[1]);
 	powTrend= (MAX_POW_TREND-MIN_POW_TREND)*powTrendBeta+MIN_POW_TREND;
@@ -62,7 +61,6 @@ model {
 	offsetSigma ~ cauchy(MIN_SIGMA,CAUCHY_SD) T[MIN_SIGMA,];	
 	coefTrend ~ cauchy(0, CAUCHY_SD);
 	powTrendBeta ~ beta(POW_TREND_ALPHA, POW_TREND_BETA);
-	powx ~ beta(POW_SIGMA_ALPHA, POW_SIGMA_BETA);
 
 	for (t in 1:SEASONALITY)
 		initSu[t] ~ cauchy (1, 0.3) T[0.01,];

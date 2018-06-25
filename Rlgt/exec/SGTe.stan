@@ -1,4 +1,4 @@
-// Seasonal Global Trend (SGTe) algorithm, smoothed error size
+// Seasonal Global Trend algorithm, using smoothed Error size (SGTe)
 
 data {  
 	int<lower=2> SEASONALITY;
@@ -27,7 +27,6 @@ transformed parameters {
 	vector<lower=0>[N] l;
 	vector<lower=0>[N] expVal; 
 	vector<lower=0>[N] smoothedInnovSize;
-	vector[SEASONALITY] inits;
 	vector[N+SEASONALITY] s;
 	real sumsu;
 	
@@ -36,18 +35,14 @@ transformed parameters {
 	for (i in 1:SEASONALITY) 
 		sumsu = sumsu+ initSu[i];
 	for (i in 1:SEASONALITY) 
-		inits[i] = initSu[i]*SEASONALITY/sumsu;
-	
-	for (i in 1:SEASONALITY) {
-		s[i] = inits[i];
-	}
-	s[SEASONALITY+1] = inits[1];
+		s[i] = initSu[i]*SEASONALITY/sumsu;
+	s[SEASONALITY+1] = s[1];
 	
 	l[1] = y[1]/s[1];
 	powTrend= (MAX_POW_TREND-MIN_POW_TREND)*powTrendBeta+MIN_POW_TREND;
 	
 	for (t in 2:N) {
-		expVal[t]=(l[t-1]+ coefTrend*fabs(l[t-1])^powTrend)*s[t];
+		expVal[t]=(l[t-1]+ coefTrend*l[t-1]^powTrend)*s[t];
 		smoothedInnovSize[t]=innovSm*fabs(y[t]-expVal[t])/s[t]+(1-innovSm)*smoothedInnovSize[t-1];
 		l[t] = levSm*y[t]/(s[t]) + (1-levSm)*l[t-1] ;  
 		s[t+SEASONALITY] = sSm*y[t]/l[t]+(1-sSm)*s[t];

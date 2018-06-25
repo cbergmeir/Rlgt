@@ -1,5 +1,5 @@
-# Test lgt - M3 yearly data
-# If you let it run  full course, you should see a very good result :-)
+# Test SGT - M3 quarterly data
+# If you let it run  full course, you should see a good result :-)
 
 library("Mcomp")
 library("Rlgt")
@@ -7,7 +7,7 @@ library("Rlgt")
 
 options(width=180)
 
-M3.data <- subset(M3,"yearly")
+M3.data <- subset(M3,"quarterly")
 M3.data <- sample(M3.data) #shuffle
 
 quantileLoss<-function(forec, actual, tau) {
@@ -22,9 +22,9 @@ for (iter in 1:length(M3.data)) {
 	series=M3.data[[iter]]$sn
   data.train <- M3.data[[iter]]$x
   data.test <- M3.data[[iter]]$xx
-  rstanmodel <- fit.lgt(data.train, model="LGT", nCores=4, nChains=4,
-                          control=lgt.control(MAX_NUM_OF_REPEATS=3, NUM_OF_ITER=5000), 
-                          verbose=FALSE)
+  rstanmodel <- fit.lgt(data.train, model="SGT", nCores=4, nChains=4,
+                          control=lgt.control(SEASONALITY=4, MAX_NUM_OF_REPEATS=3, NUM_OF_ITER=5000), 
+                          verbose=TRUE)
 	forec= forecast(rstanmodel, h = length(data.test), level=c(90,98))
 	
 	sMAPE=mean(abs(forec$median-data.test)/(forec$median+data.test))*200

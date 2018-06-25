@@ -60,7 +60,8 @@ forecast.lgt <- function(object, h=ifelse(frequency(object$x)>1, 2*frequency(obj
   
   quantiles=percentiles/100.
   
-  SEASONALITY <- object$SEASONALITY 
+  SEASONALITY <- object$control$SEASONALITY
+	SEASONALITY2 <- object$control$SEASONALITY2
   
   out <- list(model=object,x=object$x)
   #' @importFrom stats tsp
@@ -79,16 +80,20 @@ forecast.lgt <- function(object, h=ifelse(frequency(object$x)>1, 2*frequency(obj
   lastB <- object$params[["lastB"]]
   lastSmoothedInnovSize <- object$params[["lastSmoothedInnovSize"]]
   powx <- object$params[["powx"]]
-  s <- object$params[["s"]]
   
   nuS=Inf; bSmS=0; bS=0; locTrendFractS=0;  #these initializations are important, do not remove. 
   #t=1; irun=1
   if (SEASONALITY>1) {
+		s <- object$params[["s"]]
     sS=rep(1,SEASONALITY+h)
   }
-  
+	if (SEASONALITY2>1) {
+		s2 <- object$params[["s2"]]
+		sS2=rep(1,SEASONALITY2+h)
+	}
+	
   # Initialise a matrix which contains the last level value
-  yf=matrix(object$paramMeans[["lastLevel"]],nrow=NUM_OF_TRIALS, ncol=h)
+  yf=matrix(0,nrow=NUM_OF_TRIALS, ncol=h)
   
   # For each forecasting trial
   for (irun in 1:NUM_OF_TRIALS) {
@@ -119,13 +124,26 @@ forecast.lgt <- function(object, h=ifelse(frequency(object$x)>1, 2*frequency(obj
       offsetsigmaS=object$params[["offsetSigma"]][indx]
     }
     
-    #t=1
+    #t=1; irun=1
     if (SEASONALITY>1) { #seasonal
+			powSeasonS=object$params[["powSeason"]][indx]
+			
       sS[1:SEASONALITY]=s[indx,(ncol(s)-SEASONALITY+1):ncol(s)]
+			if (SEASONALITY2>1) {
+				sS2[1:SEASONALITY2]=s2[indx,(ncol(s2)-SEASONALITY2+1):ncol(s2)]
+			}
       for (t in 1:h) {
         seasonA=sS[t]
+				if (SEASONALITY2>1) {
+					seasonA=seasonA*sS2[t]
+				}
         ## From eq.6.a
-        expVal=(prevLevel+ coefTrendS*abs(prevLevel)^powTrendS)*seasonA;
+				if (is.null(powSeasonS)) {
+					expVal=(prevLevel+ coefTrendS*abs(prevLevel)^powTrendS)*seasonA;	
+				} else {
+					expVal=prevLevel+ coefTrendS*abs(prevLevel)^powTrendS+ seasonA*abs(prevLevel)^powSeasonS;
+				}
+        
         if (!is.null(powx)) {
           omega=sigmaS*(abs(prevLevel))^powxS+offsetsigmaS
         } else if (!is.null(lastSmoothedInnovSize)) {
@@ -134,7 +152,7 @@ forecast.lgt <- function(object, h=ifelse(frequency(object$x)>1, 2*frequency(obj
           omega=sigmaS
         }
         
-        # Find the t-dist error
+        # Generate the t-dist error
         error=rst(n=1, xi=0 ,	omega=omega, alpha=0, nu=nuS)
         
         # Fill in the matrix of predicted value
@@ -144,13 +162,18 @@ forecast.lgt <- function(object, h=ifelse(frequency(object$x)>1, 2*frequency(obj
         if (inherits(object$model, "RlgtStanModelSGT2")) {
           currLevel=max(MIN_VAL,levSmS*yf[irun,t]/seasonA + (1-levSmS)*expVal/seasonA) ;
         }
-        else{
+        else if (is.null(powSeasonS)){
           currLevel=max(MIN_VAL,levSmS*yf[irun,t]/seasonA + (1-levSmS)*prevLevel) ;
-        }
+        } else {#gSTG model
+					currLevel=max(MIN_VAL,levSmS*(yf[irun,t]-seasonA*abs(prevLevel)^powSeasonS) + (1-levSmS)*prevLevel) ;
+				}     
         if (currLevel>MIN_VAL) {
           prevLevel=currLevel
         } 
         sS[t+SEASONALITY] <- sS[t];
+				if (SEASONALITY2>1) {
+					sS2[t+SEASONALITY2] <- sS2[t];
+				}
       }	#through horizons
       # yf[irun,]
     } else { #nonseasonal
@@ -194,7 +217,7 @@ forecast.lgt <- function(object, h=ifelse(frequency(object$x)>1, 2*frequency(obj
   out$yf <- yf
   
   #' @importFrom stats ts
-  out$mean <- ts(apply(yf, 2, mean),frequency=frequency(out$x),start=start.f   )
+  out$mean <- ts(apply(yf, 2, mean),frequency=max(frequency(out$x),SEASONALITY), start=start.f ) #still not right if there are two seasonalities
   
   #' @importFrom stats quantile
   avgYfs=apply(yf,2,quantile,probs=quantiles)
@@ -208,7 +231,11 @@ forecast.lgt <- function(object, h=ifelse(frequency(object$x)>1, 2*frequency(obj
   out$level <- level
   
   # Assign tsp attributes for consistency
-  tsp(out$median) <- tsp(out$lower) <- tsp(out$upper) <- tsp(out$mean)
+  if (SEASONALITY2<=1) {
+    tsp(out$median) <- tsp (out$lower) <- tsp(out$upper) <- tsp(out$mean)
+	}
+  # for dual seasonality this fails with Error in `tsp<-`(`*tmp*`, value = c(653, 700, 1)) : 
+  #invalid time series parameters specified
   
   class(out) <- "forecast"
   out

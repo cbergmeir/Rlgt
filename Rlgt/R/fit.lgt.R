@@ -58,13 +58,16 @@ fit.lgt <- function(y, model=c("LGT", "LGTe", "SGT", "S2GT", "SGTe", "gSGT", "Tr
   CauchySd=max(y)/control$CAUCHY_SD_DIV
   
   SEASONALITY=control$SEASONALITY
+	SEASONALITY2=control$SEASONALITY2
+	
   #' @importFrom stats frequency
   if (SEASONALITY<=1 && frequency(y)>1 && modelIsSeasonal) {
 		SEASONALITY=frequency(y)
 		print(paste0("Seasonality not specified, but the data is seasonal. Inferring seasonality equal to ",SEASONALITY))
 	}
 	
-  data <- list(CAUCHY_SD=CauchySd, SEASONALITY=SEASONALITY,
+  data <- list(CAUCHY_SD=CauchySd, 
+		SEASONALITY=SEASONALITY, SEASONALITY2=SEASONALITY2,
     MIN_POW_TREND=control$MIN_POW_TREND, 
     MAX_POW_TREND=control$MAX_POW_TREND, 
     MIN_SIGMA=control$MIN_SIGMA,  
@@ -77,13 +80,15 @@ fit.lgt <- function(y, model=c("LGT", "LGTe", "SGT", "S2GT", "SGTe", "gSGT", "Tr
     y=y, N=n, SKEW=control$SKEW) # to be passed on to Stan
   
   ### Repeat until Rhat is in an acceptable range (i.e. convergence is reached)
+
   avgRHat=1e200; irep=1
   for (irep in 1:MAX_NUM_OF_REPEATS) {
     initializations <- list();
     for (irr in 1:nChains) {
       initializations[[irr]]=list( 
         ### Initialise seasonality factors
-        initSu=rnorm(SEASONALITY,1,0.1) # for non-seasonal models it is not necessary, but makes code simpler and is not a big overhead
+        initSu=rnorm(SEASONALITY,1,0.05), # for non-seasonal models it is not necessary, but makes code simpler and is not a big overhead
+				initSu2=rnorm(SEASONALITY2,1,0.05)
       )
     }
     
@@ -110,7 +115,7 @@ fit.lgt <- function(y, model=c("LGT", "LGTe", "SGT", "S2GT", "SGTe", "gSGT", "Tr
     if (currRHat<=MAX_RHAT_ALLOWED) {
       samples=samples1
       avgRHat=currRHat
-      print(samples)
+			if(verbose) print(samples)
       print(paste("avgRHat",avgRHat))
       break
     } else {
@@ -131,32 +136,32 @@ fit.lgt <- function(y, model=c("LGT", "LGTe", "SGT", "S2GT", "SGTe", "gSGT", "Tr
   if(verbose) print(summary(do.call(rbind, args = get_sampler_params(samples1, inc_warmup = F)), digits = 2)) #diagnostics including step sizes and tree depths
   
   params <- list()
-  paramMeans <- list()
+  #paramMeans <- list()
   
   # Extract all of the parameter means
   for(param in model$parameters) {
     params[[param]] <- extract(samples)[[param]]
     
     # Find the mean, but for ETS components average based on each t
-    paramMeans[[param]] <- if(param %in% c("l", "b", "s")) apply(params[[param]],2,mean) else mean(params[[param]])
+    #paramMeans[[param]] <- if(param %in% c("l", "b", "s")) apply(params[[param]],2,mean) else mean(params[[param]])
   }
   
   #special processing for vector params, where only the last value counts
   # This includes level, trend, and innov size
   params[["lastLevel"]] <- params[["l"]][,ncol(params[["l"]])]
-  paramMeans[["lastLevel"]] <- mean(params[["lastLevel"]])
+  #paramMeans[["lastLevel"]] <- mean(params[["lastLevel"]])
   
   if ("b" %in% model$parameters) {
     params[["lastB"]] <- params[["b"]][,ncol(params[["b"]])]
-    paramMeans[["lastB"]] <- mean(params[["lastB"]])
+    #paramMeans[["lastB"]] <- mean(params[["lastB"]])
   }
   if ("smoothedInnovSize" %in% model$parameters) {
     params[["lastSmoothedInnovSize"]] <- params[["smoothedInnovSize"]][,ncol(params[["smoothedInnovSize"]])]
-    paramMeans[["lastSmoothedInnovSize"]] <- mean(params[["lastSmoothedInnovSize"]])
+    #paramMeans[["lastSmoothedInnovSize"]] <- mean(params[["lastSmoothedInnovSize"]])
   }
   
   
-  out <- lgt(y.orig, model, params, paramMeans, SEASONALITY, samples)
+  out <- lgt(y.orig, model, params, control, samples)
   
   out
   

@@ -12,7 +12,7 @@
 print.lgt <- function(x, ...) {
   if(!inherits(x, "lgt")) stop("not a legitimate lgt result")
   
-  print(x$paramMeans)
+  print(lapply(x$params,median))
   
   invisible(x)
 }

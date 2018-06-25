@@ -9,7 +9,6 @@ data {
 	int<lower=1> N;
 	vector<lower=0>[N] y;
 	real<lower=0> POW_TREND_ALPHA; real<lower=0> POW_TREND_BETA; 
-	real<lower=0> POW_SIGMA_ALPHA; real<lower=0> POW_SIGMA_BETA; 
 }
 parameters {
 	real<lower=MIN_NU,upper=MAX_NU> nu; 
@@ -39,7 +38,7 @@ transformed parameters {
 	powTrend= (MAX_POW_TREND-MIN_POW_TREND)*powTrendBeta+MIN_POW_TREND;
 	
 	for (t in 2:N) {
-		l[t]  = levSm*y[t]/(s[t]) + (1-levSm)*l[t-1] ;  
+		l[t]  = levSm*y[t]/(s[t]) + (1-levSm)*l[t-1] ;  //E(y[t])=l[t]*s[t]
 		s[t+SEASONALITY] = sSm*y[t]/l[t]+(1-sSm)*s[t];
 	}
 }
@@ -50,7 +49,6 @@ model {
 	offsetSigma ~ cauchy(MIN_SIGMA,CAUCHY_SD) T[MIN_SIGMA,];	
 	coefTrend ~ cauchy(0, CAUCHY_SD);
 	powTrendBeta ~ beta(POW_TREND_ALPHA, POW_TREND_BETA);
-	powx ~ beta(POW_SIGMA_ALPHA, POW_SIGMA_BETA);
 
 	for (t in 1:SEASONALITY)
 		initSu[t] ~ cauchy (1, 0.3) T[0.01,];
