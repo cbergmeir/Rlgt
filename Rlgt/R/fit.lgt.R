@@ -64,6 +64,7 @@ fit.lgt <- function(y, model=c("LGT", "LGTe", "SGT", "S2GT", "SGTe", "gSGT", "Tr
   if (SEASONALITY<=1 && frequency(y)>1 && modelIsSeasonal) {
 		SEASONALITY=frequency(y)
 		print(paste0("Seasonality not specified, but the data is seasonal. Inferring seasonality equal to ",SEASONALITY))
+		control$SEASONALITY=SEASONALITY  #will be used in forecast()
 	}
 	
   data <- list(CAUCHY_SD=CauchySd, 
@@ -88,7 +89,8 @@ fit.lgt <- function(y, model=c("LGT", "LGTe", "SGT", "S2GT", "SGTe", "gSGT", "Tr
       initializations[[irr]]=list( 
         ### Initialise seasonality factors
         initSu=rnorm(SEASONALITY,1,0.05), # for non-seasonal models it is not necessary, but makes code simpler and is not a big overhead
-				initSu2=rnorm(SEASONALITY2,1,0.05)
+				initSu2=rnorm(SEASONALITY2,1,0.05),
+				innovSizeInit=abs(rnorm(1,0,CauchySd))#used only for *GTe models 
       )
     }
     

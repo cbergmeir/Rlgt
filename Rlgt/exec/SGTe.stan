@@ -40,6 +40,7 @@ transformed parameters {
 	
 	l[1] = y[1]/s[1];
 	powTrend= (MAX_POW_TREND-MIN_POW_TREND)*powTrendBeta+MIN_POW_TREND;
+	expVal[1]=1; // expVal[1] is not used, but Stan will be unhappy without it
 	
 	for (t in 2:N) {
 		expVal[t]=(l[t-1]+ coefTrend*l[t-1]^powTrend)*s[t];
