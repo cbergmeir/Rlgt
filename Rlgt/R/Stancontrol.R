@@ -2,7 +2,7 @@
 
 #'
 #' @title Sets and initializes the main parameters of the algorithm
-#' @description ANother building block: This function initialize and set the parameters of the algorithm. This function is created mainly to provide a default value for each parameter.
+#' @description This function initialize and set the parameters of the algorithm. This function is created mainly to provide a default value for each parameter.
 #' It generates a list of parameters, to be used with the \code{\link{fit.lgt}} function. 
 #' @param MAX_RHAT_ALLOWED Maximum average Rhat that suggests a good fit, see Stan's manual. Suggested range(1.005,1.02), see also MAX_NUM_OF_REPEATS description below.
 #' @param NUM_OF_ITER Number of iterations for each chain. Suggested range(1000,5000). Generally, the longer the series, the smaller the vallue will do. 
@@ -11,19 +11,20 @@
 #' Each round doubles the number of iterations. Suggested range(2,4)
 #' @param CAUCHY_SD_DIV For parameters with non-obvious range Cauchy distribution is used. The error size of this distribution 
 #' is calculated by dividing max value of the time series by this constant. Suggested range(100,300)
-#' @param MIN_SIGMA Minimum size of the fitted sigma, applied for numerical stability. Must bve positive. 
+#' @param MIN_SIGMA Minimum size of the fitted sigma, applied for numerical stability. Must be positive. 
 #' @param MIN_NU Minimum degrees of freedom of the Student's distribution, that is used in most models. Suggested range(1.2, 5)
 #' @param MAX_NU Maximum degrees of freedom of the Student's distribution. Suggested range(15,30) 
-#' @param MIN_POW_TREND Minimum value of power of trend coefficient. Suggested range(-1,0) 
-#' @param MAX_POW_TREND Maximum value of power of trend coefficient. It should stay 1 to allow the model to approach exponential growth when needed.
-#' @param POW_TREND_ALPHA Alpha parameter of Beta distribution that is the prior of the power coefficient in the formula of trend parameter.
+#' @param MIN_POW_TREND Minimum value of the global trend power coefficient. Suggested range(-1,0) 
+#' @param MAX_POW_TREND Maximum value of the global trend power coefficient. It should stay 1 to allow the model to approach exponential growth when needed.
+#' @param POW_TREND_ALPHA Alpha parameter of Beta distribution that is the prior  
 #' To make the forecast more curved, make it larger. Suggested range(1,6)
-#' @param	POW_TREND_BETA Beta parameter of Beta distribution that is the prior of the power of trend parameter. 1 by default, see also above.
-#' @param	POW_SEASON_ALPHA Alpha parameter of Beta distribution that is the prior of the power coefficient in the formula of the generalized seasonality in gSGT model. 1 by default, see also below.
+#' @param	POW_TREND_BETA Beta parameter of Beta distribution that is the prior of the global trend power coefficient. 1 by default, see also above.
+#' @param	POW_SEASON_ALPHA Alpha parameter of Beta distribution that is the prior of the power coefficient in the formula of the generalized seasonality in gSGT model. 
+#' 1 by default, increasing it will push the seasonality towards multiplicative behavior. Seel also below.
 #' @param	POW_SEASON_BETA Beta parameter of Beta distribution that is the prior of the power coefficient in the formula of the generalized seasonality in gSGT model. 1 by default.
 #' To push the seasonality to resemble more multiplicative seasonality, encourage larger power coefficient by increasing POW_SEASON_ALPHA, say, to 3 or 5.
-#' ADAPT_DELTA Target Metropolis acceptance rate. See Stan manual. Suggested range (0.8-0.97). 
-#' MAX_TREE_DEPTH NUTS maximum tree depth. See Stan manual. Suggested range (10-12).
+#' @param	ADAPT_DELTA Target Metropolis acceptance rate. See Stan manual. Suggested range (0.85-0.97). 
+#' @param	MAX_TREE_DEPTH NUTS maximum tree depth. See Stan manual. Suggested range (10-12).
 #' @param	SEASONALITY E.g. 24 for hourly seasonality. Used only by seasonal models.
 #' @param	SEASONALITY2 E.g. 168 for hourly seasonality. Used only by dual-seasonality models.
 #' @returnType list

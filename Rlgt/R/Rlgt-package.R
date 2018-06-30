@@ -4,8 +4,8 @@
 #' @name Rlgt-package
 #' @aliases Rlgt
 #' @docType package
-#' @title Getting started with the Rlgt package
-#' @keywords forecasting, exponential smoothing
+#' @keywords forecasting, exponential smoothing, bayesian, Monte Carlo, MCMC
+#' but keywords only allowed from file.path(R.home("doc"),"KEYWORDS") ?
 # @exportPattern "^[[:alpha:]]+"
 #' @useDynLib Rlgt, .registration=TRUE
 #' @import methods
