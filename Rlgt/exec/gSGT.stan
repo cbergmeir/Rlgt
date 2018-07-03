@@ -26,7 +26,7 @@ parameters {
 transformed parameters {
   real <lower=MIN_POW_TREND,upper=MAX_POW_TREND>powTrend;
   vector<lower=0>[N] l;
-  vector<lower=0>[N+SEASONALITY] s;
+  vector[N+SEASONALITY] s;
   
   for (i in 1:SEASONALITY) 
     s[i] = initSu[i];
