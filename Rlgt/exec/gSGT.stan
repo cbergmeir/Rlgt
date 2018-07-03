@@ -36,8 +36,7 @@ transformed parameters {
   powTrend= (MAX_POW_TREND-MIN_POW_TREND)*powTrendBeta+MIN_POW_TREND;
   for (t in 2:N) {
     l[t]  = levSm*(y[t] - s[t]*l[t-1]^powSeason) + (1-levSm)*l[t-1] ;  //E(y[t])=l[t]+s[t]*l[t]^powSeason, so approx here
-    //s[t+SEASONALITY]= sSm*(y[t]-l[t-1]- coefTrend*l[t-1]^powTrend)/l[t-1]^powSeason + (1-sSm)*s[t]; 
-    s[t+SEASONALITY]= sSm*(y[t]-l[t])/l[t]^powSeason + (1-sSm)*s[t]; 
+    s[t+SEASONALITY]= sSm*(y[t]-l[t-1]- coefTrend*l[t-1]^powTrend)/l[t-1]^powSeason + (1-sSm)*s[t]; 
   }
 }
 model {
