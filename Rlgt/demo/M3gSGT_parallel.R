@@ -1,7 +1,8 @@
 # Test SGT - M3 monthly data
 # This is a most computationally demanding subset of M3, so also a good opportunity to showcase parallel execution
 # We will use all cores on the server - the more of them the faster the whole process will be.
-# If you let it run full course, you should see a good result :-)
+# After a few days (on a 6-core computer) you will see something like this:
+# Num of cases:1428, sMAPE:13.53, % of time 95p exceeded:6.26, % of time 5p exceeded:5.155, q5Loss:3.913, q95Loss:6.645, q99Loss:2.125"
 
 library(Mcomp)
 library(Rlgt)
@@ -10,9 +11,7 @@ library(doParallel)
 options(width=180)
 
 numOfCores=parallel:::detectCores()
-CLUSTER_SIZE=as.integer(numOfCores/3)  #Each cluster will use 4 cores, so it looks like oversubscription, 
-#but processes in one cluster tend not to finish at the same time.
-
+CLUSTER_SIZE=as.integer(numOfCores/4)  #Each cluster will use 4 cores
 
 M3.data <- subset(M3,"monthly")
 SEASONALITY=12
