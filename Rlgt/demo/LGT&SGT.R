@@ -47,21 +47,4 @@ forecasts[["SGT"]] <- forecast(mod[["SGT"]], h = sizeTestSet, level=c(80, 95, 98
 plot(forecasts[["SGT"]],main=paste(curr_series,'by SGT'))
 
 
-#Fit SGTe, vector input
-data.train=as.numeric(data.train)
-mod[["SGTe"]] <- fit.lgt(data.train, model="SGTe", nCores=4, nChains=4,
-		control=lgt.control(SEASONALITY=12, MAX_NUM_OF_REPEATS=3, NUM_OF_ITER=2000), 
-		verbose=TRUE)
-# print the model details
-print(mod[["SGTe"]])
-
-# print the interval for all vars
-posterior_interval(mod[["SGTe"]])
-
-forecasts[["SGTe"]] <- forecast(mod[["SGTe"]], h = 2*sizeTestSet, level=c(80, 95, 98))
-plot(forecasts[["SGTe"]],main=paste(curr_series,'by SGTe'))
-
-
-
-
 

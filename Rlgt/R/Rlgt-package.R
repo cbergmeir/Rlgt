@@ -10,7 +10,6 @@
 #' x <- 1
 #' @docType package
 #' @title Getting started with the Rlgt package
-#' 
 #' @description An implementation of innovative Bayesian ETS models named
 #' LGT (for non-seasonal time series data) and SGT (for time series data).
 #'  These models have been tested on M3-competition dataset in which they 
@@ -55,9 +54,9 @@
 #' 
 #' The rationale of each individual equation of the model is discussed below.
 #' \itemize{
-#' \item \strong{eq. 1.1. Student’s t error distribution}
+#' \item \strong{eq. 1.1. Student's t error distribution}
 #' 
-#' The data value follows Student’s t-distribution around the 
+#' The data value follows Student's t-distribution around the 
 #' expected value of the data with a time-varying standard deviation. 
 #' The Student-t distribution can be seen as a generalisation of the normal 
 #' distribution to allow for a fat-tailed error distribution
@@ -67,7 +66,7 @@
 #' In addition to accounting for possible fat-tailed error distribution, 
 #' the error function also allows the variance of the error to change as the level changes.  
 #' This is achieved by allowing the scale (deviation) parameter of the assumed 
-#' Student’s t-distribution to vary in proportion to the current level of the time series. 
+#' Student's t-distribution to vary in proportion to the current level of the time series. 
 #' This will account for common situations, where the magnitude of the error will increase 
 #' as the value of the data points increases.
 #' Moreover, this relationship does not necessarily be linear as the parameter  

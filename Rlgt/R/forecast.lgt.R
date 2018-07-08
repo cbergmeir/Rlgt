@@ -8,7 +8,7 @@
 #' @param NUM_OF_TRIALS Number of simulations to run. Suggested rannge (1000,5000), but it may have to be higher for good coverage of very high levels, e.g. 99.8. 
 #' @param MIN_VAL Minimum value the forecast can take. Must be positive.
 #' @param MAX_VAL Maximum value the forecast can take.
-# @param ... description
+#' @param ... currently not being used
 #' @return returns a forecast object compatible with the forecast package
 #' @S3method forecast lgt
 #' @method forecast lgt

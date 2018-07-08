@@ -5,6 +5,7 @@
 #' @param x the \code{\link{lgt}} model
 #' @param ... additional function parameters (currently not used)
 #' @aliases summary.lgt
+#' @importFrom stats median
 #' @export
 # @S3method print lgt
 # @method print lgt

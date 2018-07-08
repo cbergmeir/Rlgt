@@ -1,5 +1,6 @@
-iris	classification example: the iris data, used with various supervised methods present in the RSNNS high-level api (rsnns)
-laser	regression example: the original SNNS laser data, used with various supervised methods present in the RSNNS high-level api (rsnns)
-som_iris	self-organizing map: a som for the iris data, using the RSNNS high-level api (rsnns)
-art1_letters	the original SNNS art1 letters example, using the RSNNS high-level api (rsnns)
-art2_tetra the original SNNS art2 tetra example, using the RSNNS high-level api (rsnns)
+All-models	consider to be removed?
+LGT&SGT	Implementation of LGT and SGT models on the R buit-in datasets
+M3LGT	Implementation of LGT model on 819 non-seasonal time-series data in M3-competition dataset
+M3SGT	Implementation of SGT model on 2184 seasonal time-series data in M3-competition dataset
+M4S2GT  Implementation of S2GT model on a selected sample of hourly time-series data from M4-competition dataset
+M3gSGT_parallel Parallel implementation of SGT model on monthly time-series data from M3-competition dataset
