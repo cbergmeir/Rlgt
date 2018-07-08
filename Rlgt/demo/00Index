@@ -1,0 +1,5 @@
+iris	classification example: the iris data, used with various supervised methods present in the RSNNS high-level api (rsnns)
+laser	regression example: the original SNNS laser data, used with various supervised methods present in the RSNNS high-level api (rsnns)
+som_iris	self-organizing map: a som for the iris data, using the RSNNS high-level api (rsnns)
+art1_letters	the original SNNS art1 letters example, using the RSNNS high-level api (rsnns)
+art2_tetra the original SNNS art2 tetra example, using the RSNNS high-level api (rsnns)
