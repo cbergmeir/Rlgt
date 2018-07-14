@@ -1,13 +1,11 @@
 #' @name Rlgt-package
 #' @aliases Rlgt
 #' @docType package
-#' @keywords forecasting, exponential smoothing
+#' @keywords forecasting exponential smoothing
 # @exportPattern "^[[:alpha:]]+"
 #' @useDynLib Rlgt, .registration=TRUE
 #' @import methods
 #' @import Rcpp
-#' @examples
-#' x <- 1
 #' @docType package
 #' @title Getting started with the Rlgt package
 #' @description An implementation of innovative Bayesian ETS models named
@@ -19,13 +17,16 @@
 #' 
 #' @section LGT(Local and Global Trend):
 #' \subsection{Model Equations}{
+#' 
 #' In terms of mathematical notation, the model can be fully represented as follow 
 #' \deqn{y_{t+1} \sim Student (v,y_{t+1}, \sigma _{t+1}) \quad (eq.1.1)}    
 #' \deqn{  y_{t+1}=l_{t}+ \gamma l_{t}^{ \rho }+ \lambda b_{t}  \quad  (eq. 1.2)} 
 #' \deqn{  l_{t}= \alpha y_{t}+ \left( 1- \alpha  \right)  \left(  l_{t-1} \right) \quad (eq. 1.3) } 
 #' \deqn{  b_{t+1}= \beta  \left( l_{t+1}-l_{t} \right) + \left( 1- \beta  \right) b_{t}  \quad  (eq. 1.4)}
 #' \deqn{   \sigma _{t+1}= \sigma l_{t}^{ \tau}+ \varsigma   \quad  (eq. 1.5) }
+#' 
 #' and the notations are defined as follow:
+#' 
 #' \describe{
 #' \item{\eqn{y_{t}}}{value of the dependent variable of interest at time t}
 #' \item{\eqn{y_{t+1}}}{predicted value of y at time t+1 given information up to time t}
@@ -36,7 +37,9 @@
 #' }
 #' 
 #' \subsection{Model Parameters}{
+#' 
 #' Parameters of the model which need to be estimated include:
+#' 
 #' \describe{
 #' \item{\eqn{v}}{degrees of freedom of the t-distribution}
 #' \item{\eqn{\gamma}}{coefficient of the global trend}
@@ -49,7 +52,6 @@
 #' \item{\eqn{\varsigma}}{base/ minimum value of the standard deviation}
 #' }
 #' }
-
 #' \subsection{Rationale}{
 #' 
 #' The rationale of each individual equation of the model is discussed below.
@@ -61,7 +63,7 @@
 #' The Student-t distribution can be seen as a generalisation of the normal 
 #' distribution to allow for a fat-tailed error distribution
 #' 
-#' \item \strong{eq. 1.5. Heteroscedastic Error }
+#' \item \strong{eq. 1.5. Heteroscedastic Error}
 #' 
 #' In addition to accounting for possible fat-tailed error distribution, 
 #' the error function also allows the variance of the error to change as the level changes.  
@@ -77,7 +79,7 @@
 #' The value between 0 and 1 will describe an error function which grows in relation 
 #' to the increase in data value, but at a slower pace than linear growth.
 
-#' \item \strong{eq. 1.2: One-step prediction forecast}
+#' \item \strong{eq. 1.2: One-step ahead prediction equation}
 #' 
 #' There are three distinct terms that constitute this Bayesian ETS model: a level term, 
 #' and a couple of different trends. The first term eqn{l_{t}} is the level term, 
@@ -111,11 +113,83 @@
 #'  with the smoothing parameter  \eqn{  \beta  }.
 #' }
 #' }
+#' 
+#' @section SGT (Seasonal, Global Trend):
+#' 
+#' SGT model was designed as a seasonal counterpart to the LGT model. 
+#' Similar to LGT, this model is devised to allow for global trend term and heteroscedastic error.
+#' 
+#' In terms of mathematical notation, the model can be fully represented as follow:
 
-#' \subsection{Prior Distributions}{
+#' \deqn{ y_{t+1} \sim Student \left( v,y_{t+1}, \sigma _{t+1} \right)  (eq. 2.1) } 
+#' \deqn{ y_{t+1}= \left( l_{t}+ \gamma l_{t}^{ \rho } \right)  s_{t+1-m} \quad (eq. 2.2)} 
+#' \deqn{ l_{t}= \alpha  \frac{y_{t}}{s_{t}}+ \left( 1- \alpha  \right)  \left( l_{t-1} \right) \quad (eq. 2.3)  }  
+#' \deqn{ s_{t}= \zeta  \frac{y_{t}}{l_{t}}+ \left( 1- \zeta  \right) s_{t-m}  \quad (eq. 2.4)}
+#' \deqn{ \sigma _{t+1}= \sigma y_{t+1}^{ \tau}+ \varsigma \quad (eq. 2.5)}
+
+
+#' with the notations defined consistently with the LGT model. 
+#' Additional notations related to seasonality are defined as follow:
+
+#' \describe{
+#' \item{\eqn{s_{t}}}{seasonality factor at time t}
+#' \item{\eqn{ m }}{number of seasons in the data (e.g. 12 for monthly, 4 for quarterly)}
+#' \item{\eqn{\zeta}}{smoothing parameters for the seasonality factors}
+#' }
+#' Additionally,  \eqn{v,\gamma,\alpha, \sigma} are the parameters of the model which need to be estimated. 
+#' 
+#' Most of the components of the model is similar to the non-seasonal model above. 
+#' A couple of modifications have been applied to this model in comparison to LGT:
+
+#' \enumerate{
+#' \item Removal of local dampen trend
+#' \item Addition of multiplicative seasonality term
+#' }
+#' The mathematical equations have also been adjusted accordingly:
+#' 
+#' \itemize{
+#' \item \strong{eq. 2.2.One-step ahead prediction equation}
+#' Comparing eq. 2.2 with eq. 1.2, it is apparent that the local trend term  
+#' \eqn{\lambda b_{t}}  has been removed from the SGT model. 
+#' Consequently, the equation governing the evolution of local trend over time (eq. 2.4) is 
+#' no longer needed. Based on empirical evidence, the role of the local trend was 
+#' found to be insignificant for seasonal data in M3-competition dataset.
+#' 
+#' Moreover, there is also an addition of multiplicative seasonality term modelled 
+#' after Holt-Winters seasonality term. In this case, the data value is decomposed 
+#' into level value and seasonal value (i.e.  { y_{t}=l_{t} s_{t} } ). Thus, it follows 
+#' that the one-step prediction value of  { y_{t+1} }  (eq. 2.2) is obtained by 
+#' multiplying the predicted level term  \eqn{l_{t}+ \gamma l_{t}^{ \rho }} with the 
+#' seasonal term  \eqn{s_{t+1}}. 
+#'
+#' \item \strong{eq. 2.4.Seasonal factors adjustment equation}
+#' The evolution of the seasonal component in eq. 2.4. is also based on standard 
+#' ETS model, i.e. a weighted average of predicted seasonal level  
+#' \eqn{\left( \frac{y_{t}}{l_{t}} \right)}  and previous seasonal 
+#' value from the past season \eqn{s_{t-m}} .
+#' 
+#' \item \strong{Equation 2.3.Level adjustment equation}
+#' The evolution of level term in eq. 2.3 is defined analogously to the level 
+#' term in LGT model. The level term of time t  \eqn{\left( l_{t} \right)}  is 
+#' calculated as a weighted average of predicted current level value at time t  
+#' \eqn{ \frac{y_{t}}{s_{t}} }  and the previous estimate of the level at time t 
+#' given information up to t-1, i.e.  \eqn{ l_{t-1}+ \gamma l_{t-1}^{ \rho }.}  
+#' 
+#'  \item \strong{Equation 2.5.Heteroscedastic Error}
+#' There is also a straightforward modification to the error term in SGT eq. 2.5 
+#' due to the introduction of seasonal factors. Compared to eq. 1.5, the error term
+#'  in SGT is allowed to vary in proportion to \eqn{  y  } instead of  \eqn{ l_{t} } . 
+#'  The reason for that is because the error term is likely to become larger d
+#'  uring the peak seasons (i.e. seasons with high seasonality coefficient). 
+#'  Hence, it is intuitive to link the dispersion of the error to the predicted 
+#'  value of the dependent variable. Note that in the case of LGT, the predicted 
+#'  value of y is also a function of the previous level  \eqn{ l_{t-1} }  and 
+#'  thus, the error term can be defined in terms of  \eqn{ l_{t-1} }  instead.
+#' }
+#' 
+#' @section Prior Distributions for LGT and SGT models:
 #' 
 #' The default prior distributions of the parameters are given below:
-
 #' \describe{
 #' \item{\eqn{ \sigma,\gamma,\varsigma }}{Cauchy distribution with 0 location value and the scale parameter equals to 1/200 of the maximum value of y}
 #' \item{\eqn{b}}{Normally distributed with a mean of 0 and standard deviation of 1/200 of the maximum value of y.}
@@ -125,7 +199,6 @@
 #' \item{\eqn{\rho}}{Uniform between -0.5 and 1.0}
 #' \item{\eqn{v}}{Uniformly distributed between 2 and 20}
 #' \item{\eqn{\tau}}{Beta distribution with shape parameters  \eqn{\alpha =1}  and \eqn{\beta =1 }}
-#' }
 #' }
 
 NULL
