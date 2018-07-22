@@ -146,19 +146,19 @@
 #' \describe{
 #' \item{\eqn{s_{t}}}{seasonality factor at time t}
 #' \item{\eqn{ m }}{number of seasons in the data (e.g. 12 for monthly, 4 for quarterly)}
-#' \item{\eqn{\zeta}}{smoothing parameters for the seasonality factors}
 #' }
 #' }
 #' 
 #' \subsection{Additional Parameters}{
 #' 
 #' \describe{
-#'  \item{\eqn{\zeta}}{smoothing parameter for the seasonal term}
+#'  \item{\eqn{\zeta}}{smoothing parameter for the seasonality terms}
 #' }
 #' 
 #' }
 #' 
 #' \subsection{Rationale for Mathematical Equations}{
+#' 
 #' Most of the components of the model is similar to the non-seasonal model above. 
 #' A couple of modifications have been applied to this model in comparison to LGT:
 #' 
@@ -185,14 +185,14 @@
 #' multiplying the predicted level term  \eqn{l_{t}+ \gamma l_{t}^{ \rho }} with the 
 #' seasonal term  \eqn{s_{t+1}}. 
 #'
-#' \item \strong{Eq. 2.4.Seasonal factors adjustment equation}
+#' \item \strong{Eq. 2.4.Seasonal Factors Adjustment Equation}
 #' 
 #' The evolution of the seasonal component in eq. 2.4. is also based on standard 
 #' ETS model, i.e. a weighted average of predicted seasonal level  
 #' \eqn{\left( \frac{y_{t}}{l_{t}} \right)}  and previous seasonal 
 #' value from the past observations \eqn{s_{t}} .
 #' 
-#' \item \strong{Eq. 2.3.Level adjustment equation}
+#' \item \strong{Eq. 2.3.Level Adjustment Equation}
 #' 
 #' The evolution of level term in eq. 2.3 is defined analogously to the level 
 #' term in LGT model. The level term of time t  \eqn{\left( l_{t} \right)}  is 
@@ -216,8 +216,8 @@
 #' 
 #' @section S2GT (Double Seasonal, Global Trend):
 #' 
-#' S2GT is designed as an extension to SGT in time-series data which exhibit multiple seasonality patterns. 
-#' The second seasonality factor generalises the model to capture a number of seasonalities 
+#' S2GT is designed as an extension to SGT in time-series data which exhibit two seasonality patterns. 
+#' The additional second seasonality factor generalises the model to capture a number of seasonalities 
 #' that exist in the data. A classic example of this type of data is the hourly electricity consumption data 
 #' which are affected by the time of the day as well as the day in the week. 
 #' The mathematical modelling is based on the classical Double Seasonal Exponential Smoothing 
@@ -263,7 +263,7 @@
 #' Therefore, both seasonality factors will affect the proportionality between the expected 
 #' value of the observed data and the level. 
 #' 
-#' \item \strong{Equation 3.3. Level adjustment equation}
+#' \item \strong{Equation 3.3. Level Adjustment Equation}
 #' 
 #' The evolution of level term in eq. 3.3 is largely identical to eq.2.3. 
 #' The only difference is that since the observed value is now seen as a product 
@@ -271,14 +271,14 @@
 #' value at time t is now calculated as   \eqn{ \frac{y_{t}}{l_{t}s_{t}} }. 
 #' The weighted average in the right-hand side of the equation is then adjusted accordingly.
 #' 
-#' \item \strong{Eq. 3.4. First seasonal factors adjustment equation}
+#' \item \strong{Eq. 3.4. First Seasonal Factors Adjustment Equation}
 #' 
 #' The evolution of the seasonal component in eq. 3.4. is also similar to eq. 2.4. 
 #' Again, the predicted seasonal level based on current observation has been changed to  
 #' \eqn{ \frac{y_{t}}{l_{t}w_{t}} }  to undo the effect of the other seasonality 
 #' factor on the observed data value. 
 #' 
-#' \item \strong{Eq. 3.5. Second seasonal factors adjustment equation}
+#' \item \strong{Eq. 3.5. Second Seasonal Factors Adjustment Equation}
 #' 
 #' The adjustment equation for the second seasonality term is identical to eq. 3.4. 
 #' with the slight change in the parameters' notations and values. 
