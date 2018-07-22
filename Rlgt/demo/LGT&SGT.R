@@ -13,7 +13,7 @@ mod <- list()
 forecasts <- list()
 
 #--------------------------------
-#Fit Dampen model
+#Fit LGT model
 mod[["LGT"]] <- fit.lgt(data.train, model="LGT", nCores=4, nChains=4,
   control=lgt.control(MAX_NUM_OF_REPEATS=10, NUM_OF_ITER=2000), 
   verbose=TRUE)
