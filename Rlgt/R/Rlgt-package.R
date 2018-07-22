@@ -6,6 +6,9 @@
 #' @useDynLib Rlgt, .registration=TRUE
 #' @import methods
 #' @import Rcpp
+#' @import rstantools
+#' @importFrom rstan sampling
+#' 
 #' @docType package
 #' @title Getting started with the Rlgt package
 #' @description An implementation of innovative Bayesian ETS models named
@@ -301,6 +304,9 @@
 #' }
 #' 
 #' Note that some of these prior distributions can be adjusted by the users in the \code{rlgt} function
-
+#' 
+#' @references 
+#' Stan Development Team (2017). RStan: the R interface to Stan. R package version 2.16.2. http://mc-stan.org
+#' 
 NULL
 
