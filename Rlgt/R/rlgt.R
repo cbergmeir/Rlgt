@@ -14,7 +14,7 @@
 #' @return lgtModel
 #' @examples
 #'\dontrun{
-#' lgt_model <- fit.lgt(lynx, model="LGT", nCores=4, nChains=4,
+#' lgt_model <- rlgt(lynx, model="LGT", nCores=4, nChains=4,
 #' control=lgt.control(MAX_NUM_OF_REPEATS=1, NUM_OF_ITER=2000), 
 #' verbose=TRUE)
 
@@ -31,13 +31,14 @@
 #' @importMethodsFrom rstan summary
 #' @importFrom sn rst
 #' @export
-fit.lgt <- function(y, model=c("LGT", "LGTe", "SGT", "S2GT", "SGTe", "gSGT", "Trend", "Dampen", "SDampen"), 
+rlgt <- function(y, model.type=c("LGT", "LGTe", "SGT", "S2GT", "SGTe", "gSGT", "Trend", "Dampen", "SDampen"), 
   control=lgt.control(), nChains=2, nCores=2, addJitter=TRUE, verbose=FALSE) {
+  # for safety
+  model.type <- model.type[1]
+	modelIsSeasonal=model.type %in% c("SGT", "S2GT", "SGTe", "gSGT","SDampen")
 
-	modelIsSeasonal=model %in% c("SGT", "S2GT", "SGTe", "gSGT","SDampen")
-
-  if(!inherits(model, "RlgtStanModel")) {
-    model <- initModel(model)
+  if(!inherits(model.type, "RlgtStanModel")) {
+    model <- initModel(model.type = model.type)
   }
   
   MAX_RHAT_ALLOWED=control$MAX_RHAT_ALLOWED
@@ -98,7 +99,8 @@ fit.lgt <- function(y, model=c("LGT", "LGTe", "SGT", "S2GT", "SGTe", "gSGT", "Tr
     numOfIters=NUM_OF_ITER*2^(irep-1)
     samples1=
       sampling(
-        control=list(adapt_delta = control$ADAPT_DELTA, max_treedepth=control$MAX_TREE_DEPTH),
+        control=list(adapt_delta = control$ADAPT_DELTA, 
+                     max_treedepth=control$MAX_TREE_DEPTH),
         model$model,   
         data=data, 
         init=initializations,
@@ -162,9 +164,6 @@ fit.lgt <- function(y, model=c("LGT", "LGTe", "SGT", "S2GT", "SGTe", "gSGT", "Tr
     #paramMeans[["lastSmoothedInnovSize"]] <- mean(params[["lastSmoothedInnovSize"]])
   }
   
-  
-  out <- lgt(y.orig, model, params, control, samples)
-  
+  out <- lgt(y.orig, model.type, model, params, control, samples)
   out
-  
 }

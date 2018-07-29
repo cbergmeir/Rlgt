@@ -43,7 +43,7 @@ ret_df=foreach(i=1:NUM_OF_CASES, .combine=rbind, .inorder=FALSE, .packages=c("Rl
 	series=M3.data[[i]]$sn
 	data.train <- M3.data[[i]]$x
 	data.test <- M3.data[[i]]$xx
-	rstanmodel <- fit.lgt(data.train, model="gSGT", nCores=4, nChains=4,
+	rstanmodel <- rlgt(data.train, model="gSGT", nCores=4, nChains=4,
 		control=lgt.control(SEASONALITY=SEASONALITY, MAX_NUM_OF_REPEATS=3, NUM_OF_ITER=5000), 
 		verbose=FALSE)
 	forec= forecast(rstanmodel, h = H, level=c(90,98))

@@ -32,7 +32,7 @@ for (i in 1:NUM_OF_CASES) {
 	data.test = x[(length(x)-H+1):length(x)]
 	data.train = x[1:(length(x)-H)]
 	
-	rstanmodel <- fit.lgt(data.train, model="S2GT", nCores=4, nChains=4,
+	rstanmodel <- rlgt(data.train, model="S2GT", nCores=4, nChains=4,
 		control=lgt.control(MAX_NUM_OF_REPEATS=3, NUM_OF_ITER=1000, #longer time series, say several hundred points-long, require smaller number of iterations
 		SEASONALITY=SEASONALITY, SEASONALITY2=SEASONALITY2 ), #dual seasonality can't be inferred, needs to be specified
 		verbose=TRUE)

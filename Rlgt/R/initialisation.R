@@ -4,21 +4,21 @@
 #' This function is only used as a building block for the main functions
 #' 
 #' @title Initialize a model
-#' @param modelType type of the forecasting model selected, a character object
+#' @param model.type type of the forecasting model selected, a character object
 #' @return SkeletonModel
 #' 
 #' @importFrom rstan stan_model
 #' @export
-initModel <- function(modelType = NULL){
+initModel <- function(model.type = NULL){
   
-  if(is.null(modelType)) {
+  if(is.null(model.type)) {
     print("No model type was provided, generating an LGT model.")
-    modelType <- "LGT"
+    model.type <- "LGT"
   }
   
   model <- list()
   
-  if(modelType=="LGT")  {
+  if(model.type=="LGT")  {
     #Non-Seasonal Local Global Trend model
     model[["parameters"]] <- c("l", "b", "nu", "sigma", "levSm",  "bSm", 
       "powx", "coefTrend",  "powTrend", "offsetSigma", "locTrendFract")
@@ -26,7 +26,7 @@ initModel <- function(modelType = NULL){
     model[["model"]] <- stanmodels$lgt
     class(model) <- c("RlgtStanModelLGT")
   }	
-	else if (modelType=="LGTe") {
+	else if (model.type=="LGTe") {
 		#Non-Seasonal Local Global Trend model with smoothed error size
 		model[["parameters"]] <- c("l", "b", "smoothedInnovSize", 
 				"coefTrend",  "powTrend", "sigma", "offsetSigma",
@@ -35,7 +35,7 @@ initModel <- function(modelType = NULL){
 		model[["model"]] <- stanmodels$LGTe
 		class(model) <- c("RlgtStanModelLGTe")
 	} 
-	else if(modelType=="SGT") {
+	else if(model.type=="SGT") {
 		#Seasonal Global Trend model
 		model[["parameters"]] <- c("l", "s", "sSm","nu", "sigma", "levSm", 
 				"powx", "coefTrend", "powTrend", "offsetSigma")
@@ -43,7 +43,7 @@ initModel <- function(modelType = NULL){
 		model[["model"]] <- stanmodels$sgt
 		class(model) <- c("RlgtStanModelSGT")
 	} 
-	else if(modelType=="gSGT") {
+	else if(model.type=="gSGT") {
 		#generalized Seasonality Global Trend model
 		model[["parameters"]] <- c("l", "s", "sSm","nu", "sigma", "levSm", 
 				"powx", "coefTrend", "powTrend", "offsetSigma", "powSeason")
@@ -51,14 +51,14 @@ initModel <- function(modelType = NULL){
 		model[["model"]] <- stanmodels$gSGT
 		class(model) <- c("RlgtStanModelgSGT")
 	} 
-	else if(modelType=="S2GT")  {
+	else if(model.type=="S2GT")  {
 		#Non-Seasonal Local Global Trend model
 		model[["parameters"]] <- c("l", "s", "sSm", "s2", "s2Sm", "nu", "sigma", "levSm", 
 				"powx", "coefTrend", "powTrend", "offsetSigma")
 		model[["model"]] <- stanmodels$S2GT
 		class(model) <- c("RlgtStanModelS2GT")
 	}
-	else if (modelType=="SGTe") {
+	else if (model.type=="SGTe") {
 		#Seasonal Global Trend model with smoothed error size 
 		model[["parameters"]] <- c("l", "s", "smoothedInnovSize", 
 				"coefTrend", "powTrend", "sigma", "offsetSigma",
@@ -66,35 +66,35 @@ initModel <- function(modelType = NULL){
 		model[["model"]] <- stanmodels$SGTe
 		class(model) <- c("RlgtStanModelSGTe")
 	}
-  else if (modelType=="Dampen") {
+  else if (model.type=="Dampen") {
     #dampen ETS fitted with Bayesian method
     model[["parameters"]] <- c("l", "b","sigma", "bSm", "levSm", "psi")
     
     model[["model"]] <- stanmodels$Dampen
     class(model) <- c("RlgtStanModelDampen")
   }
-  else if (modelType=="SDampen") {
+  else if (model.type=="SDampen") {
     #dampen seasonal ETS fitted with Bayesian method
     model[["parameters"]] <- c("l", "b", "s", "sSm", "sigma", "bSm", "levSm", "psi")
     
     model[["model"]] <- stanmodels$SDampen
     class(model) <- c("RlgtStanModelDampen")
   }
-  else if (modelType=="TDampen") {
+  else if (model.type=="TDampen") {
     #dampen ETS fitted with Bayesian method
     model[["parameters"]] <- c("l", "b","sigma", "bSm", "levSm", "psi","nu", "powx", "offsetSigma")
     
     model[["model"]] <- stanmodels$TDampen
     class(model) <- c("RlgtStanModelDampen")
   }
-  else if (modelType=="TSDampen") {
+  else if (model.type=="TSDampen") {
     #dampen seasonal ETS fitted with Bayesian method
     model[["parameters"]] <- c("l", "b", "s", "sSm", "sigma", "bSm", "levSm", "psi", "nu", "powx", "offsetSigma")
     
     model[["model"]] <- stanmodels$TSDampen
     class(model) <- c("RlgtStanModelDampen")
   }	
-  else if (modelType=="Trend") {
+  else if (model.type=="Trend") {
     #trend-only, Gaussian error, homoscedastic version of LGT
     model[["parameters"]] <- c("l", "b", "sigma", "levSm",  "bSm", "coefTrend", "powTrend", "locTrendFract")
     
@@ -119,10 +119,11 @@ initModel <- function(modelType = NULL){
 #' @param samples stanfit object representing the MCMC samples
 #' @return lgt instance
 
-lgt <- function(y,lgtmodel,params, control, samples) {
+lgt <- function(y, model.type, lgtmodel, params, control, samples) {
 	# we can add our own integrity checks
-	
-	value <- list(x = y, model = lgtmodel, params = params, control=control, samples=samples)
+	value <- list(x = y, model.type = model.type,
+	              model = lgtmodel, params = params, 
+	              control=control, samples=samples)
 	
 	# class can be set using class() or attr() function
 	attr(value, "class") <- "lgt"
@@ -130,10 +131,15 @@ lgt <- function(y,lgtmodel,params, control, samples) {
 }
 
 
-dampen <- function(y,lgtmodel,params, paramMean, seasonality, samples) {
+dampen <- function(y, model.type = model.type, 
+                   lgtmodel, params, paramMean, 
+                   seasonality, samples) {
 	# we can add our own integrity checks
-	
-	value <- list(x = y, model = lgtmodel, params = params, paramMeans=paramMean, SEASONALITY=seasonality, samples=samples)
+	value <- list(x = y, model.type = model.type, 
+	              model = lgtmodel, params = params, 
+	              paramMeans = paramMean, 
+	              SEASONALITY = seasonality, 
+	              samples = samples)
 	
 	# class can be set using class() or attr() function
 	attr(value, "class") <- "dampen"

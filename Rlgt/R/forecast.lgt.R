@@ -33,19 +33,19 @@
 
 # object=mod[["lgte"]]; level=c(80,95, 98); NUM_OF_TRIALS=2000; MIN_VAL=0.001; MAX_VAL=1e38; h=8
 # library(sn)
-forecast.lgt <- function(object, h=ifelse(frequency(object$x)>1, 2*frequency(object$x), 10),
-  level=c(80,95),
-  NUM_OF_TRIALS=2000, 
-  MIN_VAL=0.001, MAX_VAL=1e38, ...) {
-  
-  #object <- mod[["lgt"]]
+forecast.lgt <- function(object, 
+                         h=ifelse(frequency(object$x)>1, 
+                                  2*frequency(object$x), 10),
+                         level=c(80,95),
+                         NUM_OF_TRIALS=2000, 
+                         MIN_VAL=0.001, MAX_VAL=1e38, ...) {
   
   if (any(level>100) || any(level<0)) {
     print(paste("Warning: levels mus be between 0 and 100. Assuming defaults."))
     level=c(80,95)
   }
   
-  if(length(level)==1 && level==50) {
+  if (length(level)==1 && level==50) {
     percentiles=level
     indexOfMedian=1
   } else {
@@ -61,7 +61,7 @@ forecast.lgt <- function(object, h=ifelse(frequency(object$x)>1, 2*frequency(obj
   quantiles=percentiles/100.
   
   SEASONALITY <- object$control$SEASONALITY
-	SEASONALITY2 <- object$control$SEASONALITY2
+  SEASONALITY2 <- object$control$SEASONALITY2
   
   out <- list(model=object,x=object$x)
   #' @importFrom stats tsp
@@ -84,14 +84,14 @@ forecast.lgt <- function(object, h=ifelse(frequency(object$x)>1, 2*frequency(obj
   nuS=Inf; bSmS=0; bS=0; locTrendFractS=0;  #these initializations are important, do not remove. 
   #t=1; irun=1
   if (SEASONALITY>1) {
-		s <- object$params[["s"]]
+    s <- object$params[["s"]]
     sS=rep(1,SEASONALITY+h)
   }
-	if (SEASONALITY2>1) {
-		s2 <- object$params[["s2"]]
-		sS2=rep(1,SEASONALITY2+h)
-	}
-	
+  if (SEASONALITY2>1) {
+    s2 <- object$params[["s2"]]
+    sS2=rep(1,SEASONALITY2+h)
+  }
+  
   # Initialise a matrix which contains the last level value
   yf=matrix(0,nrow=NUM_OF_TRIALS, ncol=h)
   
@@ -126,23 +126,23 @@ forecast.lgt <- function(object, h=ifelse(frequency(object$x)>1, 2*frequency(obj
     
     #t=1; irun=1
     if (SEASONALITY>1) { #seasonal
-			powSeasonS=object$params[["powSeason"]][indx]
-			
+      powSeasonS=object$params[["powSeason"]][indx]
+      
       sS[1:SEASONALITY]=s[indx,(ncol(s)-SEASONALITY+1):ncol(s)]
-			if (SEASONALITY2>1) {
-				sS2[1:SEASONALITY2]=s2[indx,(ncol(s2)-SEASONALITY2+1):ncol(s2)]
-			}
+      if (SEASONALITY2>1) {
+        sS2[1:SEASONALITY2]=s2[indx,(ncol(s2)-SEASONALITY2+1):ncol(s2)]
+      }
       for (t in 1:h) {
         seasonA=sS[t]
-				if (SEASONALITY2>1) {
-					seasonA=seasonA*sS2[t]
-				}
+        if (SEASONALITY2>1) {
+          seasonA=seasonA*sS2[t]
+        }
         ## From eq.6.a
-				if (is.null(powSeasonS)) {
-					expVal=(prevLevel+ coefTrendS*abs(prevLevel)^powTrendS)*seasonA;	
-				} else {
-					expVal=prevLevel+ coefTrendS*abs(prevLevel)^powTrendS+ seasonA*abs(prevLevel)^powSeasonS;
-				}
+        if (is.null(powSeasonS)) {
+          expVal=(prevLevel+ coefTrendS*abs(prevLevel)^powTrendS)*seasonA;	
+        } else {
+          expVal=prevLevel+ coefTrendS*abs(prevLevel)^powTrendS+ seasonA*abs(prevLevel)^powSeasonS;
+        }
         
         if (!is.null(powx)) {
           omega=sigmaS*(abs(prevLevel))^powxS+offsetsigmaS
@@ -165,15 +165,15 @@ forecast.lgt <- function(object, h=ifelse(frequency(object$x)>1, 2*frequency(obj
         else if (is.null(powSeasonS)){
           currLevel=max(MIN_VAL,levSmS*yf[irun,t]/seasonA + (1-levSmS)*prevLevel) ;
         } else {#gSTG model
-					currLevel=max(MIN_VAL,levSmS*(yf[irun,t]-seasonA*abs(prevLevel)^powSeasonS) + (1-levSmS)*prevLevel) ;
-				}     
+          currLevel=max(MIN_VAL,levSmS*(yf[irun,t]-seasonA*abs(prevLevel)^powSeasonS) + (1-levSmS)*prevLevel) ;
+        }     
         if (currLevel>MIN_VAL) {
           prevLevel=currLevel
         } 
         sS[t+SEASONALITY] <- sS[t];
-				if (SEASONALITY2>1) {
-					sS2[t+SEASONALITY2] <- sS2[t];
-				}
+        if (SEASONALITY2>1) {
+          sS2[t+SEASONALITY2] <- sS2[t];
+        }
       }	#through horizons
       # yf[irun,]
     } else { #nonseasonal
@@ -192,10 +192,10 @@ forecast.lgt <- function(object, h=ifelse(frequency(object$x)>1, 2*frequency(obj
         
         ## update level equation
         if (inherits(object$model, "RlgtStanModelLGT2")) {
-        currLevel=max(MIN_VAL,levSmS*yf[irun,t] + (1-levSmS)*expVal) ;
+          currLevel=max(MIN_VAL,levSmS*yf[irun,t] + (1-levSmS)*expVal) ;
         }
         else {
-        currLevel=max(MIN_VAL,levSmS*yf[irun,t] + (1-levSmS)*prevLevel) ;
+          currLevel=max(MIN_VAL,levSmS*yf[irun,t] + (1-levSmS)*prevLevel) ;
         }
         
         ## update trend equations
@@ -233,7 +233,7 @@ forecast.lgt <- function(object, h=ifelse(frequency(object$x)>1, 2*frequency(obj
   # Assign tsp attributes for consistency
   if (SEASONALITY2<=1) {
     tsp(out$median) <- tsp (out$lower) <- tsp(out$upper) <- tsp(out$mean)
-	}
+  }
   # for dual seasonality this fails with Error in `tsp<-`(`*tmp*`, value = c(653, 700, 1)) : 
   #invalid time series parameters specified
   

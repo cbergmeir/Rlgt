@@ -25,7 +25,7 @@ for (i in 1:NUM_OF_CASES) {
 	series=M3.data[[i]]$sn
   data.train <- M3.data[[i]]$x
   data.test <- M3.data[[i]]$xx
-  rstanmodel <- fit.lgt(data.train, model="LGT", nCores=4, nChains=4,
+  rstanmodel <- rlgt(data.train, model="LGT", nCores=4, nChains=4,
             control=lgt.control(MAX_NUM_OF_REPEATS=3, NUM_OF_ITER=5000), 
             verbose=FALSE)
 	forec= forecast(rstanmodel, h = H, level=c(90,98))
