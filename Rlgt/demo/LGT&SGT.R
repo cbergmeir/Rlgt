@@ -1,4 +1,3 @@
-
 library("Rlgt")
 #set.seed(12)
 options(width=180)

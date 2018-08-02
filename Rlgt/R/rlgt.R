@@ -32,11 +32,11 @@
 #' @importFrom sn rst
 #' @export
 rlgt <- function(y, model.type=c("LGT", "LGTe", "SGT", "S2GT", "SGTe", "gSGT", "Trend", "Dampen", "SDampen"), 
-  control=lgt.control(), nChains=2, nCores=2, addJitter=TRUE, verbose=FALSE) {
+                 control=lgt.control(), nChains=2, nCores=2, addJitter=TRUE, verbose=FALSE) {
   # for safety
   model.type <- model.type[1]
-	modelIsSeasonal=model.type %in% c("SGT", "S2GT", "SGTe", "gSGT","SDampen")
-
+  modelIsSeasonal=model.type %in% c("SGT", "S2GT", "SGTe", "gSGT","SDampen")
+  
   if(!inherits(model.type, "RlgtStanModel")) {
     model <- initModel(model.type = model.type)
   }
@@ -59,30 +59,30 @@ rlgt <- function(y, model.type=c("LGT", "LGTe", "SGT", "S2GT", "SGTe", "gSGT", "
   CauchySd=max(y)/control$CAUCHY_SD_DIV
   
   SEASONALITY=control$SEASONALITY
-	SEASONALITY2=control$SEASONALITY2
-	
+  SEASONALITY2=control$SEASONALITY2
+  
   #' @importFrom stats frequency
   if (SEASONALITY<=1 && frequency(y)>1 && modelIsSeasonal) {
-		SEASONALITY=frequency(y)
-		print(paste0("Seasonality not specified, but the data is seasonal. Inferring seasonality equal to ",SEASONALITY))
-		control$SEASONALITY=SEASONALITY  #will be used in forecast()
-	}
-	
+    SEASONALITY=frequency(y)
+    print(paste0("Seasonality not specified, but the data is seasonal. Inferring seasonality equal to ",SEASONALITY))
+    control$SEASONALITY=SEASONALITY  #will be used in forecast()
+  }
+  
   data <- list(CAUCHY_SD=CauchySd, 
-		SEASONALITY=SEASONALITY, SEASONALITY2=SEASONALITY2,
-    MIN_POW_TREND=control$MIN_POW_TREND, 
-    MAX_POW_TREND=control$MAX_POW_TREND, 
-    MIN_SIGMA=control$MIN_SIGMA,  
-    MIN_NU=control$MIN_NU,  
-    MAX_NU=control$MAX_NU, 
-    POW_SEASON_ALPHA=control$POW_SEASON_ALPHA, 
-    POW_SEASON_BETA=control$POW_SEASON_BETA,
-    POW_TREND_ALPHA=control$POW_TREND_ALPHA, 
-    POW_TREND_BETA=control$POW_TREND_BETA,
-    y=y, N=n, SKEW=control$SKEW) # to be passed on to Stan
+               SEASONALITY=SEASONALITY, SEASONALITY2=SEASONALITY2,
+               MIN_POW_TREND=control$MIN_POW_TREND, 
+               MAX_POW_TREND=control$MAX_POW_TREND, 
+               MIN_SIGMA=control$MIN_SIGMA,  
+               MIN_NU=control$MIN_NU,  
+               MAX_NU=control$MAX_NU, 
+               POW_SEASON_ALPHA=control$POW_SEASON_ALPHA, 
+               POW_SEASON_BETA=control$POW_SEASON_BETA,
+               POW_TREND_ALPHA=control$POW_TREND_ALPHA, 
+               POW_TREND_BETA=control$POW_TREND_BETA,
+               y=y, N=n, SKEW=control$SKEW) # to be passed on to Stan
   
   ### Repeat until Rhat is in an acceptable range (i.e. convergence is reached)
-
+  
   avgRHat=1e200; irep=1
   for (irep in 1:MAX_NUM_OF_REPEATS) {
     initializations <- list();
@@ -90,8 +90,8 @@ rlgt <- function(y, model.type=c("LGT", "LGTe", "SGT", "S2GT", "SGTe", "gSGT", "
       initializations[[irr]]=list( 
         ### Initialise seasonality factors
         initSu=rnorm(SEASONALITY,1,0.05), # for non-seasonal models it is not necessary, but makes code simpler and is not a big overhead
-				initSu2=rnorm(SEASONALITY2,1,0.05),
-				innovSizeInit=abs(rnorm(1,0,CauchySd))#used only for *GTe models 
+        initSu2=rnorm(SEASONALITY2,1,0.05),
+        innovSizeInit=abs(rnorm(1,0,CauchySd))#used only for *GTe models 
       )
     }
     
@@ -119,7 +119,7 @@ rlgt <- function(y, model.type=c("LGT", "LGTe", "SGT", "S2GT", "SGTe", "gSGT", "
     if (currRHat<=MAX_RHAT_ALLOWED) {
       samples=samples1
       avgRHat=currRHat
-			if(verbose) print(samples)
+      if(verbose) print(samples)
       print(paste("avgRHat",avgRHat))
       break
     } else {
@@ -137,8 +137,13 @@ rlgt <- function(y, model.type=c("LGT", "LGTe", "SGT", "S2GT", "SGTe", "gSGT", "
     #str(samples, max.level =4)
   }#repeat if needed
   
-  if(verbose) print(summary(do.call(rbind, args = get_sampler_params(samples1, inc_warmup = F)), digits = 2)) #diagnostics including step sizes and tree depths
-  
+  if(verbose) {
+    print(summary(do.call(rbind, 
+                          args = get_sampler_params(samples1, 
+                                                    inc_warmup = F)), 
+                  digits = 2)) #diagnostics including step sizes and tree depths
+  }
+
   params <- list()
   #paramMeans <- list()
   

@@ -15,7 +15,7 @@
 #' @importFrom forecast forecast 
 #' @examples 
 #' \dontrun{
-#' lgt_model <- fit.lgt(lynx, model="LGT", nCores=4, nChains=4,
+#' lgt_model <- rlgt(lynx, model="LGT", nCores=4, nChains=4,
 #' control=lgt.control(MAX_NUM_OF_REPEATS=1, NUM_OF_ITER=2000), 
 #' verbose=TRUE)
 
