@@ -21,10 +21,9 @@ print(mod[["LGT"]])
 # print the interval for all vars
 posterior_interval(mod[["LGT"]])
 
-forecasts[["LGT"]] <- forecast(mod[["LGT"]], 
-                               h = sizeTestSet/2, level=c(80, 95, 98))
+forecasts[["LGT"]] <- forecast(mod[["LGT"]], h = sizeTestSet/2, 
+                               level=c(80, 95, 98))
 plot(forecasts[["LGT"]], main=paste(curr_series,'by LGT'))
-
 
 # Use AirPassanger data as an example for a seasonal dataset
 seasonal_data <- AirPassengers

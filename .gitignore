@@ -6,6 +6,10 @@ Rlgt_0.0-1.tar.gz
 Rlgt/man/*
 tmp_roxy.Rout
 tmp_roxy.R
+*Rlgt.so
+rclust.out
+stanOutput.txt
+*.hpp
 *.o
 *.DS_Store
 *.Rproj

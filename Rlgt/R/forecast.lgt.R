@@ -15,7 +15,7 @@
 #' @importFrom forecast forecast 
 #' @examples 
 #' \dontrun{
-#' lgt_model <- rlgt(lynx, model="LGT", nCores=4, nChains=4,
+#' lgt_model <- fit.lgt(lynx, model="LGT", nCores=4, nChains=4,
 #' control=lgt.control(MAX_NUM_OF_REPEATS=1, NUM_OF_ITER=2000), 
 #' verbose=TRUE)
 
@@ -69,20 +69,21 @@ forecast.lgt <- function(object,
   tspx <- tsp(out$x)
   
   # start.f is the next(first) forecast period
-  if(!is.null(tspx)){
+  if (!is.null(tspx)) {
     start.f <- tspx[2] + 1/frequency(out$x)
   } else {
     start.f <- length(out$x)+1
   }
   
   # extracting all of the params
-  nu=object$params[["nu"]]
+  nu <- object$params[["nu"]]
   lastB <- object$params[["lastB"]]
   lastSmoothedInnovSize <- object$params[["lastSmoothedInnovSize"]]
   powx <- object$params[["powx"]]
   
-  nuS=Inf; bSmS=0; bS=0; locTrendFractS=0;  #these initializations are important, do not remove. 
-  #t=1; irun=1
+  #these initializations are important, do not remove. 
+  nuS=Inf; bSmS=0; bS=0; locTrendFractS=0; #t=1; irun=1
+  
   if (SEASONALITY>1) {
     s <- object$params[["s"]]
     sS=rep(1,SEASONALITY+h)
@@ -108,7 +109,7 @@ forecast.lgt <- function(object,
     powTrendS=object$params[["powTrend"]][indx]
     coefTrendS=object$params[["coefTrend"]][indx]
     
-    if(!is.null(lastB)) {
+    if (!is.null(lastB)) {
       bS=lastB[indx]
       bSmS= object$params[["bSm"]][indx]
       locTrendFractS=object$params[["locTrendFract"]][indx]
