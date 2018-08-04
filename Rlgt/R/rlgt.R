@@ -3,7 +3,8 @@
 #' 
 #' @title Runs the model fitting
 #' @param y the time series
-#' @param model a Stan model
+#' @param model.type a character string specifies the model
+#' @param xreg Optionally, a vector or matrix of external regressors, which must have the same number of rows as y.
 #' @param control control arguments list
 #' @param nChains number of MCMC chains . Must >=1. Perhaps optimal number is 4.
 #' @param nCores number of cores to be used. For performance reasons it should be equal to nChains, 
@@ -31,19 +32,27 @@
 #' @importMethodsFrom rstan summary
 #' @importFrom sn rst
 #' @export
-rlgt <- function(y, model.type=c("LGT", "LGTe", "SGT", "S2GT", "SGTe", "gSGT", "Trend", "Dampen", "SDampen"), 
-                 control=lgt.control(), nChains=2, nCores=2, addJitter=TRUE, verbose=FALSE) {
+rlgt <- function(y, model.type = c("LGT", "LGTe", "SGT", "S2GT", "SGTe", 
+                                 "gSGT", "Trend", "Dampen", "SDampen"), 
+                 xreg = NULL,
+                 control = lgt.control(), nChains = 2, nCores = 2, 
+                 addJitter = TRUE, verbose = FALSE) {
   # for safety
   model.type <- model.type[1]
-  modelIsSeasonal=model.type %in% c("SGT", "S2GT", "SGTe", "gSGT","SDampen")
+  modelIsSeasonal <- model.type %in% c("SGT", "S2GT", "SGTe", "gSGT","SDampen")
   
   if(!inherits(model.type, "RlgtStanModel")) {
     model <- initModel(model.type = model.type)
   }
   
-  MAX_RHAT_ALLOWED=control$MAX_RHAT_ALLOWED
-  NUM_OF_ITER=control$NUM_OF_ITER
-  MAX_NUM_OF_REPEATS=control$MAX_NUM_OF_REPEATS
+  if(!is.null(xreg) && !model.type %in% c("LGT", "SGT")) {
+    message("Models except LGT & SGT currently do not support regression. 
+            Regression variables will be ignored.")
+  }
+  
+  MAX_RHAT_ALLOWED <- control$MAX_RHAT_ALLOWED
+  NUM_OF_ITER <- control$NUM_OF_ITER
+  MAX_NUM_OF_REPEATS <- control$MAX_NUM_OF_REPEATS
   
   if(nCores>1) {
     rstan_options(auto_write = TRUE)
@@ -51,25 +60,26 @@ rlgt <- function(y, model.type=c("LGT", "LGTe", "SGT", "S2GT", "SGTe", "gSGT", "
   }
   
   y.orig <- y
-  n=length(y)
+  n <- length(y)
   
   #' @importFrom stats rnorm
   if(addJitter) y <- y + rnorm(n,0,sd=abs(min(y))*0.0001)
   
-  CauchySd=max(y)/control$CAUCHY_SD_DIV
+  CauchySd <- max(y) / control$CAUCHY_SD_DIV
   
-  SEASONALITY=control$SEASONALITY
-  SEASONALITY2=control$SEASONALITY2
+  SEASONALITY <- control$SEASONALITY
+  SEASONALITY2 <- control$SEASONALITY2
   
   #' @importFrom stats frequency
-  if (SEASONALITY<=1 && frequency(y)>1 && modelIsSeasonal) {
-    SEASONALITY=frequency(y)
+  if (SEASONALITY <= 1 && frequency(y) > 1 && modelIsSeasonal) {
+    SEASONALITY <- frequency(y)
     print(paste0("Seasonality not specified, but the data is seasonal. Inferring seasonality equal to ",SEASONALITY))
-    control$SEASONALITY=SEASONALITY  #will be used in forecast()
+    control$SEASONALITY <- SEASONALITY  #will be used in forecast()
   }
   
   data <- list(CAUCHY_SD=CauchySd, 
-               SEASONALITY=SEASONALITY, SEASONALITY2=SEASONALITY2,
+               SEASONALITY=SEASONALITY, 
+               SEASONALITY2=SEASONALITY2,
                MIN_POW_TREND=control$MIN_POW_TREND, 
                MAX_POW_TREND=control$MAX_POW_TREND, 
                MIN_SIGMA=control$MIN_SIGMA,  
@@ -83,49 +93,50 @@ rlgt <- function(y, model.type=c("LGT", "LGTe", "SGT", "S2GT", "SGTe", "gSGT", "
   
   ### Repeat until Rhat is in an acceptable range (i.e. convergence is reached)
   
-  avgRHat=1e200; irep=1
+  avgRHat <- 1e200 
+  irep <- 1
   for (irep in 1:MAX_NUM_OF_REPEATS) {
-    initializations <- list();
+    initializations <- list()
     for (irr in 1:nChains) {
       initializations[[irr]]=list( 
         ### Initialise seasonality factors
-        initSu=rnorm(SEASONALITY,1,0.05), # for non-seasonal models it is not necessary, but makes code simpler and is not a big overhead
-        initSu2=rnorm(SEASONALITY2,1,0.05),
-        innovSizeInit=abs(rnorm(1,0,CauchySd))#used only for *GTe models 
+        initSu  <- rnorm(SEASONALITY, 1, 0.05), # for non-seasonal models it is not necessary, but makes code simpler and is not a big overhead
+        initSu2 <- rnorm(SEASONALITY2, 1, 0.05),
+        innovSizeInit <-abs(rnorm(1, 0, CauchySd))#used only for *GTe models 
       )
     }
     
     #Double the number of iterations for the next cycle
-    numOfIters=NUM_OF_ITER*2^(irep-1)
-    samples1=
+    numOfIters <- NUM_OF_ITER * 2 ^ (irep - 1)
+    samples1 <-
       sampling(
         control=list(adapt_delta = control$ADAPT_DELTA, 
                      max_treedepth=control$MAX_TREE_DEPTH),
-        model$model,   
-        data=data, 
-        init=initializations,
-        pars=model$parameters,
-        iter=numOfIters,
-        chains=nChains,
-        cores=nCores,
-        open_progress=F,
-        refresh = if(verbose) numOfIters/5 else -1)
+        object = model$model,   
+        data = data, 
+        init = initializations,
+        pars = model$parameters,
+        iter = numOfIters,
+        chains = nChains,
+        cores = nCores,
+        open_progress = F,
+        refresh = if(verbose) numOfIters / 5 else -1)
     
     ### Get the Rhat values
-    ainfo=summary(samples1)
-    RHats=ainfo$summary[,10]
-    RHats=as.numeric(RHats[is.finite(RHats)])
-    currRHat=mean(RHats, na.rm=T)
-    if (currRHat<=MAX_RHAT_ALLOWED) {
-      samples=samples1
-      avgRHat=currRHat
+    ainfo <- summary(samples1)
+    RHats <- ainfo$summary[,10]
+    RHats <- as.numeric(RHats[is.finite(RHats)])
+    currRHat <- mean(RHats, na.rm = T)
+    if (currRHat <= MAX_RHAT_ALLOWED) {
+      samples <- samples1
+      avgRHat <- currRHat
       if(verbose) print(samples)
       print(paste("avgRHat",avgRHat))
       break
     } else {
       if (currRHat<avgRHat) {#in the worst case this is at least once executed, because avgRHat is initialized high
-        samples=samples1
-        avgRHat=currRHat
+        samples <- samples1
+        avgRHat <- currRHat
         print(samples)
         print(paste("avgRHat",avgRHat))
       } else {
