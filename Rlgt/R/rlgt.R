@@ -46,7 +46,7 @@ rlgt <- function(y, model.type = c("LGT", "LGTe", "SGT", "S2GT", "SGTe",
   }
   
   if(!is.null(xreg) && !model.type %in% c("LGT", "SGT")) {
-    message("Models except LGT & SGT currently do not support regression. 
+    message("Current model do not support regression. 
             Regression variables will be ignored.")
   }
   
@@ -54,7 +54,7 @@ rlgt <- function(y, model.type = c("LGT", "LGTe", "SGT", "S2GT", "SGTe",
   NUM_OF_ITER <- control$NUM_OF_ITER
   MAX_NUM_OF_REPEATS <- control$MAX_NUM_OF_REPEATS
   
-  if(nCores>1) {
+  if (nCores>1) {
     rstan_options(auto_write = TRUE)
     options(mc.cores = nCores)    
   }
@@ -63,7 +63,7 @@ rlgt <- function(y, model.type = c("LGT", "LGTe", "SGT", "S2GT", "SGTe",
   n <- length(y)
   
   #' @importFrom stats rnorm
-  if(addJitter) y <- y + rnorm(n,0,sd=abs(min(y))*0.0001)
+  if(addJitter) y <- y + rnorm(n, 0, sd=abs(min(y)) * 0.0001)
   
   CauchySd <- max(y) / control$CAUCHY_SD_DIV
   
@@ -92,17 +92,18 @@ rlgt <- function(y, model.type = c("LGT", "LGTe", "SGT", "S2GT", "SGTe",
                y=y, N=n, SKEW=control$SKEW) # to be passed on to Stan
   
   ### Repeat until Rhat is in an acceptable range (i.e. convergence is reached)
-  
-  avgRHat <- 1e200 
+  avgRHat <- 1e200
   irep <- 1
   for (irep in 1:MAX_NUM_OF_REPEATS) {
     initializations <- list()
     for (irr in 1:nChains) {
       initializations[[irr]]=list( 
         ### Initialise seasonality factors
-        initSu  <- rnorm(SEASONALITY, 1, 0.05), # for non-seasonal models it is not necessary, but makes code simpler and is not a big overhead
-        initSu2 <- rnorm(SEASONALITY2, 1, 0.05),
-        innovSizeInit <-abs(rnorm(1, 0, CauchySd))#used only for *GTe models 
+        # for non-seasonal models it is not necessary, 
+        # but makes code simpler and is not a big overhead
+        initSu = rnorm(SEASONALITY, 1, 0.05), 
+        initSu2 = rnorm(SEASONALITY2, 1, 0.05),
+        innovSizeInit = abs(rnorm(1, 0, CauchySd))#used only for *GTe models 
       )
     }
     
@@ -110,17 +111,17 @@ rlgt <- function(y, model.type = c("LGT", "LGTe", "SGT", "S2GT", "SGTe",
     numOfIters <- NUM_OF_ITER * 2 ^ (irep - 1)
     samples1 <-
       sampling(
-        control=list(adapt_delta = control$ADAPT_DELTA, 
-                     max_treedepth=control$MAX_TREE_DEPTH),
+        control = list(adapt_delta = control$ADAPT_DELTA, 
+                     max_treedepth = control$MAX_TREE_DEPTH),
         object = model$model,   
         data = data, 
-        init = initializations,
+        init  =initializations,
         pars = model$parameters,
         iter = numOfIters,
         chains = nChains,
         cores = nCores,
         open_progress = F,
-        refresh = if(verbose) numOfIters / 5 else -1)
+        refresh = if(verbose) numOfIters / 5 else - 1)
     
     ### Get the Rhat values
     ainfo <- summary(samples1)
