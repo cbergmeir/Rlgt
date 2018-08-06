@@ -46,6 +46,7 @@ model {
 	coefTrend ~ cauchy(0,CAUCHY_SD);
 	powTrendBeta ~ beta(POW_TREND_ALPHA, POW_TREND_BETA);
 	bInit ~ normal(0,CAUCHY_SD);
+	xreg_coef ~ normal(0, 1);
 	
 	for (t in 2:N) {
 		y[t] ~ student_t(nu, l[t-1] + coefTrend * l[t-1] ^ powTrend + locTrendFract * b[t-1], 

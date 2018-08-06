@@ -85,41 +85,41 @@ forecast.lgt <- function(object,
   nuS=Inf; bSmS=0; bS=0; locTrendFractS=0; #t=1; irun=1
   
   if (SEASONALITY>1) {
-    s <- object$params[["s"]]
-    sS=rep(1,SEASONALITY+h)
+    s  <- object$params[["s"]]
+    sS <- rep(1,SEASONALITY+h)
   }
   if (SEASONALITY2>1) {
-    s2 <- object$params[["s2"]]
-    sS2=rep(1,SEASONALITY2+h)
+    s2  <- object$params[["s2"]]
+    sS2 <-rep(1,SEASONALITY2+h)
   }
   
   # Initialise a matrix which contains the last level value
-  yf=matrix(0,nrow=NUM_OF_TRIALS, ncol=h)
+  yf <- matrix(0,nrow=NUM_OF_TRIALS, ncol=h)
   
   # For each forecasting trial
   for (irun in 1:NUM_OF_TRIALS) {
     # Obtain the relevant parameters & use bootstrap sampling
-    indx=sample(nrow(object$params[["l"]]),1)
-    prevLevel=object$params[["lastLevel"]][indx]
-    levSmS=object$params[["levSm"]][indx]
+    indx <- sample(nrow(object$params[["l"]]),1)
+    prevLevel <- object$params[["lastLevel"]][indx]
+    levSmS <- object$params[["levSm"]][indx]
     if (!is.null(nu)) {
-      nuS=nu[indx]
+      nuS <- nu[indx]
     } 
     
-    powTrendS=object$params[["powTrend"]][indx]
-    coefTrendS=object$params[["coefTrend"]][indx]
+    powTrendS <- object$params[["powTrend"]][indx]
+    coefTrendS <- object$params[["coefTrend"]][indx]
     
     if (!is.null(lastB)) {
-      bS=lastB[indx]
-      bSmS= object$params[["bSm"]][indx]
-      locTrendFractS=object$params[["locTrendFract"]][indx]
+      bS <- lastB[indx]
+      bSmS <- object$params[["bSm"]][indx]
+      locTrendFractS <- object$params[["locTrendFract"]][indx]
     }
     
     sigmaS <- object$params[["sigma"]][indx]
     if (!is.null(lastSmoothedInnovSize)) {
-      innovSize=lastSmoothedInnovSize[indx]
-      innovSmS=object$params[["innovSm"]][indx]
-      offsetsigmaS=object$params[["offsetSigma"]][indx]
+      innovSize <- lastSmoothedInnovSize[indx]
+      innovSmS <- object$params[["innovSm"]][indx]
+      offsetsigmaS <- object$params[["offsetSigma"]][indx]
     } else if (!is.null(powx)) {
       powxS=powx[indx]
       offsetsigmaS=object$params[["offsetSigma"]][indx]

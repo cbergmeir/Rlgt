@@ -100,6 +100,20 @@ initModel <- function(model.type = NULL){
     
     model[["model"]] <- stanmodels$trend
     class(model) <- c("RlgtStanModelTrend")
+  } else if(model.type=="LGT_Reg")  {
+    #Non-Seasonal Local Global Trend model
+    model[["parameters"]] <- c("l", "b", "nu", "sigma", "levSm",  "bSm", 
+                               "powx", "coefTrend",  "powTrend", "offsetSigma", 
+                               "locTrendFract", "xreg_coef")
+    model[["model"]] <- stanmodels$lgt_reg
+    class(model) <- c("RlgtStanModelLGT")
+  }	else if(model.type=="SGT_Reg") {
+    #Seasonal Global Trend model
+    model[["parameters"]] <- c("l", "s", "sSm","nu", "sigma", "levSm", 
+                               "powx", "coefTrend", "powTrend", "offsetSigma",
+                               "xreg_coef")
+    model[["model"]] <- stanmodels$sgt_reg
+    class(model) <- c("RlgtStanModelSGT")
   } 
   
   class(model) <- c("RlgtStanModel", class(model))
@@ -119,11 +133,13 @@ initModel <- function(model.type = NULL){
 #' @param samples stanfit object representing the MCMC samples
 #' @return lgt instance
 
-lgt <- function(y, model.type, lgtmodel, params, control, samples) {
+lgt <- function(y, model.type, has.regression, 
+                lgtmodel, params, control, samples) {
 	# we can add our own integrity checks
 	value <- list(x = y, model.type = model.type,
+	              has.regression = has.regression,
 	              model = lgtmodel, params = params, 
-	              control=control, samples=samples)
+	              control = control, samples = samples)
 	
 	# class can be set using class() or attr() function
 	attr(value, "class") <- "lgt"

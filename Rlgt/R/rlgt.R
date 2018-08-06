@@ -33,21 +33,24 @@
 #' @importFrom sn rst
 #' @export
 rlgt <- function(y, model.type = c("LGT", "LGTe", "SGT", "S2GT", "SGTe", 
-                                 "gSGT", "Trend", "Dampen", "SDampen"), 
+                                   "gSGT", "Trend", "Dampen", "SDampen"), 
                  xreg = NULL,
                  control = lgt.control(), nChains = 2, nCores = 2, 
                  addJitter = TRUE, verbose = FALSE) {
   # for safety
   model.type <- model.type[1]
   modelIsSeasonal <- model.type %in% c("SGT", "S2GT", "SGTe", "gSGT","SDampen")
+  has.regression <- FALSE
+  if(!is.null(xreg) && model.type %in% c("LGT", "SGT")) {
+    model.type <- paste0(model.type, "_Reg")
+    has.regression <- TRUE
+  } else {
+    message("Current model do not support regression. 
+            Regression variables will be ignored.")
+  }
   
   if(!inherits(model.type, "RlgtStanModel")) {
     model <- initModel(model.type = model.type)
-  }
-  
-  if(!is.null(xreg) && !model.type %in% c("LGT", "SGT")) {
-    message("Current model do not support regression. 
-            Regression variables will be ignored.")
   }
   
   MAX_RHAT_ALLOWED <- control$MAX_RHAT_ALLOWED
@@ -91,6 +94,14 @@ rlgt <- function(y, model.type = c("LGT", "LGTe", "SGT", "S2GT", "SGTe",
                POW_TREND_BETA=control$POW_TREND_BETA,
                y=y, N=n, SKEW=control$SKEW) # to be passed on to Stan
   
+  if(has.regression){
+    data[['xreg']] <- xreg
+    data[['J']] <- ncol(xreg)
+    if(nrow(xreg) != n){
+      stop("Error: Number of rows supplied in regression matrix does not match length of y!")
+    }
+  }
+  
   ### Repeat until Rhat is in an acceptable range (i.e. convergence is reached)
   avgRHat <- 1e200
   irep <- 1
@@ -112,10 +123,10 @@ rlgt <- function(y, model.type = c("LGT", "LGTe", "SGT", "S2GT", "SGTe",
     samples1 <-
       sampling(
         control = list(adapt_delta = control$ADAPT_DELTA, 
-                     max_treedepth = control$MAX_TREE_DEPTH),
+                       max_treedepth = control$MAX_TREE_DEPTH),
         object = model$model,   
         data = data, 
-        init  =initializations,
+        init = initializations,
         pars = model$parameters,
         iter = numOfIters,
         chains = nChains,
@@ -155,7 +166,7 @@ rlgt <- function(y, model.type = c("LGT", "LGTe", "SGT", "S2GT", "SGTe",
                                                     inc_warmup = F)), 
                   digits = 2)) #diagnostics including step sizes and tree depths
   }
-
+  
   params <- list()
   #paramMeans <- list()
   
@@ -181,6 +192,7 @@ rlgt <- function(y, model.type = c("LGT", "LGTe", "SGT", "S2GT", "SGTe",
     #paramMeans[["lastSmoothedInnovSize"]] <- mean(params[["lastSmoothedInnovSize"]])
   }
   
-  out <- lgt(y.orig, model.type, model, params, control, samples)
+  out <- lgt(y.orig, model.type, has.regression = has.regression,
+             model, params, control, samples)
   out
 }
