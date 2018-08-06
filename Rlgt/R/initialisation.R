@@ -104,14 +104,14 @@ initModel <- function(model.type = NULL){
     #Non-Seasonal Local Global Trend model
     model[["parameters"]] <- c("l", "b", "nu", "sigma", "levSm",  "bSm", 
                                "powx", "coefTrend",  "powTrend", "offsetSigma", 
-                               "locTrendFract", "xreg_coef")
+                               "locTrendFract", "regCoef")
     model[["model"]] <- stanmodels$lgt_reg
     class(model) <- c("RlgtStanModelLGT")
   }	else if(model.type=="SGT_Reg") {
     #Seasonal Global Trend model
     model[["parameters"]] <- c("l", "s", "sSm","nu", "sigma", "levSm", 
                                "powx", "coefTrend", "powTrend", "offsetSigma",
-                               "xreg_coef")
+                               "regCoef")
     model[["model"]] <- stanmodels$sgt_reg
     class(model) <- c("RlgtStanModelSGT")
   } 

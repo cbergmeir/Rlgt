@@ -12,7 +12,7 @@ data {
 	real<lower=0> POW_TREND_ALPHA; real<lower=0> POW_TREND_BETA; 
 }
 parameters {
-  vector[J]  xreg_coef;
+  vector[J]  regCoef;
 	real<lower=MIN_NU,upper=MAX_NU> nu; 
 	real<lower=0> sigma;
 	real <lower=0,upper=1>levSm;
@@ -30,12 +30,12 @@ transformed parameters {
 	vector[N] b;
 	vector[N] r; //regression component
 	
-	r[1] = xreg[1,:] * xreg_coef;
+	r[1] = xreg[1,:] * regCoef;
 	l[1] = y[1]; b[1] = bInit;
 	powTrend= (MAX_POW_TREND-MIN_POW_TREND)*powTrendBeta+MIN_POW_TREND;
 
 	for (t in 2:N) {
-	  r[t] = xreg[t,:] * xreg_coef;
+	  r[t] = xreg[t,:] * regCoef;
 		l[t] = levSm*y[t] + (1-levSm)*l[t-1] ;  //E(y[t])=l[t]=l[t-1]+coefTrend*l[t-1]^powTrend+locTrendFract*b[t-1]
 		b[t] = bSm*(l[t]-l[t-1]) + (1-bSm)*b[t-1] ;
 	}
@@ -46,7 +46,7 @@ model {
 	coefTrend ~ cauchy(0,CAUCHY_SD);
 	powTrendBeta ~ beta(POW_TREND_ALPHA, POW_TREND_BETA);
 	bInit ~ normal(0,CAUCHY_SD);
-	xreg_coef ~ normal(0, 1);
+	regCoef ~ normal(0, 1);
 	
 	for (t in 2:N) {
 		y[t] ~ student_t(nu, l[t-1] + coefTrend * l[t-1] ^ powTrend + locTrendFract * b[t-1], 

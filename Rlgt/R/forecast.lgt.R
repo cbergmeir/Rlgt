@@ -34,14 +34,21 @@
 # object=mod[["lgte"]]; level=c(80,95, 98); NUM_OF_TRIALS=2000; MIN_VAL=0.001; MAX_VAL=1e38; h=8
 # library(sn)
 forecast.lgt <- function(object, 
+                         xreg=NULL,
                          h=ifelse(frequency(object$x)>1, 
                                   2*frequency(object$x), 10),
                          level=c(80,95),
                          NUM_OF_TRIALS=2000, 
                          MIN_VAL=0.001, MAX_VAL=1e38, ...) {
   
+  # check if you have non-null and names matched xreg...
+  # WIP
+  if (object$has.regression && is.null(xreg)){
+    stop("")
+  }
+  
   if (any(level>100) || any(level<0)) {
-    print(paste("Warning: levels mus be between 0 and 100. Assuming defaults."))
+    message("Warning: levels mus be between 0 and 100. Assuming defaults.")
     level=c(80,95)
   }
   
@@ -102,11 +109,15 @@ forecast.lgt <- function(object,
     indx <- sample(nrow(object$params[["l"]]),1)
     prevLevel <- object$params[["lastLevel"]][indx]
     levSmS <- object$params[["levSm"]][indx]
+    if (object$has.regression) {
+      regCoef <- object$params[["regCoef"]][indx]
+    }
+
     if (!is.null(nu)) {
       nuS <- nu[indx]
     } 
     
-    powTrendS <- object$params[["powTrend"]][indx]
+    powTrendS  <- object$params[["powTrend"]][indx]
     coefTrendS <- object$params[["coefTrend"]][indx]
     
     if (!is.null(lastB)) {
@@ -121,13 +132,13 @@ forecast.lgt <- function(object,
       innovSmS <- object$params[["innovSm"]][indx]
       offsetsigmaS <- object$params[["offsetSigma"]][indx]
     } else if (!is.null(powx)) {
-      powxS=powx[indx]
-      offsetsigmaS=object$params[["offsetSigma"]][indx]
+      powxS <- powx[indx]
+      offsetsigmaS <- object$params[["offsetSigma"]][indx]
     }
     
     #t=1; irun=1
-    if (SEASONALITY>1) { #seasonal
-      powSeasonS=object$params[["powSeason"]][indx]
+    if (SEASONALITY > 1) { #seasonal
+      powSeasonS <- object$params[["powSeason"]][indx]
       
       sS[1:SEASONALITY]=s[indx,(ncol(s)-SEASONALITY+1):ncol(s)]
       if (SEASONALITY2>1) {
@@ -136,25 +147,26 @@ forecast.lgt <- function(object,
       for (t in 1:h) {
         seasonA=sS[t]
         if (SEASONALITY2>1) {
-          seasonA=seasonA*sS2[t]
+          seasonA <- seasonA * sS2[t]
         }
         ## From eq.6.a
         if (is.null(powSeasonS)) {
-          expVal=(prevLevel+ coefTrendS*abs(prevLevel)^powTrendS)*seasonA;	
+          expVal <- (prevLevel+ coefTrendS * abs(prevLevel) ^ powTrendS) * seasonA;	
         } else {
-          expVal=prevLevel+ coefTrendS*abs(prevLevel)^powTrendS+ seasonA*abs(prevLevel)^powSeasonS;
+          expVal <- prevLevel+ coefTrendS * abs(prevLevel) ^ powTrendS + seasonA *
+            abs(prevLevel) ^ powSeasonS;
         }
         
         if (!is.null(powx)) {
-          omega=sigmaS*(abs(prevLevel))^powxS+offsetsigmaS
+          omega <- sigmaS*(abs(prevLevel))^powxS+offsetsigmaS
         } else if (!is.null(lastSmoothedInnovSize)) {
-          omega=sigmaS*innovSize + offsetsigmaS
+          omega <- sigmaS*innovSize + offsetsigmaS
         } else {
-          omega=sigmaS
+          omega <- sigmaS
         }
         
         # Generate the t-dist error
-        error=rst(n=1, xi=0 ,	omega=omega, alpha=0, nu=nuS)
+        error <- rst(n=1, xi=0 ,omega=omega, alpha=0, nu=nuS)
         
         # Fill in the matrix of predicted value
         yf[irun,t]=min(MAX_VAL,max(MIN_VAL,expVal+error))
@@ -179,35 +191,37 @@ forecast.lgt <- function(object,
       # yf[irun,]
     } else { #nonseasonal
       for (t in 1:h) {
-        expVal=prevLevel + coefTrendS*(abs(prevLevel))^powTrendS + locTrendFractS*bS
+        expVal <- prevLevel + coefTrendS*(abs(prevLevel)) ^ powTrendS + locTrendFractS * bS
         if (!is.null(powx)) {
-          omega=sigmaS*(abs(prevLevel))^powxS+offsetsigmaS
+          omega <- sigmaS * (abs(prevLevel)) ^ powxS + offsetsigmaS
         } else if (!is.null(lastSmoothedInnovSize)) {
-          omega=sigmaS*innovSize + offsetsigmaS
+          omega <- sigmaS * innovSize + offsetsigmaS
         } else {
-          omega=sigmaS
+          omega <- sigmaS
         }
-        error=rst(n=1, xi=0, omega=omega, alpha=0, nu=nuS)
+        error <- rst(n=1, xi=0, omega=omega, alpha=0, nu=nuS)
         
-        yf[irun,t]=min(MAX_VAL,max(MIN_VAL, expVal+error))
+        yf[irun,t] <- min(MAX_VAL,max(MIN_VAL, expVal + error))
         
         ## update level equation
         if (inherits(object$model, "RlgtStanModelLGT2")) {
-          currLevel=max(MIN_VAL,levSmS*yf[irun,t] + (1-levSmS)*expVal) ;
+          currLevel <- max(MIN_VAL, levSmS * yf[irun,t] + (1-levSmS) * expVal) ;
         }
         else {
-          currLevel=max(MIN_VAL,levSmS*yf[irun,t] + (1-levSmS)*prevLevel) ;
+          currLevel <- max(MIN_VAL, levSmS * yf[irun,t] + (1-levSmS)*prevLevel) ;
         }
         
         ## update trend equations
         if (currLevel>MIN_VAL & !inherits(object$model, "RlgtStanModelLGT2")) {
-          bS= bSmS*(currLevel-prevLevel)+(1-bSmS)*bS #but bSmS and bS may be==0 so then noop
-          prevLevel=currLevel
+          # but bSmS and bS may be==0 so then noop
+          prevLevel <- currLevel
+          bS <- bSmS * (currLevel - prevLevel) + (1 - bSmS) * bS 
         } 
         
         else if (currLevel>MIN_VAL){
-          bS= bSmS*(currLevel-prevLevel)+(1-bSmS)*locTrendFractS*bS #but bSmS and bS may be==0 so then noop
-          prevLevel=currLevel
+          # but bSmS and bS may be==0 so then noop
+          bS <- bSmS * (currLevel - prevLevel) + (1 - bSmS) * locTrendFractS * bS 
+          prevLevel <- currLevel
         } 
         
       } #through horizons
@@ -218,13 +232,14 @@ forecast.lgt <- function(object,
   out$yf <- yf
   
   #' @importFrom stats ts
-  out$mean <- ts(apply(yf, 2, mean),frequency=max(frequency(out$x),SEASONALITY), start=start.f ) #still not right if there are two seasonalities
+  out$mean <- ts(apply(yf, 2, mean), frequency=max(frequency(out$x),SEASONALITY), 
+                 start=start.f ) #still not right if there are two seasonalities
   
   #' @importFrom stats quantile
   avgYfs=apply(yf,2,quantile,probs=quantiles)
   
   out$median <- ts(avgYfs[indexOfMedian,])
-  if (indexOfMedian>1) {
+  if (indexOfMedian > 1) {
     out$lower <- ts(t(avgYfs[1:(indexOfMedian-1),]))
     out$upper <- ts(t(avgYfs[(indexOfMedian+1):(indexOfMedian+length(upperPercentiles)),]))	
   }
