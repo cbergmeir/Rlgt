@@ -1,26 +1,24 @@
-
-#' Runs the model fitting
-#' 
-#' @title Runs the model fitting
-#' @param y the time series
-#' @param model.type a character string specifies the model
-#' @param xreg Optionally, a vector or matrix of external regressors, which must have the same number of rows as y.
-#' @param control control arguments list
-#' @param nChains number of MCMC chains . Must >=1. Perhaps optimal number is 4.
-#' @param nCores number of cores to be used. For performance reasons it should be equal to nChains, 
-#' but nChains should be smaller or equal to the number of cores on the computer.  
-#' @param addJitter adding a bit of jitter is helping Stan in case of some flat series
-#' @param verbose print verbose information yes/no
-#' @returnType lgt
-#' @return lgtModel
+#' @title Fit an Rlgt model
+#' @description The main function to fit an rlgt model. It fitted the parameter values through MCMC simulations.
+#' @param y time-series data for training (provided as a vector or a ts object).
+#' @param model.type a chosen model from the Rlgt package.
+#' @param control list of control parameters, i.e. hyperparameter values for the model's prior distribution.  
+#' @param nChains number of MCMC chains ro be produced. The number must be >=1. 
+#' More chains will improve the quality of the model, but will significantly increase 
+#' the run-time of the MCMC sampling procedure.Perhaps, an optimal number is around 4.
+#' @param nCores number of cores to be used. For performance reasons, it should be set to equal 
+#' to nChains, in case of nChains <= the number of cores available on the computer.  
+#' @param addJitter adding a bit of jitter is helping Stan in case of some flat time-series data.
+#' @param verbose whether verbose information should be printed (true/false value only)
+#' @return rlgtfit object
 #' @examples
 #'\dontrun{
-#' lgt_model <- rlgt(lynx, model="LGT", nCores=4, nChains=4,
+#' rlgt_model <- rlgt(lynx, model="LGT", nCores=4, nChains=4,
 #' control=lgt.control(MAX_NUM_OF_REPEATS=1, NUM_OF_ITER=2000), 
 #' verbose=TRUE)
 
 #' # print the model details
-#' print(lgt_model)
+#' print(rlgt_model)
 #'}
 #'
 #'\dontrun{demo(exampleScript)}
@@ -32,14 +30,11 @@
 #' @importMethodsFrom rstan summary
 #' @importFrom sn rst
 #' @export
-rlgt <- function(y, model.type = c("LGT", "LGTe", "SGT", "S2GT", "SGTe", 
-                                   "gSGT", "Trend", "Dampen", "SDampen"), 
-                 xreg = NULL,
-                 control = lgt.control(), nChains = 2, nCores = 2, 
-                 addJitter = TRUE, verbose = FALSE) {
+rlgt <- function(y, model.type=c("LGT", "SGT", "S2GT", "gSGT"), 
+                 control=rlgt.control(), nChains=2, nCores=2, addJitter=TRUE, verbose=FALSE) {
   # for safety
   model.type <- model.type[1]
-  modelIsSeasonal <- model.type %in% c("SGT", "S2GT", "SGTe", "gSGT","SDampen")
+  modelIsSeasonal <- model.type %in% c("SGT", "S2GT", "SGTe", "gSGT")
   has.regression <- FALSE
   if(!is.null(xreg) && model.type %in% c("LGT", "SGT")) {
     model.type <- paste0(model.type, "_Reg")
@@ -192,7 +187,7 @@ rlgt <- function(y, model.type = c("LGT", "LGTe", "SGT", "S2GT", "SGTe",
     #paramMeans[["lastSmoothedInnovSize"]] <- mean(params[["lastSmoothedInnovSize"]])
   }
   
-  out <- lgt(y.orig, model.type, has.regression = has.regression,
+  out <- rlgtfit(y.orig, model.type, has.regression = has.regression,
              model, params, control, samples)
   out
 }

@@ -1,29 +1,26 @@
-
-
-#' This is a method of dampen object to produce posterior interval
+#' This is a method of rlgt object to produce posterior interval
 #' 
-#' @title dampen posterior interval
-#' @param object an object of class dampen
+#' @title rlgtfit posterior interval
+#' @param object an object of class rlgtfit
 #' @param prob percentile level to be generated (multiple values can be accepted as a vector)
 #' @param type currently only central is available
 #' @param ... currently not in use
 #' @return confidence interval
-#' @S3method posterior_interval dampen
-#' @method posterior_interval dampen
+#' @S3method posterior_interval rlgtfit
+#' @method posterior_interval rlgtfit
 #' @importFrom rstantools posterior_interval 
-#' @author wibowo
 #' @examples 
 #'\dontrun{
-#' dampen_model <- fit.dampen(lynx, model="dampen", nCores=4, nChains=4,
-#' control=dampen.control(MAX_NUM_OF_REPEATS=1, NUM_OF_ITER=2000), 
+#' rlgt_model <- rlgt(lynx, model="LGT", nCores=4, nChains=4,
+#' control=rlgt.control(MAX_NUM_OF_REPEATS=1, NUM_OF_ITER=2000), 
 #' verbose=TRUE)
 
 #' # print the model details
-#' posterior_interval(dampen_model)
+#' posterior_interval(rlgt_model)
 #'}
 #' @export
 
-posterior_interval.dampen <- function(object,
+posterior_interval.rlgtfit <- function(object,
     prob = 0.9,
     type = "central",
     ...) {

@@ -1,4 +1,3 @@
-All-models	consider to be removed?
 LGT&SGT	Implementation of LGT and SGT models on the R buit-in datasets
 M3LGT	Implementation of LGT model on 819 non-seasonal time-series data in M3-competition dataset
 M3SGT	Implementation of SGT model on 2184 seasonal time-series data in M3-competition dataset
