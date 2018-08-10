@@ -68,11 +68,12 @@ initModel <- function(model.type = NULL){
 #' @param samples stanfit object representing the MCMC samples
 #' @return an rlgtfit instance
 
-rlgtfit <- function(y, model.type, rlgtmodel, params, control, samples) {
+rlgtfit <- function(y, model.type, has.regression,
+                    rlgtmodel, params, control, samples) {
 	# we can add our own integrity checks
 	value <- list(x = y, model.type = model.type,
 	              has.regression = has.regression,
-	              model = lgtmodel, params = params, 
+	              model = rlgtmodel, params = params, 
 	              control = control, samples = samples)
 	
 	# class can be set using class() or attr() function
