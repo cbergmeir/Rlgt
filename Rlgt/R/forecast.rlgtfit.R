@@ -32,16 +32,22 @@
 
 # object=mod[["lgte"]]; level=c(80,95, 98); NUM_OF_TRIALS=2000; MIN_VAL=0.001; MAX_VAL=1e38; h=8
 # library(sn)
-                         xreg=NULL,
-  if (object$has.regression && is.null(xreg)){
-    stop("")
-  }
+                         
+
 forecast.rlgtfit <- function(object, 
+                             xreg=NULL,
                              h=ifelse(frequency(object$x)>1, 
                                       2*frequency(object$x), 10),
                              level=c(80,95),
                              NUM_OF_TRIALS=2000, 
                              MIN_VAL=0.001, MAX_VAL=1e38, ...) {
+  
+  # check if you have non-null and names matched xreg...
+  # WIP
+  if (object$has.regression && is.null(xreg)){
+    stop("")
+  }
+  
   
   if (any(level>100) || any(level<0)) {
     message("Warning: levels mus be between 0 and 100. Assuming defaults.")
@@ -210,7 +216,7 @@ forecast.rlgtfit <- function(object,
         ## update trend equations
         if (currLevel>MIN_VAL & !inherits(object$model, "RlgtStanModelLGT2")) {
           bS= bSmS*(currLevel-prevLevel)+(1-bSmS)*bS #but bSmS and bS may be==0 so then noop
-          prevLevel=currLevel
+          prevLevel <- currLevel
         } 
         
         else if (currLevel>MIN_VAL){
