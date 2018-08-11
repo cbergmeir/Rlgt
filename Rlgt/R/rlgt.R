@@ -2,6 +2,7 @@
 #' @description The main function to fit an rlgt model. It fitted the parameter values through MCMC simulations.
 #' @param y time-series data for training (provided as a vector or a ts object).
 #' @param model.type a chosen model from the Rlgt package.
+#' @param xreg Optionally, a vector or matrix of external regressors, which must have the same number of rows as y.
 #' @param control list of control parameters, i.e. hyperparameter values for the model's prior distribution.  
 #' @param nChains number of MCMC chains ro be produced. The number must be >=1. 
 #' More chains will improve the quality of the model, but will significantly increase 
@@ -12,7 +13,7 @@
 #' @param verbose whether verbose information should be printed (true/false value only)
 #' @return rlgtfit object
 #' @examples
-#'\dontrun{
+#' \dontrun{
 #' rlgt_model <- rlgt(lynx, model="LGT", nCores=4, nChains=4,
 #' control=lgt.control(MAX_NUM_OF_REPEATS=1, NUM_OF_ITER=2000), 
 #' verbose=TRUE)
@@ -31,7 +32,9 @@
 #' @importFrom sn rst
 #' @export
 rlgt <- function(y, model.type=c("LGT", "SGT", "S2GT", "gSGT"), 
-                 control=rlgt.control(), nChains=2, nCores=2, addJitter=TRUE, verbose=FALSE) {
+                 xreg = NULL,
+                 control=rlgt.control(), nChains=2, nCores=2, 
+                 addJitter=TRUE, verbose=FALSE) {
   # for safety
   model.type <- model.type[1]
   modelIsSeasonal <- model.type %in% c("SGT", "S2GT", "SGTe", "gSGT")
