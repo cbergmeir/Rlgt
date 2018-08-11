@@ -1,51 +1,47 @@
-
-#' This function produces forecasts from a model
 #' 
-#' @title produce forecasts
-#' @param object lgt object
-#' @param h Forecasting horizon (10 for annual and 2*periods otherwise)
-#' @param level Confidence levels for prediction intervals a.k.a. coverage percentiles. Beween 0 and 100.
-#' @param NUM_OF_TRIALS Number of simulations to run. Suggested rannge (1000,5000), but it may have to be higher for good coverage of very high levels, e.g. 99.8. 
-#' @param MIN_VAL Minimum value the forecast can take. Must be positive.
+#' @title Rlgt forecast
+#' @description  produce forecasts from an rlgtfit object
+#' @param object rlgtfit object
+#' @param h Forecasting horizon (the default is 10 for annual and 2*periods otherwise)
+#' @param level Confidence levels for prediction intervals a.k.a. coverage percentiles. Musat be between 0 and 100.
+#' @param NUM_OF_TRIALS Number of simulations to run. Suggested range is between (1000,5000), but it needs 
+#' to be higher for good coverage for very high levels, e.g. 99.8. 
+#' @param MIN_VAL Minimum value that forecast can take. Must be positive.
 #' @param MAX_VAL Maximum value the forecast can take.
 #' @param ... currently not being used
 #' @return returns a forecast object compatible with the forecast package
-#' @S3method forecast lgt
-#' @method forecast lgt
+#' @S3method forecast rlgtfit
+#' @method forecast rlgtfit
 #' @importFrom forecast forecast 
 #' @examples 
 #' \dontrun{
-#' lgt_model <- fit.lgt(lynx, model="LGT", nCores=4, nChains=4,
+#' rlgt_model <- rlgt(lynx, model="LGT", nCores=4, nChains=4,
 #' control=lgt.control(MAX_NUM_OF_REPEATS=1, NUM_OF_ITER=2000), 
 #' verbose=TRUE)
 
 #' # print the model details
-#' print(lgt_model)
+#' print(rlgt_model)
 #' 
 #' # Produce Forecasts for the next 10 years
-#' forecast_result <- forecast(lgt_model, h = 10, level=c(80, 95, 98))
+#' forecast_result <- forecast(rlgt_model, h = 10, level=c(80, 95, 98))
 #' 
 #' plot(forecast_result,main="Forecasting lynx dataset with LGT model")
 #' }
 #'
-#' \dontrun{demo(exampleScript)}
 #' @export
 
 # object=mod[["lgte"]]; level=c(80,95, 98); NUM_OF_TRIALS=2000; MIN_VAL=0.001; MAX_VAL=1e38; h=8
 # library(sn)
-forecast.lgt <- function(object, 
                          xreg=NULL,
-                         h=ifelse(frequency(object$x)>1, 
-                                  2*frequency(object$x), 10),
-                         level=c(80,95),
-                         NUM_OF_TRIALS=2000, 
-                         MIN_VAL=0.001, MAX_VAL=1e38, ...) {
-  
-  # check if you have non-null and names matched xreg...
-  # WIP
   if (object$has.regression && is.null(xreg)){
     stop("")
   }
+forecast.rlgtfit <- function(object, 
+                             h=ifelse(frequency(object$x)>1, 
+                                      2*frequency(object$x), 10),
+                             level=c(80,95),
+                             NUM_OF_TRIALS=2000, 
+                             MIN_VAL=0.001, MAX_VAL=1e38, ...) {
   
   if (any(level>100) || any(level<0)) {
     message("Warning: levels mus be between 0 and 100. Assuming defaults.")
@@ -213,9 +209,8 @@ forecast.lgt <- function(object,
         
         ## update trend equations
         if (currLevel>MIN_VAL & !inherits(object$model, "RlgtStanModelLGT2")) {
-          # but bSmS and bS may be==0 so then noop
-          prevLevel <- currLevel
-          bS <- bSmS * (currLevel - prevLevel) + (1 - bSmS) * bS 
+          bS= bSmS*(currLevel-prevLevel)+(1-bSmS)*bS #but bSmS and bS may be==0 so then noop
+          prevLevel=currLevel
         } 
         
         else if (currLevel>MIN_VAL){
