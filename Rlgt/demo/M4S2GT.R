@@ -1,4 +1,4 @@
-#testing dual seasonalty method S2GT on hourly subset of the M4 competition set, using the last 48 points as the forecast area.
+#testing dual seasonalty method S2GT on hourly subset of the M4 competition set
 
 options(width=180)
 
@@ -15,7 +15,7 @@ SEASONALITY2=168
 hourly=Filter(function(l) l$period == "Hourly", M4)
 hourly=sample(hourly) #shuffle
 #NUM_OF_CASES=min(length(hourly),NUM_OF_CASES)
-NUM_OF_CASES=20
+NUM_OF_CASES=5
 
 quantileLoss<-function(forec, actual, tau) {
 	diff=actual-forec
@@ -28,13 +28,16 @@ sumSMAPE=0; sumQ99Loss=0; sumQ95Loss=0; sumQ5Loss=0;
 numOfCases95pExceeded=0; numOfCases5pExceeded=0;
 for (i in 1:NUM_OF_CASES) {
 	series=hourly[[i]]$st
-	x=as.vector(hourly[[i]]$x)
-	data.test = x[(length(x)-H+1):length(x)]
-	data.train = x[1:(length(x)-H)]
+	data.train = as.vector(hourly[[i]]$x)  #class(hourly[[i]]$x) -> ts
+	MAX_SERIES_LEN_IN_SEAS=7  #we can truncate long series, say longer than 5-7 largest seasonalities
+	if (length(data.train)>MAX_SERIES_LEN_IN_SEAS*SEASONALITY2) {
+		data.train=data.train[(data.train-MAX_SERIES_LEN_IN_SEAS*SEASONALITY2+1):length(data.train)]
+	}
+	data.test = as.vector(hourly[[i]]$xx)
 	
 	rstanmodel <- rlgt(data.train, model="S2GT", nCores=4, nChains=4,
-		control=lgt.control(MAX_NUM_OF_REPEATS=3, NUM_OF_ITER=1000, #longer time series, say several hundred points-long, require smaller number of iterations
-		SEASONALITY=SEASONALITY, SEASONALITY2=SEASONALITY2 ), #dual seasonality can't be inferred, needs to be specified
+		control=rlgt.control(MAX_NUM_OF_REPEATS=3, NUM_OF_ITER=500, #longer time series, say several hundred points-long, require smaller number of iterations
+		SEASONALITY=SEASONALITY, SEASONALITY2=SEASONALITY2 ), #dual seasonality can't be inferred here
 		verbose=TRUE)
 	forec= forecast(rstanmodel, h = H, level=c(90,98))
 	

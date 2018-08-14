@@ -13,7 +13,7 @@ forecasts <- list()
 #--------------------------------
 #Fit LGT model
 mod[["LGT"]] <- rlgt(data.train, model.type ="LGT", nCores=4, nChains=4,
-  control=rlgt.control(MAX_NUM_OF_REPEATS=10, NUM_OF_ITER=2000), 
+  control=rlgt.control(MAX_NUM_OF_REPEATS=3, NUM_OF_ITER=2000), 
   verbose=TRUE)
 # print the model details
 print(mod[["LGT"]])
@@ -33,7 +33,7 @@ sizeTestSet <- frequency(AirPassengers)
 #--------------------------------
 #Fit SGT model
 mod[["SGT"]] <- rlgt(data.train, model.type="SGT", nCores=4, nChains=4,
-  control=rlgt.control(MAX_NUM_OF_REPEATS=3, NUM_OF_ITER=1000), 
+  control=rlgt.control(MAX_NUM_OF_REPEATS=3, NUM_OF_ITER=2000), 
   verbose=TRUE)
 # print the model details
 print(mod[["SGT"]])

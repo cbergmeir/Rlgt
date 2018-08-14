@@ -15,7 +15,7 @@ forecasts <- list()
 #Fit LGT model
 debug(rlgt)
 mod[["LGT"]] <- rlgt(data.train, model.type ="LGT", nCores = 4, 
-                     nChains = 4, control = lgt.control(MAX_NUM_OF_REPEATS = 10, 
+                     nChains = 4, control = rlgt.control(MAX_NUM_OF_REPEATS = 10, 
                                                         NUM_OF_ITER = 2000), 
                      verbose=TRUE)
 # print the model details
@@ -27,7 +27,7 @@ x_mat <- as.matrix(iclaims.example[, c('trend.unemploy', 'trend.filling',
 # debug(rlgt)
 mod[["LGT_Reg"]] <- rlgt(data.train, model.type ="LGT", nCores = 4, 
                          xreg = x_mat,
-                         nChains = 4, control = lgt.control(
+                         nChains = 4, control = rlgt.control(
                            MAX_NUM_OF_REPEATS = 10, 
                            NUM_OF_ITER = 2000), 
                          verbose=TRUE)
@@ -46,7 +46,7 @@ sizeTestSet <- frequency(data.train)
 #--------------------------------
 #Fit SGT model
 mod[["SGT"]] <- rlgt(data.train, model.type="SGT", nCores=4, nChains=4,
-                     control=lgt.control(MAX_NUM_OF_REPEATS=3, NUM_OF_ITER=1000), 
+                     control=rlgt.control(MAX_NUM_OF_REPEATS=3, NUM_OF_ITER=1000), 
                      verbose=TRUE)
 # print the model details
 print(mod[["SGT"]])
