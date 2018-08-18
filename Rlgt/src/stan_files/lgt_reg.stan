@@ -49,7 +49,7 @@ model {
 	regCoef ~ normal(0, 1);
 	
 	for (t in 2:N) {
-		y[t] ~ student_t(nu, l[t-1] + coefTrend * l[t-1] ^ powTrend + locTrendFract * b[t-1], 
-		sigma * l[t-1] ^ powx + offsetSigma + r[t]) ;
+		y[t] ~ student_t(nu, l[t-1] + coefTrend * l[t-1] ^ powTrend + locTrendFract * b[t-1] + r[t], 
+		sigma * l[t-1] ^ powx + offsetSigma) ;
 	}
 }
