@@ -24,7 +24,16 @@ initModel <- function(model.type = NULL){
     
     model[["model"]] <- stanmodels$lgt
     class(model) <- c("RlgtStanModelLGT")
-  }	
+  }
+	else if (model.type=="LGTe") {
+		#Non-Seasonal Local Global Trend model with smoothed error size
+		model[["parameters"]] <- c("l", "b", "smoothedInnovSize", 
+				"coefTrend",  "powTrend", "sigma", "offsetSigma",
+				"bSm", "locTrendFract", "levSm", "innovSm", "nu")
+		
+		model[["model"]] <- stanmodels$LGTe
+		class(model) <- c("RlgtStanModelLGTe")
+	} 	
 	else if(model.type=="SGT") {
 		#Seasonal Global Trend model
 		model[["parameters"]] <- c("l", "s", "sSm","nu", "sigma", "levSm", 
@@ -41,6 +50,14 @@ initModel <- function(model.type = NULL){
 		model[["model"]] <- stanmodels$gSGT
 		class(model) <- c("RlgtStanModelgSGT")
 	} 
+	else if (model.type=="SGTe") {
+		#Seasonal Global Trend model with smoothed error size 
+		model[["parameters"]] <- c("l", "s", "smoothedInnovSize", 
+				"coefTrend", "powTrend", "sigma", "offsetSigma",
+				"levSm", "sSm", "innovSm", "nu")
+		model[["model"]] <- stanmodels$SGTe
+		class(model) <- c("RlgtStanModelSGTe")
+	}
 	else if(model.type=="S2GT")  {
 		#Non-Seasonal Local Global Trend model
 		model[["parameters"]] <- c("l", "s", "sSm", "s2", "s2Sm", "nu", "sigma", "levSm", 

@@ -31,7 +31,7 @@
 #' @importMethodsFrom rstan summary
 #' @importFrom sn rst
 #' @export
-rlgt <- function(y, model.type=c("LGT", "SGT", "S2GT", "gSGT"), 
+rlgt <- function(y, model.type=c("LGT", "LGTe", "SGT", "SGTe", "S2GT", "gSGT", "Trend"), 
                  xreg = NULL,
                  control=rlgt.control(), nChains=2, nCores=2, 
                  addJitter=TRUE, verbose=FALSE) {
