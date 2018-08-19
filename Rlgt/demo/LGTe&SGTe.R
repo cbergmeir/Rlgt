@@ -14,30 +14,18 @@ mod <- list()
 forecasts <- list()
 
 
-#fc <- forecast(ets(data.train), h = sizeTestSet)
-#plot(fc)
+#--------------------------------
+#Fit LGTe model
+mod[["lgte"]] <- rlgt(data.train, model.type="LGTe", nCores=4, nChains=4,
+		control=rlgt.control(MAX_NUM_OF_REPEATS=1, NUM_OF_ITER=2000), 
+		verbose=TRUE)
+forecasts[["lgte"]] <- forecast(mod[["lgte"]], h = sizeTestSet, level=c(80, 95, 98))
+plot(forecasts[["lgte"]],main=paste(curr_series,'by LGTe'))
 
-
-##--------------------------------
-##Fit LGT model
-#
-##plot(forecast(fit.lgt(data.train)))
-#
-##mod[["lgt"]] <- fit.lgt(data.train)
-#
-#myMod <- init.lgt()
-#
-##mod[["lgt"]] <- fit.lgt(data.train, h = sizeTestSet, stanModel=myMod, ncores=4)
-#
-#options(error=recover)
-#
-
-
-76y80[0oerqas]
 #--------------------------------
 #Fit Trend model
-mod[["trend"]] <- fit.lgt(data.train, model="Trend", nCores=4, nChains=4,
-		control=lgt.control(MAX_NUM_OF_REPEATS=2), 
+mod[["trend"]] <- rlgt(data.train, model.type="Trend", nCores=4, nChains=4,
+		control=rlgt.control(MAX_NUM_OF_REPEATS=2), 
 		verbose=TRUE)
 forecasts[["trend"]] <- forecast(mod[["trend"]], h = sizeTestSet, level=c(80, 95, 98))
 plot(forecasts[["trend"]],main=paste(curr_series,'by Trend'))
@@ -50,9 +38,10 @@ curr_series=805
 sizeTestSet <- length(M3.data[[curr_series]]$xx)
 data.train <- M3.data[[curr_series]]$x
 
+
 #--------------------------------
 #Fit SGTe model
-mod[["sgte"]] <- rlgt(data.train, model="SGTe", nCores=4, nChains=4,
+mod[["sgte"]] <- rlgt(data.train, model.type="SGTe", nCores=4, nChains=4,
 		control=rlgt.control(), 
 		verbose=TRUE)
 forecasts[["sgte"]] <- forecast(mod[["sgte"]], h = sizeTestSet, level=c(80, 95, 98))

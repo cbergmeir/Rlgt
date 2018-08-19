@@ -1,4 +1,6 @@
 LGT&SGT	Implementation of LGT and SGT models on the R buit-in datasets
+LGTe&SGTe Implementation of LGT and SGT models on some samples of M3-competition dataset
+LGT&SGT_REG Implementation of LGT and SGT models with additional regression variables
 M3LGT	Implementation of LGT model on 819 non-seasonal time-series data in M3-competition dataset
 M3SGT	Implementation of SGT model on 2184 seasonal time-series data in M3-competition dataset
 M4S2GT  Implementation of S2GT model on a selected sample of hourly time-series data from M4-competition dataset

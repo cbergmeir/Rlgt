@@ -2,6 +2,7 @@
 #' @title Rlgt forecast
 #' @description  produce forecasts from an rlgtfit object
 #' @param object rlgtfit object
+#' @param xreg input regression matrix for multivariate time-series data
 #' @param h Forecasting horizon (the default is 10 for annual and 2*periods otherwise)
 #' @param level Confidence levels for prediction intervals a.k.a. coverage percentiles. Musat be between 0 and 100.
 #' @param NUM_OF_TRIALS Number of simulations to run. Suggested range is between (1000,5000), but it needs 

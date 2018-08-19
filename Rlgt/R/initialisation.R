@@ -78,6 +78,7 @@ initModel <- function(model.type = NULL){
 #' This class will be used as an output to the \code{\link{rlgt}} function.
 #' @param y time-series data for training (provided as a vector or a ts object).
 #' @param model.type the type of rlgt model
+#' @param has.regression whether the data has any additional variables to be used with forecasting, i.e. multivariate time-series.
 #' @param rlgtmodel an rlgt model.
 #' @param params list of parameters of the model (to be fitted).
 #' @param control list of control parameters, i.e. hyperparameter values 
