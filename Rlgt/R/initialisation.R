@@ -4,6 +4,7 @@
 #' A building block:to validate the model type and generate the corresponding list of parameters for the model.
 #' 
 #' @param model.type type of the forecasting model selected, a character object
+#' @param use.regression binary parameter indicating whether additional regressors will be used for forecasting in multivariate settings.
 #' @return an RLGT skeleton model
 #' 
 #' @importFrom rstan stan_model
