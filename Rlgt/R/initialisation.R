@@ -8,7 +8,7 @@
 #' 
 #' @importFrom rstan stan_model
 #' @export
-initModel <- function(model.type = NULL){
+initModel <- function(model.type=NULL, use.regression=FALSE){
   
   if(is.null(model.type)) {
     print("No model type was provided, generating an LGT model.")
@@ -21,7 +21,6 @@ initModel <- function(model.type = NULL){
     #Non-Seasonal Local Global Trend model
     model[["parameters"]] <- c("l", "b", "nu", "sigma", "levSm",  "bSm", 
       "powx", "coefTrend",  "powTrend", "offsetSigma", "locTrendFract")
-    
     model[["model"]] <- stanmodels$lgt
     class(model) <- c("RlgtStanModelLGT")
   }
@@ -66,6 +65,20 @@ initModel <- function(model.type = NULL){
 		class(model) <- c("RlgtStanModelS2GT")
 	}
 
+  if (use.regression) {
+    # append regression parameters
+    model[["parameters"]] <- c(model[["parameters"]], "regCoef")
+    # only support LGT and SGT
+    if (model.type == "LGT")  {
+      #Non-Seasonal Local Global Trend model
+      model[["model"]] <- stanmodels$lgt_reg
+      class(model) <- c("RlgtStanModelLGT_REG")
+    } else if(model.type == "SGT") {
+      #Seasonal Global Trend model
+      model[["model"]] <- stanmodels$sgt_reg
+      class(model) <- c("RlgtStanModelSGT_REG")
+    } 
+  }
   
   class(model) <- c("RlgtStanModel", class(model))
   model  
@@ -78,7 +91,7 @@ initModel <- function(model.type = NULL){
 #' This class will be used as an output to the \code{\link{rlgt}} function.
 #' @param y time-series data for training (provided as a vector or a ts object).
 #' @param model.type the type of rlgt model
-#' @param has.regression whether the data has any additional variables to be used with forecasting, i.e. multivariate time-series.
+#' @param use.regression whether the data has any additional variables to be used with forecasting, i.e. multivariate time-series.
 #' @param rlgtmodel an rlgt model.
 #' @param params list of parameters of the model (to be fitted).
 #' @param control list of control parameters, i.e. hyperparameter values 
@@ -86,11 +99,11 @@ initModel <- function(model.type = NULL){
 #' @param samples stanfit object representing the MCMC samples
 #' @return an rlgtfit instance
 
-rlgtfit <- function(y, model.type, has.regression,
+rlgtfit <- function(y, model.type, use.regression,
                     rlgtmodel, params, control, samples) {
 	# we can add our own integrity checks
 	value <- list(x = y, model.type = model.type,
-	              has.regression = has.regression,
+	              use.regression = use.regression,
 	              model = rlgtmodel, params = params, 
 	              control = control, samples = samples)
 	

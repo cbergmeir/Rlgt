@@ -44,11 +44,24 @@ forecast.rlgtfit <- function(object,
                              MIN_VAL=0.001, MAX_VAL=1e38, ...) {
   
   # check if you have non-null and names matched xreg...
-  # WIP
-  if (object$has.regression && is.null(xreg)){
-    stop("")
-  }
-  
+  has.regression <- !is.null(xreg)
+  # this is different from object$use.regression.  
+  # use.regression makes final decision whether to use use.regression
+  use.regression <- FALSE
+  if (has.regression) {
+    # regression components detected
+    if (object$use.regression) {
+      use.regression <- TRUE
+      # override horizon input h here
+      h <- nrow(xreg)
+    } else {
+      message("Current model do not support regression. Regression variables will be ignored.")
+    }
+  } else {
+    if (object$use.regression) {
+      stop("Model expects a regression component.")
+    }
+  } 
   
   if (any(level>100) || any(level<0)) {
     message("Warning: levels mus be between 0 and 100. Assuming defaults.")
@@ -91,6 +104,14 @@ forecast.rlgtfit <- function(object,
   lastSmoothedInnovSize <- object$params[["lastSmoothedInnovSize"]]
   powx <- object$params[["powx"]]
   
+  if(use.regression){
+    regCoef <- object$params[["regCoef"]]
+    if(ncol(xreg) != ncol(regCoef)){
+      stop("Error: Number of regression coefficients does not match matrix supplied.")
+    }
+  }
+  
+  
   #these initializations are important, do not remove. 
   nuS=Inf; bSmS=0; bS=0; locTrendFractS=0; #t=1; irun=1
   
@@ -112,8 +133,8 @@ forecast.rlgtfit <- function(object,
     indx <- sample(nrow(object$params[["l"]]),1)
     prevLevel <- object$params[["lastLevel"]][indx]
     levSmS <- object$params[["levSm"]][indx]
-    if (object$has.regression) {
-      regCoef <- object$params[["regCoef"]][indx]
+    if (use.regression) {
+      regCoefS <- regCoef[indx,]
     }
     
     if (!is.null(nu)) {
@@ -226,8 +247,11 @@ forecast.rlgtfit <- function(object,
           prevLevel <- currLevel
         } 
         
-      } #through horizons
-      # yf[irun,]
+      } # through horizons
+    } # end of seasonal and non-seasonal split
+    # extract the with regression components
+    if (use.regression) {
+      yf[irun,] <- yf[irun,] + xreg %*% regCoefS
     }
   } #through trials (simulations)
   

@@ -12,7 +12,13 @@
 print.rlgtfit <- function(x, ...) {
   if(!inherits(x, "rlgtfit")) stop("not a legitimate result of an Rlgt model")
   
-  print(lapply(x$params,median))
+  if (x$use.regression) {
+    temp <- lapply(x$params,median)
+    temp[['regCoef']] <- colMeans(x$params[['regCoef']])
+    print(temp)
+  } else {
+    print(lapply(x$params,median))
+  }
   
   invisible(x)
 }

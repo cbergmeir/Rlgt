@@ -38,17 +38,20 @@ rlgt <- function(y, model.type=c("LGT", "LGTe", "SGT", "SGTe", "S2GT", "gSGT", "
   # for safety
   model.type <- model.type[1]
   modelIsSeasonal <- model.type %in% c("SGT", "S2GT", "SGTe", "gSGT")
-  has.regression <- FALSE
-  if(!is.null(xreg) && model.type %in% c("LGT", "SGT")) {
-    model.type <- paste0(model.type, "_Reg")
-    has.regression <- TRUE
-  } else {
-    message("Current model do not support regression. 
-            Regression variables will be ignored.")
+  has.regression <- !is.null(xreg)
+  use.regression <- FALSE
+  if (has.regression) {
+    # regression components detected
+    if (model.type %in% c("LGT", "SGT")) {
+      use.regression <- TRUE
+    } else {
+      message("Current model do not support regression. Regression variables will be ignored.")
+    }
   }
-  
+
   if(!inherits(model.type, "RlgtStanModel")) {
-    model <- initModel(model.type = model.type)
+    model <- initModel(model.type = model.type,
+                       use.regression = use.regression)
   }
   
   MAX_RHAT_ALLOWED <- control$MAX_RHAT_ALLOWED
@@ -92,7 +95,7 @@ rlgt <- function(y, model.type=c("LGT", "LGTe", "SGT", "SGTe", "S2GT", "gSGT", "
                POW_TREND_BETA=control$POW_TREND_BETA,
                y=y, N=n, SKEW=control$SKEW) # to be passed on to Stan
   
-  if(has.regression){
+  if(use.regression){
     data[['xreg']] <- xreg
     data[['J']] <- ncol(xreg)
     if(nrow(xreg) != n){
@@ -119,7 +122,7 @@ rlgt <- function(y, model.type=c("LGT", "LGTe", "SGT", "SGTe", "S2GT", "gSGT", "
     #Double the number of iterations for the next cycle
     numOfIters <- NUM_OF_ITER * 2 ^ (irep - 1)
     samples1 <-
-      sampling(
+      rstan::sampling(
         control = list(adapt_delta = control$ADAPT_DELTA, 
                        max_treedepth = control$MAX_TREE_DEPTH),
         object = model$model,   
@@ -190,7 +193,7 @@ rlgt <- function(y, model.type=c("LGT", "LGTe", "SGT", "SGTe", "S2GT", "gSGT", "
     #paramMeans[["lastSmoothedInnovSize"]] <- mean(params[["lastSmoothedInnovSize"]])
   }
   
-  out <- rlgtfit(y.orig, model.type, has.regression = has.regression,
+  out <- rlgtfit(y.orig, model.type, use.regression = use.regression,
              model, params, control, samples)
   out
 }

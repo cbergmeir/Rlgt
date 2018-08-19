@@ -40,9 +40,12 @@ search.job.clean <- search.job %>%
 iclaims.example <- iclaim %>%
   rename(claims = ICNSA, week = DATE) %>%
   mutate(week = floor_date(week, unit = "weeks", week_start = 7) + 7,
-         claims = claims / 1000 ) %>%
+         claims = claims / 1000) %>%
   inner_join(search.unemploy.clean, by = c('week' = 'date')) %>%
   inner_join(search.filling.clean, by = c('week' = 'date')) %>%
   inner_join(search.job.clean, by = c('week' = 'date')) 
+
+iclaims.example[,c('claims','trend.unemploy','trend.filling','trend.job')] <-
+  log(iclaims.example[,c('claims','trend.unemploy','trend.filling','trend.job')])
 
 save(iclaims.example, file = './data/iclaims.example.RData')

@@ -1,51 +1,29 @@
+rm(list=ls())
 library(Rlgt)
+library(rstan)
 #set.seed(12)
 options(width=180)
-
 data("iclaims.example")
 
+# Data setup --------------------------------
 # predict initial unemployment claims of US based on google search data
 curr_series <- "iclaims"
-data.train  <- iclaims.example$claims
-sizeTestSet <- 10
+y  <- iclaims.example$claims
+y.train <- y[1:(length(y) - sizeTestSet)]
+y        <- ts(y, start = 1, frequency = 52)
+y.train  <- ts(y.train, start = 1, frequency = 52)
+sizeTestSet <- frequency(y.train)
 
+# Regression Matrix
+x.mat <- as.matrix(
+  iclaims.example[, c('trend.unemploy', 'trend.filling', 'trend.job')])
+x.mat.train <- x.mat[1:(nrow(x.mat) - sizeTestSet),]
+x.mat.test <- x.mat[(nrow(x.mat) - sizeTestSet + 1):nrow(x.mat),]
 mod <- list()
 forecasts <- list()
 #--------------------------------
-#Fit LGT model
-debug(rlgt)
-mod[["LGT"]] <- rlgt(data.train, model.type ="LGT", nCores = 4, 
-                     nChains = 4, control = rlgt.control(MAX_NUM_OF_REPEATS = 10, 
-                                                        NUM_OF_ITER = 2000), 
-                     verbose=TRUE)
-# print the model details
-print(mod[["LGT"]])
-
-# With Regressions
-x_mat <- as.matrix(iclaims.example[, c('trend.unemploy', 'trend.filling',
-                                       'trend.job')])
-# debug(rlgt)
-mod[["LGT_Reg"]] <- rlgt(data.train, model.type ="LGT", nCores = 4, 
-                         xreg = x_mat,
-                         nChains = 4, control = rlgt.control(
-                           MAX_NUM_OF_REPEATS = 10, 
-                           NUM_OF_ITER = 2000), 
-                         verbose=TRUE)
-# print the model details
-print(mod[["LGT_Reg"]])
-
-# print the interval for all vars
-posterior_interval(mod[["LGT_Reg"]])
-debug(forecast)
-forecasts[["LGT_Reg"]] <- forecast(mod[["LGT_Reg"]], h = sizeTestSet/2, 
-                               level=c(80, 95, 98))
-plot(forecasts[["LGT_Reg"]], main=paste(curr_series,'by LGT_Reg'))
-
-data.train  <- ts(iclaims.example$claims, start = 1, frequency = 52)
-sizeTestSet <- frequency(data.train)
-#--------------------------------
-#Fit SGT model
-mod[["SGT"]] <- rlgt(data.train, model.type="SGT", nCores=4, nChains=4,
+#Fit SGT model without Regression 
+mod[["SGT"]] <- rlgt(y.train, model.type="SGT", nCores=4, nChains=4,
                      control=rlgt.control(MAX_NUM_OF_REPEATS=3, NUM_OF_ITER=1000), 
                      verbose=TRUE)
 # print the model details
@@ -53,8 +31,26 @@ print(mod[["SGT"]])
 
 # print the interval for all vars
 posterior_interval(mod[["SGT"]])
-forecasts[["SGT"]] <- forecast(mod[["SGT"]], h = sizeTestSet, 
+forecasts[["SGT"]] <- forecast(mod[["SGT"]],  
+                               h = sizeTestSet,
                                level=c(80, 95, 98))
-plot(forecasts[["SGT"]],main=paste(curr_series,'by SGT'))
+plot(forecasts[["SGT"]], main=paste(curr_series,'by SGT'))
+lines(y, col = 'red')
 
+#--------------------------------
+#Fit SGT model with Regression 
+mod[["SGT_REG"]] <- rlgt(y.train, model.type="SGT", nCores=4, nChains=4,
+                         xreg = x.mat.train,
+                         control=rlgt.control(MAX_NUM_OF_REPEATS=3, NUM_OF_ITER=1000), 
+                         verbose=TRUE)
+# print the model details
+print(mod[["SGT_REG"]])
+
+# print the interval for all vars
+posterior_interval(mod[["SGT_REG"]])
+forecasts[["SGT_REG"]] <- forecast(mod[["SGT_REG"]],                                   
+                               x.mat.test,
+                               level=c(80, 95, 98))
+plot(forecasts[["SGT_REG"]], main=paste(curr_series,'by SGT with Regression'))
+lines(y, col = 'red')
 
