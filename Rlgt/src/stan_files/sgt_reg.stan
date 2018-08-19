@@ -43,8 +43,8 @@ transformed parameters {
 	
 	for (t in 2:N) {
 	  r[t] = xreg[t,:] * regCoef;
-		l[t] = levSm*y[t]/(s[t]) + (1-levSm)*l[t-1] ;  //E(y[t])=l[t]*s[t]
-		s[t+SEASONALITY] = sSm*y[t]/l[t]+(1-sSm)*s[t];
+		l[t] = levSm*(y[t]-r[t])/(s[t]) + (1-levSm)*l[t-1] ;  //E(y[t])=l[t]*s[t]
+		s[t+SEASONALITY] = sSm*(y[t]-r[t])/l[t]+(1-sSm)*s[t];
 	}
 }
 model {
