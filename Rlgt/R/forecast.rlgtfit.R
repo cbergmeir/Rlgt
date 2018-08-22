@@ -193,19 +193,19 @@ forecast.rlgtfit <- function(object,
         error <- rst(n=1, xi=0 ,omega=omega, alpha=0, nu=nuS)
         
         # Fill in the matrix of predicted value
-        yf[irun,t]=min(MAX_VAL,max(MIN_VAL,expVal+error))
+        yf[irun,t] <- min(MAX_VAL,max(MIN_VAL,expVal+error))
         
         # find the currLevel
         if (inherits(object$model, "RlgtStanModelSGT2")) {
-          currLevel=max(MIN_VAL,levSmS*yf[irun,t]/seasonA + (1-levSmS)*expVal/seasonA) ;
+          currLevel <- max(MIN_VAL,levSmS*yf[irun,t]/seasonA + (1-levSmS)*expVal/seasonA) ;
         }
         else if (is.null(powSeasonS)){
-          currLevel=max(MIN_VAL,levSmS*yf[irun,t]/seasonA + (1-levSmS)*prevLevel) ;
+          currLevel <- max(MIN_VAL,levSmS*yf[irun,t]/seasonA + (1-levSmS)*prevLevel) ;
         } else {#gSTG model
-          currLevel=max(MIN_VAL,levSmS*(yf[irun,t]-seasonA*abs(prevLevel)^powSeasonS) + (1-levSmS)*prevLevel) ;
+          currLevel <- max(MIN_VAL,levSmS*(yf[irun,t]-seasonA*abs(prevLevel) ^ powSeasonS) + (1-levSmS)*prevLevel) ;
         }     
         if (currLevel>MIN_VAL) {
-          prevLevel=currLevel
+          prevLevel <- currLevel
         } 
         sS[t+SEASONALITY] <- sS[t];
         if (SEASONALITY2>1) {
@@ -262,7 +262,7 @@ forecast.rlgtfit <- function(object,
                  start=start.f ) #still not right if there are two seasonalities
   
   #' @importFrom stats quantile
-  avgYfs=apply(yf,2,quantile,probs=quantiles)
+  avgYfs <- apply(yf,2,quantile,probs=quantiles)
   
   out$median <- ts(avgYfs[indexOfMedian,])
   if (indexOfMedian > 1) {
