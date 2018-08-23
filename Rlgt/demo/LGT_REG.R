@@ -1,4 +1,3 @@
-rm(list=ls())
 library(Rlgt)
 library(rstan)
 #set.seed(12)
@@ -20,8 +19,8 @@ y.train <- y[1:(length(y) - sizeTestSet)]
 # Regression Matrix
 x.mat <- as.matrix(
   umcsent.example2[, c("search.engine",
-                      "financial.planning", "bus.news",      
-                      "investing", "energy.utilities")])
+                       "financial.planning", "bus.news",      
+                       "investing", "energy.utilities")])
 x.mat.train <- x.mat[1:(nrow(x.mat) - sizeTestSet),]
 x.mat.test <- x.mat[(nrow(x.mat) - sizeTestSet + 1):nrow(x.mat),]
 mod <- list()

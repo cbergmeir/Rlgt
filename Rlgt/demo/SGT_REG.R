@@ -49,8 +49,8 @@ print(mod[["SGT_REG"]])
 # print the interval for all vars
 posterior_interval(mod[["SGT_REG"]])
 forecasts[["SGT_REG"]] <- forecast(mod[["SGT_REG"]],
-                               x.mat.test,
-                               level=c(80, 95, 98))
+                                   x.mat.test,
+                                   level=c(80, 95, 98))
 plot(forecasts[["SGT_REG"]], main=paste(curr_series,'by SGT with Regression'))
 lines(y, col = 'red')
 
