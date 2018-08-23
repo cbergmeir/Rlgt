@@ -1,4 +1,3 @@
-rm(list=ls())
 library(Rlgt)
 library(rstan)
 #set.seed(12)
