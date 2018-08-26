@@ -23,21 +23,21 @@
 #' 
 #' In terms of mathematical notation, the model can be fully represented as follow:
 #' 
-#' \deqn{y_{t+1} \sim Student (v,y_{t+1}, \sigma _{t+1}) \quad (eq.1.1)}    
-#' \deqn{y_{t+1}=l_{t}+ \gamma l_{t}^{ \rho }+ \lambda b_{t}  \quad  (eq. 1.2)} 
-#' \deqn{l_{t}= \alpha y_{t}+ \left( 1- \alpha  \right)  \left(  l_{t-1} \right) \quad (eq. 1.3) } 
-#' \deqn{b_{t+1}= \beta  \left( l_{t+1}-l_{t} \right) + \left( 1- \beta  \right) b_{t}  \quad  (eq. 1.4)}
-#' \deqn{\sigma _{t+1}= \sigma l_{t}^{ \tau}+ \varsigma   \quad  (eq. 1.5) }
+#' \deqn{y_{t+1} \sim Student (v,y_{t+1}, \sigma _{t+1}) \quad (eq.1.1)}{y{t+1} ~ Student (v, y{t+1}, \sigma{t+1})     (eq.1.1)}   
+#' \deqn{y_{t+1}=l_{t}+ \gamma l_{t}^{ \rho }+ \lambda b_{t}  \quad  (eq. 1.2)}{y{t+1} = l{t}+ \gamma *l{t}^\rho + \lambda*b{t}    (eq. 1.2)}
+#' \deqn{l_{t}= \alpha y_{t}+ \left( 1- \alpha  \right)  \left(  l_{t-1} \right) \quad (eq. 1.3)}{l{t} = \alpha *y{t} + (1-\alpha)*l{t-1}    (eq. 1.3)} 
+#' \deqn{b_{t+1}= \beta  \left( l_{t+1}-l_{t} \right) + \left( 1- \beta  \right) b_{t}  \quad  (eq. 1.4)}{b{t+1} = \beta*(l{t+1}-l{t}) + (1-\beta)*b{t}     (eq. 1.4)}
+#' \deqn{\sigma _{t+1}= \sigma l_{t}^{ \tau}+ \varsigma   \quad  (eq. 1.5) }{\sigma{t+1} = \sigma*l_{t}^(\tau) + \varsigma      (eq. 1.5)}
 #' }
 #' 
 #' \subsection{Notations}{
 #' 
 #' \describe{
-#' \item{\eqn{y_{t}}}{value of the dependent variable of interest at time t}
-#' \item{\eqn{y_{t+1}}}{predicted value of y at time t+1 given information up to time t}
-#' \item{\eqn{\sigma _{t}}}{variance of the distribution at time t}
-#' \item{\eqn{l_{t}}}{level at time t}
-#' \item{\eqn{b_{t}}}{local trend at time t}
+#' \item{\eqn{y_{t}}{y{t}}}{value of the dependent variable of interest at time t}
+#' \item{\eqn{y_{t+1}}{y{t+1}}}{predicted value of y at time t+1 given information up to time t}
+#' \item{\eqn{\sigma_{t}}{\sigma{t}}}{variance of the distribution at time t}
+#' \item{\eqn{l_{t}}{l{t}}}{level at time t}
+#' \item{\eqn{b_{t}}{b{t}}}{local trend at time t}
 #' }
 #' }
 #' 
@@ -53,82 +53,10 @@
 #' \item{\eqn{\beta}}{smoothing parameter for the local trend term}
 #' \item{\eqn{\sigma}}{coefficient of the heteroscedastic standard deviation}
 #' \item{\eqn{\tau}}{power coefficient of the heteroscedastic standard deviation}
-#' \item{\eqn{\varsigma}}{base/ minimum value of the standard deviation}
+#' \item{\eqn{\varsigma}}{base or minimum value of the standard deviation}
 #' }
 #' }
 #' 
-#' \subsection{Rationale for Mathematical Equations}{
-#' 
-#' The LGT model is devised to incorporate the following main features:
-#' 
-#' \enumerate{
-#' \item Heteroscedastic and non-normal error term
-#' \item Addition of global trend term
-#' }
-#' 
-#' The inclusion of these features on each individual equation of the model is discussed below.
-#' \itemize{
-#' \item \strong{Eq. 1.1. Student's-t Error Distribution}
-#' 
-#' The data value follows Student's t-distribution around the 
-#' expected value of the data with a time-varying standard deviation. 
-#' The Student-t distribution can be seen as a generalisation of the normal 
-#' distribution to allow for a fat-tailed error distribution
-#' 
-#' 
-#' \item \strong{Eq. 1.5. Heteroscedastic Error}
-#' 
-#' In addition to accounting for possible fat-tailed error distribution, 
-#' the error function also allows the variance of the error to change as the level changes.  
-#' This is achieved by allowing the scale (deviation) parameter of the assumed 
-#' Student's t-distribution to vary in proportion to the current level of the time series. 
-#' This will account for common situations, where the magnitude of the error will increase 
-#' as the value of the data points increases.
-#' Moreover, this relationship does not necessarily be linear as the parameter  
-#' \eqn{\tau}  controls the growth of the variance of the error term. 
-#' In practice, the values taken by the parameter is often limited between 0 and 1. 
-#' A value of 0 corresponds to constant variance, i.e. homoscedasticity, whereas a 
-#' value of 1 approximates the behaviour of the multiplicative error ETS model. 
-#' The value between 0 and 1 will describe an error function which grows in relation 
-#' to the increase in data value, but at a slower pace than linear growth.
-#' 
-#' 
-#' \item \strong{Eq. 1.2: One-step Ahead Prediction Equation}
-#' 
-#' There are three distinct terms that constitute this Bayesian ETS model: a level term, 
-#' and a couple of different trends. The first term eqn{l_{t}} is the level term, 
-#' while the second term  \eqn{l_{t}^{ \rho }}  refers to the global trend which increases 
-#' with the level of the dependent variables  \eqn{l_{t}}  at a constant rate  
-#' \eqn{\gamma} . Similar to the heteroscedasticity in eq. 1.5, the change in 
-#' the value of the dependant variable does not necessarily grow linearly 
-#' with respect to the level of the variable. This relationship can be tuned in 
-#' by the use of exponential parameter \eqn{\rho}. The interpretation of this 
-#' global trend is also analogous to the time-varying error term, i.e. 
-#' the value of  \eqn{ 0< \rho <1 }  indicates a global trend which grows 
-#' faster than the additive models but slower than the multiplicative model.
-#' The last term of the right-hand side of eq.1.2. refers to the usual local dampen trend in ETS model. 
-#' However, there is an addition of dampen parameter  \eqn{  \lambda  } , constrained such that  
-#' \eqn{ -1<  \lambda  <1 } , to reduce the strength of the local trend model.
-#'
-#'
-#' \item \strong{Eq. 1.3: Level Adjustment Equation}
-#' 
-#' This equation is defined according to the classical linear trend ETS model. 
-#' The level at time t \eqn{ l_{t} } is calculated as a weighted average of 
-#' the current observation  \eqn{ y_{t} }  and the previous level at lag 1 \eqn{ l_{t-1} }
-#' with smoothing parameter  \eqn{\alpha}.
-#'
-#'
-#' \item \strong{Eq. 1.4: Local Trend Adjustment Equation}
-#' 
-#' Similarly, the evolution of the local trend  \eqn{ b_{t}  } 
-#' is identically defined to the linear trend method.\  The local trend 
-#' at time t  \eqn{ b_{t} }  is obtained as a weighted average of the 
-#' difference in level terms  \eqn{( l_{t}-l_{t-1})}  
-#' and the trend at time t-1  \eqn{b_{t-1}} 
-#'  with the smoothing parameter  \eqn{ \beta }.
-#' }
-#' }
 #' 
 #' @section SGT (Seasonal, Global Trend):
 #' 
@@ -137,11 +65,11 @@
 #' 
 #' \subsection{Model Equations}{
 #' 
-#' \deqn{ y_{t+1} \sim Student \left( v,y_{t+1}, \sigma _{t+1} \right)  \quad (eq. 2.1) } 
-#' \deqn{ y_{t+1}= \left( l_{t}+ \gamma l_{t}^{ \rho } \right)  s_{t+1-m} \quad (eq. 2.2)} 
-#' \deqn{ l_{t}= \alpha  \frac{y_{t}}{s_{t}}+ \left( 1- \alpha  \right)  \left( l_{t-1} \right) \quad (eq. 2.3)  }  
-#' \deqn{ s_{t+m}= \zeta  \frac{y_{t}}{l_{t}}+ \left( 1- \zeta  \right) s_{t}  \quad (eq. 2.4)}
-#' \deqn{ \sigma _{t+1}= \sigma y_{t+1}^{ \tau}+ \varsigma \quad (eq. 2.5)}
+#' \deqn{ y_{t+1} \sim Student \left( v,y_{t+1}, \sigma _{t+1} \right)  \quad (eq. 2.1) }{y{t+1} ~ Student(v, y{t+1}, \sigma{t+1})     (eq. 2.1)} 
+#' \deqn{ y_{t+1}= \left( l_{t}+ \gamma l_{t}^{ \rho } \right)  s_{t+1-m} \quad (eq. 2.2)}{y_{t+1} = (l{t}+ \gamma*l{t}^\rho) * s{t+1-m}     (eq. 2.2)} 
+#' \deqn{ l_{t}= \alpha  \frac{y_{t}}{s_{t}}+ \left( 1- \alpha  \right)  \left( l_{t-1} \right) \quad (eq. 2.3)}{l_{t} = \alpha*y{t}/s{t} + (1-\alpha)*(l{t-1})    (eq. 2.3)}  
+#' \deqn{ s_{t+m}= \zeta  \frac{y_{t}}{l_{t}}+ \left( 1- \zeta  \right) s_{t}  \quad (eq. 2.4)}{s{t+m} = \zeta*y_{t}/l_{t} + (1-\zeta)*s_{t}     (eq. 2.4)}
+#' \deqn{ \sigma _{t+1}= \sigma y_{t+1}^{ \tau}+ \varsigma \quad (eq. 2.5)}{\sigma{t+1} = \sigma*y{t+1}^{\tau} + \varsigma     (eq. 2.5)}
 #' }
 #' 
 #' \subsection{Additional Notations}{
