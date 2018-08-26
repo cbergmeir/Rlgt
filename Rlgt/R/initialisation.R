@@ -60,7 +60,7 @@ initModel <- function(model.type=NULL, use.regression=FALSE){
 	}
 	else if(model.type=="S2GT")  {
 		#Non-Seasonal Local Global Trend model
-		model[["parameters"]] <- c("l", "s", "sSm", "s2", "s2Sm", "nu", "sigma", "levSm", 
+		model[["parameters"]] <- c("l", "s", "s2", "sSm", "s2Sm", "nu", "sigma", "levSm", 
 				"powx", "coefTrend", "powTrend", "offsetSigma")
 		model[["model"]] <- stanmodels$S2GT
 		class(model) <- c("RlgtStanModelS2GT")

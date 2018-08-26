@@ -1,6 +1,6 @@
 #' @title Fit an Rlgt model
 #' @description The main function to fit an rlgt model. It fitted the parameter values through MCMC simulations.
-#' @param y time-series data for training (provided as a vector or a ts object).
+#' @param y time-series data for training (provided as a numeric vector, or a ts, or msts object).
 #' @param model.type a chosen model from the Rlgt package.
 #' @param xreg Optionally, a vector or matrix of external regressors, which must have the same number of rows as y.
 #' @param control list of control parameters, i.e. hyperparameter values for the model's prior distribution.  
@@ -102,7 +102,9 @@ rlgt <- function(y, model.type=c("LGT", "LGTe", "SGT", "SGTe", "S2GT", "gSGT", "
     rstan_options(auto_write = TRUE)
     options(mc.cores = nCores)    
   }
-  
+	
+  y_org<-y
+	y<-as.numeric(y)
   n <- length(y)
   
   #' @importFrom stats rnorm
@@ -122,7 +124,7 @@ rlgt <- function(y, model.type=c("LGT", "LGTe", "SGT", "SGTe", "S2GT", "gSGT", "
                POW_SEASON_BETA=control$POW_SEASON_BETA,
                POW_TREND_ALPHA=control$POW_TREND_ALPHA, 
                POW_TREND_BETA=control$POW_TREND_BETA,
-               y=as.numeric(y), N=n) # to be passed on to Stan
+               y=y, N=n) # to be passed on to Stan
   
   if(use.regression){
     data[['xreg']] <- xreg
@@ -222,7 +224,7 @@ rlgt <- function(y, model.type=c("LGT", "LGTe", "SGT", "SGTe", "S2GT", "gSGT", "
     #paramMeans[["lastSmoothedInnovSize"]] <- mean(params[["lastSmoothedInnovSize"]])
   }
   
-  out <- rlgtfit(y, model.type, use.regression = use.regression,
+  out <- rlgtfit(y_org, model.type, use.regression = use.regression,  #correct: y_org. Fitting has already been done. y_org is either numeric, or ts, or msts   
              model, params, control, samples)
   out
 }
