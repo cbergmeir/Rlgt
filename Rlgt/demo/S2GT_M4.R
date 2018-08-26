@@ -25,20 +25,30 @@ quantileLoss<-function(forec, actual, tau) {
 	mean(pinBallL/actual)*200
 }
 
+legend_str_vect=NULL; legend_cols_vect=NULL; legend_char_vect=NULL
+legend_str_vect=c(legend_str_vect,"forecast")  
+legend_cols_vect=c(legend_cols_vect, 'blue')
+legend_char_vect=c(legend_char_vect,'-')
+
+legend_str_vect=c(legend_str_vect,"actuals")  #used for short displays
+legend_cols_vect=c(legend_cols_vect, 'red')
+legend_char_vect=c(legend_char_vect,'-')
+
+
 #i=1
 sumSMAPE=0; sumQ99Loss=0; sumQ95Loss=0; sumQ5Loss=0;
 numOfCases95pExceeded=0; numOfCases5pExceeded=0;
 for (i in 1:NUM_OF_CASES) {
 	seriesName=hourly[[i]]$st
 	
-	if (i%%3==0) {  #just for demo and testing. In your code stick to one of the alternatives
+	if (i==1) {  #just for demo and testing. In your code stick to one of the alternatives
 		trainData = as.numeric(hourly[[i]]$x) #"naked" vector, so both seasonalities need to be specified in control
 		actuals = as.numeric(hourly[[i]]$xx) # actuals have to be matching trainData; both are of numeric class
 		rstanmodel <- rlgt(trainData, model="S2GT", nCores=4, nChains=4,
 			control=rlgt.control(MAX_NUM_OF_REPEATS=3, NUM_OF_ITER=1000, #longer time series, say several hundred points-long, require smaller number of iterations
 			SEASONALITY=SEASONALITY, SEASONALITY2=SEASONALITY2, MAX_TREE_DEPTH = 12 ), 
 			verbose=TRUE)	
-	}	else if (i%%3==1) {
+	}	else if (i==2) {
 		trainData = hourly[[i]]$x # trainData is of ts class, so the SEASONALITY will be extracted from it. SEASONALITY2 has to be specified,  
 		actuals = hourly[[i]]$xx  # class of actuals has to be the same as one of trainData; both are of ts class
 		rstanmodel <- rlgt(trainData, model="S2GT", nCores=4, nChains=4,
@@ -58,6 +68,16 @@ for (i in 1:NUM_OF_CASES) {
 	forec= forecast(rstanmodel, h = H, level=c(90,98))
 	# str(forec, max.level=1)
 	plot(forec, main=seriesName)
+	
+	if (inherits(trainData,"ts")) {
+		lines(actuals, col=2, lwd=2)	
+	} else {
+		xs=seq(from=length(trainData)+1,to=length(trainData)+ length(actuals))
+		lines(xs,actuals, col=2, type='b',lwd=2)	
+	}
+	legend("topleft", legend_str_vect,
+			pch=legend_char_vect, 
+			col=legend_cols_vect, cex=1)
 	
 	sMAPE=mean(abs(forec$mean-actuals)/(forec$mean+actuals))*200
 	sumSMAPE=sumSMAPE+sMAPE

@@ -256,14 +256,14 @@ forecast.rlgtfit <- function(object,
 	
 	if (inherits(out$x,'msts')) {
 		#' @importFrom forecast msts
-		out$mean <- msts(out$mean, seasonal.periods=c(SEASONALITY,SEASONALITY2), ts.frequency =SEASONALITY, start=start.f)  # Median is safer. We want to be compatible with Forecast package, but there Point Forecast==mean
+		out$mean <- msts(out$mean, seasonal.periods=c(SEASONALITY,SEASONALITY2), ts.frequency =SEASONALITY, start=start.f)  
 		if (indexOfMedian > 1) {
 			out$lower <- msts(out$lower, seasonal.periods=c(SEASONALITY,SEASONALITY2), ts.frequency =SEASONALITY, start=start.f)
 			out$upper <- msts(out$upper, seasonal.periods=c(SEASONALITY,SEASONALITY2), ts.frequency =SEASONALITY, start=start.f)
 		}	 
-	} else { #so even if input is numeric and non-seasonal, the forecast is of ts class. The reason is compatibility with Forecat package.
+	} else if (inherits(out$x,'ts')) {
 		#' @importFrom stats ts
-		out$mean <- ts(out$mean, frequency=SEASONALITY, start=start.f) # Median is safer. We want to be compatible with Forecast package, but there Point Forecast==mean
+		out$mean <- ts(out$mean, frequency=SEASONALITY, start=start.f) 
 		if (indexOfMedian > 1) {
 			out$lower <- ts(out$lower, frequency=SEASONALITY, start=start.f)
 			out$upper <- ts(out$upper, frequency=SEASONALITY, start=start.f)
