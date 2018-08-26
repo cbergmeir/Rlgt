@@ -33,7 +33,7 @@
 #' @export
 rlgt <- function(y, model.type=c("LGT", "LGTe", "SGT", "SGTe", "S2GT", "gSGT", "Trend"), 
                  xreg = NULL,
-                 control=rlgt.control(), nChains=2, nCores=2, 
+                 control=rlgt.control(), nChains=4, nCores=4, 
                  addJitter=TRUE, verbose=FALSE) {
   # for safety
   model.type <- model.type[1]
@@ -48,6 +48,43 @@ rlgt <- function(y, model.type=c("LGT", "LGTe", "SGT", "SGTe", "S2GT", "gSGT", "
       message("Current model do not support regression. Regression variables will be ignored.")
     }
   }
+	
+	if (substring(model.type,1,2)=="S2") { #dual seasonality
+		if (inherits(y,'msts')) {
+			if (control$SEASONALITY<=1) { #not specified in control
+				SEASONALITY=attributes(y)$msts[1] 
+			} else {
+				SEASONALITY <- control$SEASONALITY #priority
+			}
+			if (control$SEASONALITY2<=1) { #not specified in control
+				SEASONALITY2=attributes(y)$msts[2]	
+			} else {
+				SEASONALITY2 <- control$SEASONALITY2 #priority
+			}
+		} else if (inherits(y,'ts')) {
+			if (control$SEASONALITY<=1) { #not specified
+			  SEASONALITY=frequency(y)
+			} else {
+				SEASONALITY <- control$SEASONALITY #priority
+			}
+			SEASONALITY2 <- control$SEASONALITY2 #has to be specified
+		} else { #numeric
+			SEASONALITY <- control$SEASONALITY
+			SEASONALITY2 <- control$SEASONALITY2
+		}
+	} else if (modelIsSeasonal) { #single
+		if (inherits(y,'ts')) {
+			if (control$SEASONALITY<=1) { #not specified in control
+				SEASONALITY=frequency(y) 
+			} else {
+				SEASONALITY <- control$SEASONALITY #priority
+			}
+		} else { #numeric
+			SEASONALITY <- control$SEASONALITY
+		}
+	} 	
+	y=as.numeric(y) #internally we operate on the numeric vector
+	
 
   if(!inherits(model.type, "RlgtStanModel")) {
     model <- initModel(model.type = model.type,
@@ -63,23 +100,12 @@ rlgt <- function(y, model.type=c("LGT", "LGTe", "SGT", "SGTe", "S2GT", "gSGT", "
     options(mc.cores = nCores)    
   }
   
-  y.orig <- y
   n <- length(y)
   
   #' @importFrom stats rnorm
   if(addJitter) y <- y + rnorm(n, 0, sd=abs(min(y)) * 0.0001)
   
   CauchySd <- max(y) / control$CAUCHY_SD_DIV
-  
-  SEASONALITY <- control$SEASONALITY
-  SEASONALITY2 <- control$SEASONALITY2
-  
-  #' @importFrom stats frequency
-  if (SEASONALITY <= 1 && frequency(y) > 1 && modelIsSeasonal) {
-    SEASONALITY <- frequency(y)
-    print(paste0("Seasonality not specified, but the data is seasonal. Inferring seasonality equal to ",SEASONALITY))
-    control$SEASONALITY <- SEASONALITY  #will be used in forecast()
-  }
   
   data <- list(CAUCHY_SD=CauchySd, 
                SEASONALITY=SEASONALITY, 
@@ -193,7 +219,7 @@ rlgt <- function(y, model.type=c("LGT", "LGTe", "SGT", "SGTe", "S2GT", "gSGT", "
     #paramMeans[["lastSmoothedInnovSize"]] <- mean(params[["lastSmoothedInnovSize"]])
   }
   
-  out <- rlgtfit(y.orig, model.type, use.regression = use.regression,
+  out <- rlgtfit(y, model.type, use.regression = use.regression,
              model, params, control, samples)
   out
 }
