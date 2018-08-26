@@ -51,41 +51,22 @@ rlgt <- function(y, model.type=c("LGT", "LGTe", "SGT", "SGTe", "S2GT", "gSGT", "
 	
 	if (substring(model.type,1,2)=="S2") { #dual seasonality
 		if (inherits(y,'msts')) {
-			if (control$SEASONALITY<=1) { #not specified in control
-				SEASONALITY=attributes(y)$msts[1] 
-			} else {
-				SEASONALITY <- control$SEASONALITY #priority
-			}
-			if (control$SEASONALITY2<=1) { #not specified in control
-				SEASONALITY2=attributes(y)$msts[2]	
-			} else {
-				SEASONALITY2 <- control$SEASONALITY2 #priority
-			}
+			control$SEASONALITY=attributes(y)$msts[1]
+			control$SEASONALITY2=attributes(y)$msts[2]
 		} else if (inherits(y,'ts')) {
-			if (control$SEASONALITY<=1) { #not specified
-			  SEASONALITY=frequency(y)
-			} else {
-				SEASONALITY <- control$SEASONALITY #priority
-			}
-			SEASONALITY2 <- control$SEASONALITY2 #has to be specified
-		} else { #numeric
-			SEASONALITY <- control$SEASONALITY
-			SEASONALITY2 <- control$SEASONALITY2
+			control$SEASONALITY=frequency(y)
+		} 
+		if (control$SEASONALITY<=1 || control$SEASONALITY2<=1) {
+			stop("Dual seasonality model requires setting up both seasonalities")
 		}
-	} else if (modelIsSeasonal) { #single
+	} else if (modelIsSeasonal) { #single seasonality
 		if (inherits(y,'ts')) {
-			if (control$SEASONALITY<=1) { #not specified in control
-				SEASONALITY=frequency(y) 
-			} else {
-				SEASONALITY <- control$SEASONALITY #priority
-			}
-		} else { #numeric
-			SEASONALITY <- control$SEASONALITY
+			control$SEASONALITY=frequency(y)
+		} 
+		if (control$SEASONALITY<=1) {
+			stop("A seasonal model requires setting up the seasonality")
+			return (NULL)
 		}
-		SEASONALITY2 <- control$SEASONALITY2 #not used in this case, but needed for programming reeasons 
-	} else { #non-seasonal
-		SEASONALITY <- control$SEASONALITY   #not used in this case, but needed for programming reeasons
-		SEASONALITY2 <- control$SEASONALITY2		
 	} 	
 	
 
@@ -113,8 +94,8 @@ rlgt <- function(y, model.type=c("LGT", "LGTe", "SGT", "SGTe", "S2GT", "gSGT", "
   CauchySd <- max(y) / control$CAUCHY_SD_DIV
   
   data <- list(CAUCHY_SD=CauchySd, 
-               SEASONALITY=SEASONALITY, 
-               SEASONALITY2=SEASONALITY2,
+               SEASONALITY=control$SEASONALITY, 
+               SEASONALITY2=control$SEASONALITY2,
                MIN_POW_TREND=control$MIN_POW_TREND, 
                MAX_POW_TREND=control$MAX_POW_TREND, 
                MIN_SIGMA=control$MIN_SIGMA,  
@@ -144,8 +125,8 @@ rlgt <- function(y, model.type=c("LGT", "LGTe", "SGT", "SGTe", "S2GT", "gSGT", "
         ### Initialise seasonality factors
         # for non-seasonal models it is not necessary, 
         # but makes code simpler and is not a big overhead
-        initSu = rnorm(SEASONALITY, 1, 0.05), 
-        initSu2 = rnorm(SEASONALITY2, 1, 0.05),
+        initSu = rnorm(control$SEASONALITY, 1, 0.05), 
+        initSu2 = rnorm(control$SEASONALITY2, 1, 0.05),
         innovSizeInit = abs(rnorm(1, 0, CauchySd))#used only for *GTe models 
       )
     }

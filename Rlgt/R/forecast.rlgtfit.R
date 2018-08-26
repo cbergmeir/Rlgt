@@ -31,7 +31,7 @@
 #'
 #' @export
 
-# object=mod[["lgte"]]; level=c(80,95, 98); NUM_OF_TRIALS=2000; MIN_VAL=0.001; MAX_VAL=1e38; h=8
+# object=rstanmodel; xreg=NULL; h = H; level=c(90,98); NUM_OF_TRIALS=2000; MIN_VAL=0.001; MAX_VAL=1e38
 # library(sn)
                          
 
@@ -94,7 +94,9 @@ forecast.rlgtfit <- function(object,
   # start.f is the next(first) forecast period
   if (!is.null(tspx)) {
     start.f <- tspx[2] + 1/frequency(out$x)
-  } else {
+  } else if (SEASONALITY>1){ #input data is numeric, but seasonality(ies) specified in control
+		start.f <- length(out$x)+1./SEASONALITY
+	} else {
     start.f <- length(out$x)+1
   }
   
@@ -196,10 +198,7 @@ forecast.rlgtfit <- function(object,
         yf[irun,t] <- min(MAX_VAL,max(MIN_VAL,expVal+error))
         
         # find the currLevel
-        if (inherits(object$model, "RlgtStanModelSGT2")) {
-          currLevel <- max(MIN_VAL,levSmS*yf[irun,t]/seasonA + (1-levSmS)*expVal/seasonA) ;
-        }
-        else if (is.null(powSeasonS)){
+        if (is.null(powSeasonS)){
           currLevel <- max(MIN_VAL,levSmS*yf[irun,t]/seasonA + (1-levSmS)*prevLevel) ;
         } else {#gSTG model
           currLevel <- max(MIN_VAL,levSmS*(yf[irun,t]-seasonA*abs(prevLevel) ^ powSeasonS) + (1-levSmS)*prevLevel) ;
@@ -228,21 +227,10 @@ forecast.rlgtfit <- function(object,
         yf[irun,t] <- min(MAX_VAL,max(MIN_VAL, expVal + error))
         
         ## update level equation
-        if (inherits(object$model, "RlgtStanModelLGT2")) {
-          currLevel <- max(MIN_VAL, levSmS * yf[irun,t] + (1-levSmS) * expVal) ;
-        }
-        else {
-          currLevel <- max(MIN_VAL, levSmS * yf[irun,t] + (1-levSmS)*prevLevel) ;
-        }
-        
+        currLevel <- max(MIN_VAL, levSmS * yf[irun,t] + (1-levSmS)*prevLevel) ;
+				
         ## update trend equations
-        if (currLevel>MIN_VAL & !inherits(object$model, "RlgtStanModelLGT2")) {
-          bS= bSmS*(currLevel-prevLevel)+(1-bSmS)*bS #but bSmS and bS may be==0 so then noop
-          prevLevel <- currLevel
-        } 
-        
-        else if (currLevel>MIN_VAL){
-          # but bSmS and bS may be==0 so then noop
+        if (currLevel>MIN_VAL){
           bS <- bSmS * (currLevel - prevLevel) + (1 - bSmS) * locTrendFractS * bS 
           prevLevel <- currLevel
         } 
@@ -256,29 +244,35 @@ forecast.rlgtfit <- function(object,
   } #through trials (simulations)
   
   out$yf <- yf
-  
-  #' @importFrom stats ts
-  out$mean <- ts(apply(yf, 2, mean), frequency=max(frequency(out$x),SEASONALITY), 
-                 start=start.f ) #still not right if there are two seasonalities
-  
-  #' @importFrom stats quantile
-  avgYfs <- apply(yf,2,quantile,probs=quantiles)
-  
-  out$median <- ts(avgYfs[indexOfMedian,])
-  if (indexOfMedian > 1) {
-    out$lower <- ts(t(avgYfs[1:(indexOfMedian-1),]))
-    out$upper <- ts(t(avgYfs[(indexOfMedian+1):(indexOfMedian+length(upperPercentiles)),]))	
-  }
-  
+
+	#' @importFrom stats quantile
+	avgYfs <- apply(yf,2,quantile,probs=quantiles)
+	#out$mean <- apply(yf, 2, mean)
+	out$mean <- avgYfs[indexOfMedian,]  # Median is safer. We want to be compatible with Forecast package, but there Point Forecast==mean
+	if (indexOfMedian > 1) {
+	  out$lower <- t(avgYfs[1:(indexOfMedian-1),])
+		out$upper <- t(avgYfs[(indexOfMedian+1):(indexOfMedian+length(upperPercentiles)),])
+	}
+	
+	if (inherits(out$x,'msts')) {
+		#' @importFrom forecast msts
+		out$mean <- msts(out$mean, seasonal.periods=c(SEASONALITY,SEASONALITY2), ts.frequency =SEASONALITY, start=start.f)  # Median is safer. We want to be compatible with Forecast package, but there Point Forecast==mean
+		if (indexOfMedian > 1) {
+			out$lower <- msts(out$lower, seasonal.periods=c(SEASONALITY,SEASONALITY2), ts.frequency =SEASONALITY, start=start.f)
+			out$upper <- msts(out$upper, seasonal.periods=c(SEASONALITY,SEASONALITY2), ts.frequency =SEASONALITY, start=start.f)
+		}	 
+	} else { #so even if input is numeric and non-seasonal, the forecast is of ts class. The reason is compatibility with Forecat package.
+		#' @importFrom stats ts
+		out$mean <- ts(out$mean, frequency=SEASONALITY, start=start.f) # Median is safer. We want to be compatible with Forecast package, but there Point Forecast==mean
+		if (indexOfMedian > 1) {
+			out$lower <- ts(out$lower, frequency=SEASONALITY, start=start.f)
+			out$upper <- ts(out$upper, frequency=SEASONALITY, start=start.f)
+		}		
+	} 
+	
   out$level <- level
-  
-  # Assign tsp attributes for consistency
-  if (SEASONALITY2<=1) {
-    tsp(out$median) <- tsp (out$lower) <- tsp(out$upper) <- tsp(out$mean)
-  }
-  # for dual seasonality this fails with Error in `tsp<-`(`*tmp*`, value = c(653, 700, 1)) : 
-  #invalid time series parameters specified
-  
+	#str(out, max.level=1)
+    
   class(out) <- "forecast"
   out
 }

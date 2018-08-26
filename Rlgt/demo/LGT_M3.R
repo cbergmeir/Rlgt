@@ -1,5 +1,4 @@
 # Test lgt - M3 yearly data
-# If you let it run  full course, you should see a very good result :-), otherwise reduce NUM_OF_CASES
 
 library(Mcomp)
 library(Rlgt)
@@ -9,7 +8,8 @@ options(width=180)
 
 M3.data <- subset(M3,"yearly")
 M3.data <- sample(M3.data) #shuffle
-NUM_OF_CASES=length(M3.data)
+NUM_OF_CASES=length(M3.data)  # If you let it run its full course (comment out next line), you should see a very good result :-)
+NUM_OF_CASES=5
 
 quantileLoss<-function(forec, actual, tau) {
 	diff=actual-forec
@@ -23,24 +23,33 @@ sumSMAPE=0; sumQ99Loss=0; sumQ95Loss=0; sumQ5Loss=0;
 numOfCases95pExceeded=0; numOfCases5pExceeded=0;
 for (i in 1:NUM_OF_CASES) {
 	series=M3.data[[i]]$sn
-  data.train <- M3.data[[i]]$x
-  data.test <- M3.data[[i]]$xx
-  rstanmodel <- rlgt(data.train, model="LGT", nCores=4, nChains=4,
-            control=lgt.control(MAX_NUM_OF_REPEATS=3, NUM_OF_ITER=5000), 
-            verbose=FALSE)
+	if(i%%2==0) { #just for demo and testing. In your code stick to one of the alternatives
+		trainData <- as.numeric(M3.data[[i]]$x)  #"naked", numeric vector
+		actuals <- as.numeric(M3.data[[i]]$xx)   # class of actuals has to be the same
+		rstanmodel <- rlgt(trainData, model="LGT", nCores=4, nChains=4,
+				control=rlgt.control(MAX_NUM_OF_REPEATS=3, NUM_OF_ITER=5000), 
+				verbose=FALSE)
+	} else {
+		trainData <- M3.data[[i]]$x   # trainData is of ts class
+		actuals <- M3.data[[i]]$xx    # class of actuals has to be the same
+		rstanmodel <- rlgt(trainData, model="LGT", nCores=4, nChains=4,
+				control=rlgt.control(MAX_NUM_OF_REPEATS=3, NUM_OF_ITER=5000), 
+				verbose=FALSE)
+	}
 	forec= forecast(rstanmodel, h = H, level=c(90,98))
+	plot(forec, main=series)
 	
-	sMAPE=mean(abs(forec$median-data.test)/(forec$median+data.test))*200
+	sMAPE=mean(abs(forec$mean-actuals)/(forec$mean+actuals))*200
 	sumSMAPE=sumSMAPE+sMAPE
 	
-	numOfCases95pExceeded=numOfCases95pExceeded+sum(data.test>forec$upper[,1])
-	numOfCases5pExceeded=numOfCases5pExceeded+sum(data.test<forec$lower[,1])
+	numOfCases95pExceeded=numOfCases95pExceeded+sum(actuals>forec$upper[,1])
+	numOfCases5pExceeded=numOfCases5pExceeded+sum(actuals<forec$lower[,1])
 	
-	q95Loss=quantileLoss(forec$upper[,1], data.test, 0.95)
+	q95Loss=quantileLoss(forec$upper[,1], actuals, 0.95)
 	sumQ95Loss=sumQ95Loss+q95Loss
-	q99Loss=quantileLoss(forec$upper[,2], data.test, 0.99)
+	q99Loss=quantileLoss(forec$upper[,2], actuals, 0.99)
 	sumQ99Loss=sumQ99Loss+q99Loss
-	q5Loss=quantileLoss(forec$lower[,1], data.test, 0.05)
+	q5Loss=quantileLoss(forec$lower[,1], actuals, 0.05)
 	sumQ5Loss=sumQ5Loss+q5Loss
 	print(paste0(series," sMAPE:",signif(sMAPE,3) ,' q5Loss:',signif(q5Loss,3),' q95Loss:',signif(q95Loss,3),' q99Loss:',signif(q99Loss,3) ))
 }

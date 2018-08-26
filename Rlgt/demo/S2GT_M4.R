@@ -16,9 +16,8 @@ SEASONALITY2=168
 hourly=Filter(function(l) l$period == "Hourly", M4)
 hourly=sample(hourly) #shuffle
 
-NUM_OF_CASES=5
-NUM_OF_CASES=min(length(hourly),NUM_OF_CASES)
-
+NUM_OF_CASES=min(length(hourly),NUM_OF_CASES)  # If you let it run its full course (comment out next line), you should see a good result :-)
+NUM_OF_CASES=3
 
 quantileLoss<-function(forec, actual, tau) {
 	diff=actual-forec
@@ -31,43 +30,36 @@ sumSMAPE=0; sumQ99Loss=0; sumQ95Loss=0; sumQ5Loss=0;
 numOfCases95pExceeded=0; numOfCases5pExceeded=0;
 for (i in 1:NUM_OF_CASES) {
 	seriesName=hourly[[i]]$st
-	actuals = as.vector(hourly[[i]]$xx)
 	
-	if (i%%4==0) {
-		trainData = as.vector(hourly[[i]]$x) #"naked" vector, so both seasonalities need to be specified in control
+	if (i%%3==0) {  #just for demo and testing. In your code stick to one of the alternatives
+		trainData = as.numeric(hourly[[i]]$x) #"naked" vector, so both seasonalities need to be specified in control
+		actuals = as.numeric(hourly[[i]]$xx) # actuals have to be matching trainData; both are of numeric class
 		rstanmodel <- rlgt(trainData, model="S2GT", nCores=4, nChains=4,
 			control=rlgt.control(MAX_NUM_OF_REPEATS=3, NUM_OF_ITER=1000, #longer time series, say several hundred points-long, require smaller number of iterations
 			SEASONALITY=SEASONALITY, SEASONALITY2=SEASONALITY2, MAX_TREE_DEPTH = 12 ), 
 			verbose=TRUE)	
-	}	else if (i%%4==1) {
-		trainData = hourly[[i]]$x # Although data is of class ts, and it "knows" its single seasonality, SEASONALITY specified in control has priority. SEASONALITY2 has to be specified.   
-		rstanmodel <- rlgt(trainData, model="S2GT", nCores=4, nChains=4,
-			control=rlgt.control(MAX_NUM_OF_REPEATS=3, NUM_OF_ITER=1000, 
-			SEASONALITY=SEASONALITY, SEASONALITY2=SEASONALITY2, MAX_TREE_DEPTH = 12 ), 
-			verbose=TRUE)	
-	}	else if (i%%4==2) {
-		trainData = hourly[[i]]$x # Here class(trainData)=="ts". If SEASONALITY not specified, we extract it as frequency(trainData). SEASONALITY2 has to be specified.   
+	}	else if (i%%3==1) {
+		trainData = hourly[[i]]$x # trainData is of ts class, so the SEASONALITY will be extracted from it. SEASONALITY2 has to be specified,  
+		actuals = hourly[[i]]$xx  # class of actuals has to be the same as one of trainData; both are of ts class
 		rstanmodel <- rlgt(trainData, model="S2GT", nCores=4, nChains=4,
 			control=rlgt.control(MAX_NUM_OF_REPEATS=3, NUM_OF_ITER=1000, 
 			SEASONALITY2=SEASONALITY2, MAX_TREE_DEPTH = 12 ), 
-			verbose=TRUE)	
-  } else if (i%%4==3) {
-		trainData=msts(hourly[[i]]$x, seasonal.periods=c(SEASONALITY,SEASONALITY2))   #both seasonalities will be extracted from trainData 
-		rstanmodel <- rlgt(trainData, model="S2GT", nCores=4, nChains=4,
-			control=rlgt.control(MAX_NUM_OF_REPEATS=3, NUM_OF_ITER=1000, 
-			MAX_TREE_DEPTH = 12), 
-				verbose=TRUE)	
+			verbose=TRUE)			
 	}	else {
-		trainData=msts(hourly[[i]]$x, seasonal.periods=c(SEASONALITY,SEASONALITY2)) # Although data is of class msts, seasonalities specified in rlgt.control have priority (in this example specified unnecessarily)     
+		#we convert input and actuals from ts to msts class
+		trainData=msts(hourly[[i]]$x, seasonal.periods=c(SEASONALITY,SEASONALITY2), ts.frequency =SEASONALITY, start=start(hourly[[i]]$x))
+		actuals=msts(hourly[[i]]$xx, seasonal.periods=c(SEASONALITY,SEASONALITY2), ts.frequency =SEASONALITY, start=start(hourly[[i]]$xx))
 		rstanmodel <- rlgt(trainData, model="S2GT", nCores=4, nChains=4,
 			control=rlgt.control(MAX_NUM_OF_REPEATS=3, NUM_OF_ITER=1000, 
-			SEASONALITY=SEASONALITY, SEASONALITY2=SEASONALITY2, MAX_TREE_DEPTH = 12 ),
+			MAX_TREE_DEPTH = 12 ),
 			verbose=TRUE)
 	}
 	
 	forec= forecast(rstanmodel, h = H, level=c(90,98))
+	# str(forec, max.level=1)
+	plot(forec, main=seriesName)
 	
-	sMAPE=mean(abs(forec$median-actuals)/(forec$median+actuals))*200
+	sMAPE=mean(abs(forec$mean-actuals)/(forec$mean+actuals))*200
 	sumSMAPE=sumSMAPE+sMAPE
 	
 	numOfCases95pExceeded=numOfCases95pExceeded+sum(actuals>forec$upper[,1])
