@@ -87,7 +87,6 @@ rlgt <- function(y, model.type=c("LGT", "LGTe", "SGT", "SGTe", "S2GT", "gSGT", "
 		SEASONALITY <- control$SEASONALITY   #not used in this case, but needed for programming reeasons
 		SEASONALITY2 <- control$SEASONALITY2		
 	} 	
-	y=as.numeric(y) #internally we operate on the numeric vector
 	
 
   if(!inherits(model.type, "RlgtStanModel")) {
@@ -123,7 +122,7 @@ rlgt <- function(y, model.type=c("LGT", "LGTe", "SGT", "SGTe", "S2GT", "gSGT", "
                POW_SEASON_BETA=control$POW_SEASON_BETA,
                POW_TREND_ALPHA=control$POW_TREND_ALPHA, 
                POW_TREND_BETA=control$POW_TREND_BETA,
-               y=y, N=n, SKEW=control$SKEW) # to be passed on to Stan
+               y=as.numeric(y), N=n) # to be passed on to Stan
   
   if(use.regression){
     data[['xreg']] <- xreg
