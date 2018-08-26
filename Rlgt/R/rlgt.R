@@ -82,6 +82,10 @@ rlgt <- function(y, model.type=c("LGT", "LGTe", "SGT", "SGTe", "S2GT", "gSGT", "
 		} else { #numeric
 			SEASONALITY <- control$SEASONALITY
 		}
+		SEASONALITY2 <- control$SEASONALITY2 #not used in this case, but needed for programming reeasons 
+	} else { #non-seasonal
+		SEASONALITY <- control$SEASONALITY   #not used in this case, but needed for programming reeasons
+		SEASONALITY2 <- control$SEASONALITY2		
 	} 	
 	y=as.numeric(y) #internally we operate on the numeric vector
 	
