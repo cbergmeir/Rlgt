@@ -15,19 +15,21 @@
 #' LGT (for non-seasonal time series data) and SGT (for time series data).
 #'  These models have been tested on M3-competition dataset in which they 
 #'  outperform all of the models originally participating in the competition.
-#' The following sections will briefly outline the mathematical constructions 
-#' and the rationale for these models.
 #' 
 #' @section LGT(Local and Global Trend):
+#' LGT model is constructed based on Holt’s linear trend method. 
+#' The model is designed to allow for more general term of error by allowing 
+#' for heterescedasticity and an addition of constant "global" trend in the model.
+#' 
 #' \subsection{Model Equations}{
 #' 
 #' In terms of mathematical notation, the model can be fully represented as follow:
 #' 
-#' \deqn{y_{t+1} \sim Student (\nu,y_{t+1}, \sigma _{t+1}) \quad (eq.1.1)}{y{t+1} ~ Student (\nu, yf{t+1}, \sigma{t+1})     (eq.1.1)}   
-#' \deqn{\widehat{y}_{t+1}=l_{t}+ \gamma l_{t}^{ \rho }+ \lambda b_{t}  \quad  (eq. 1.2)}{yf{t+1} = l{t}+ \gamma *l{t}^\rho + \lambda*b{t}    (eq. 1.2)}
-#' \deqn{l_{t}= \alpha y_{t}+ \left( 1- \alpha  \right)  \left(  l_{t-1} \right) \quad (eq. 1.3)}{l{t} = \alpha *y{t} + (1-\alpha)*l{t-1}    (eq. 1.3)} 
-#' \deqn{b_{t+1}= \beta  \left( l_{t+1}-l_{t} \right) + \left( 1- \beta  \right) b_{t}  \quad  (eq. 1.4)}{b{t+1} = \beta*(l{t+1}-l{t}) + (1-\beta)*b{t}     (eq. 1.4)}
-#' \deqn{ \widehat{\sigma}_{t+1}= \sigma l_{t}^{ \tau}+ \xi   \quad  (eq. 1.5) }{\sigmaf{t+1} = \sigma*l_{t}^(\tau) + \xi      (eq. 1.5)}
+#' \deqn{y_{t+1} \sim Student (\nu,y_{t+1}, \sigma _{t+1}) \quad (eq.1.1)}{y{t+1} ~ Student (\nu, yf{t+1}, \sigma{t+1})  ....(eq.1.1)}   
+#' \deqn{\widehat{y}_{t+1}=l_{t}+ \gamma l_{t}^{ \rho }+ \lambda b_{t}  \quad  (eq. 1.2)}{yf{t+1} = l{t}+ \gamma*l{t}^\rho + \lambda*b{t}   ....(eq. 1.2)}
+#' \deqn{l_{t+1}= \alpha y_{t+1}+ \left( 1- \alpha  \right)  \left(  l_{t} \right) \quad (eq. 1.3)}{l{t+1} = \alpha*y{t+1} + (1-\alpha)*l{t}    ....(eq. 1.3)} 
+#' \deqn{b_{t+1}= \beta  \left( l_{t+1}-l_{t} \right) + \left( 1- \beta  \right) b_{t}  \quad  (eq. 1.4)}{b{t+1} = \beta*(l{t+1}-l{t}) + (1-\beta)*b{t}     ....(eq. 1.4)}
+#' \deqn{ \widehat{\sigma}_{t+1}= \sigma l_{t}^{ \tau}+ \xi   \quad  (eq. 1.5) }{\sigmaf{t+1} = \sigma*l_{t}^(\tau) + \xi      ....(eq. 1.5)}
 #' }
 #' 
 #' \subsection{Notations}{
@@ -35,7 +37,7 @@
 #' \describe{
 #' \item{\eqn{y_{t}}{y{t}}}{value of the dependent variable of interest at time t}
 #' \item{\eqn{\widehat{y}_{t+1}}{yf{t+1}}}{forecasted value of y at time t+1 given information up to time t}
-#' \item{\eqn{\widehat{\sigma}_{t}}{\sigmaf{t}}}{forecasted deviation at time t+1 given information up to time t}
+#' \item{\eqn{\widehat{\sigma}_{t+1}}{\sigmaf{t+1}}}{forecasted deviation at time t+1 given information up to time t}
 #' \item{\eqn{l_{t}}{l{t}}}{level at time t}
 #' \item{\eqn{b_{t}}{b{t}}}{local trend at time t}
 #' }
@@ -65,11 +67,11 @@
 #' 
 #' \subsection{Model Equations}{
 #' 
-#' \deqn{ y_{t+1} \sim Student \left( \nu,\widehat{y}_{t+1}, \sigma _{t+1} \right)  \quad (eq. 2.1) }{y{t+1} ~ Student(\nu, yf{t+1}, \sigma{t+1})     (eq. 2.1)} 
-#' \deqn{ \widehat{y}_{t+1}= \left( l_{t}+ \gamma l_{t}^{ \rho } \right)  s_{t+1-m} \quad (eq. 2.2)}{yf_{t+1} = (l{t}+ \gamma*l{t}^\rho) * s{t+1-m}     (eq. 2.2)} 
-#' \deqn{ l_{t}= \alpha  \frac{y_{t}}{s_{t}}+ \left( 1- \alpha  \right)  \left( l_{t-1} \right) \quad (eq. 2.3)}{l_{t} = \alpha*y{t}/s{t} + (1-\alpha)*l{t-1}    (eq. 2.3)}  
-#' \deqn{ s_{t+m}= \zeta  \frac{y_{t}}{l_{t}}+ \left( 1- \zeta  \right) s_{t}  \quad (eq. 2.4)}{s{t+m} = \zeta*y{t}/l{t} + (1-\zeta)*s{t}     (eq. 2.4)}
-#' \deqn{ \widehat{\sigma}_{t+1}= \sigma y_{t+1}^{ \tau}+ \xi \quad (eq. 2.5)}{\sigmaf{t+1} = \sigma*y{t+1}^\tau + \xi     (eq. 2.5)}
+#' \deqn{ y_{t+1} \sim Student \left( \nu,\widehat{y}_{t+1}, \sigma _{t+1} \right)  \quad (eq. 2.1) }{y{t+1} ~ Student(\nu, yf{t+1}, \sigma{t+1})   ....(eq. 2.1)} 
+#' \deqn{ \widehat{y}_{t+1}= \left( l_{t}+ \gamma l_{t}^{ \rho } \right)  s_{t+1} \quad (eq. 2.2)}{yf{t+1} = (l{t}+ \gamma*l{t}^\rho) * s{t+1}    ....(eq. 2.2)} 
+#' \deqn{ l_{t+1}= \alpha  \frac{y_{t+1}}{s_{t+1}}+ \left( 1- \alpha  \right)  \left( l_{t} \right) \quad (eq. 2.3)}{l_{t+1} = \alpha*y{t+1}/s{t+1} + (1-\alpha)*l{t}   ....(eq. 2.3)}  
+#' \deqn{ s_{t+m+1}= \zeta  \frac{y_{t+1}}{l_{t+1}}+ \left( 1- \zeta  \right) s_{t+1}  \quad (eq. 2.4)}{s{t+m+1} = \zeta*y{t+1}/l{t+1} + (1-\zeta)*s{t+1}   ....(eq. 2.4)}
+#' \deqn{ \widehat{\sigma}_{t+1}= \sigma \widehat{y}_{t+1}^{ \tau}+ \xi \quad (eq. 2.5)}{\sigmaf{t+1} = \sigma*yf{t+1}^\tau + \xi    ....(eq. 2.5)}
 #' }
 #' 
 #' \subsection{Additional Notations}{
@@ -91,26 +93,21 @@
 #' @section S2GT (Double Seasonal, Global Trend):
 #' 
 #' S2GT is designed as an extension to SGT in time-series data which exhibit two seasonality patterns. 
-#' The additional second seasonality factor generalises the model to capture a number of seasonalities 
-#' that exist in the data. A classic example of this type of data is the hourly electricity consumption data 
-#' which are affected by the time of the day as well as the day in the week. 
-#' The mathematical modelling is based on the classical Double Seasonal Exponential Smoothing 
-#' model by Taylor (2003).
 #' 
 #' \subsection{Model Equations}{
 #' 
 #' \deqn{ y_{t+1} \sim Student \left( \nu,\widehat{y}_{t+1}, \sigma _{t+1} \right) \quad (eq. 3.1)}{y{t+1} ~ Student (\nu, yf{t+1}, \sigma{t+1})    (eq. 3.1)} 
-#' \deqn{ \widehat{y}_{t+1}=\left( l_{t}+ \gamma l_{t}^{ \rho } \right) s_{t+1}w_{t+1} \quad (eq. 3.2)}{yf{t+1} = (l{t} + \gamma*l{t}^\rho) * s{t+1} * w{t+1}    (eq. 3.2)} 
+#' \deqn{ \widehat{y}_{t+1}=\left( l_{t}+ \gamma l_{t}^{ \rho } \right) s_{t+1}w_{t+1} \quad (eq. 3.2)}{yf{t+1} = (l{t}+\gamma*l{t}^\rho) * s{t+1} * w{t+1}    (eq. 3.2)} 
 #' \deqn{ l_{t}= \alpha  \frac{y_{t}}{s_{t}w_{t}}+ \left( 1- \alpha  \right) \left( l_{t-1} \right)  \quad (eq. 3.3)}{l{t}= \alpha*y{t}/(s{t}*w{t}) + (1- \alpha)*(l{t-1})    (eq. 3.3)} 
-#' \deqn{ s_{t+m}= \zeta  \frac{y_{t}}{l_{t}w_{t}}+ \left( 1- \zeta  \right) s_{t} \quad (eq. 3.4)}{s{t+m} = \zeta*y{t}/{l{t}*w{t}} + (1-\zeta)*s{t}    (eq. 3.4)} 
-#' \deqn{ w_{t+d}= \delta  \frac{y_{t}}{l_{t}s_{t}}+ \left( 1- \delta  \right) w_{t} \quad (eq. 3.5)}{w{t+d} = \delta*{y{t}}/{l{t}*s{t}} + (1-\delta)*w{t}    (eq. 3.5)} 
+#' \deqn{ s_{t+m}= \zeta  \frac{y_{t}}{l_{t}w_{t}}+ \left( 1- \zeta  \right) s_{t} \quad (eq. 3.4)}{s{t+m} = \zeta*y{t}/(l{t}*w{t}) + (1-\zeta)*s{t}    (eq. 3.4)} 
+#' \deqn{ w_{t+d}= \delta  \frac{y_{t}}{l_{t}s_{t}}+ \left( 1- \delta  \right) w_{t} \quad (eq. 3.5)}{w{t+d} = \delta*y{t}/(l{t}*s{t}) + (1-\delta)*w{t}    (eq. 3.5)} 
 #' \deqn{ \widehat{\sigma} _{t+1}= \sigma y_{t+1}^{ \tau}+ \xi  \quad (eq. 3.6)}{\sigmaf{t+1} = \sigma*y{t+1}^\tau + \xi    (eq. 3.6)} 
 #' }
 #' 
 #' \subsection{Additional Notations}{
 #' \describe{
 #' \item{\eqn{w_{t}}{w{t}}}{second seasonality factor prevailing at time t}
-#' \item{\eqn{d}}{number of (second) seasons in a complete period (e.g. 12 for monthly, 4 for quarterly}
+#' \item{\eqn{d}}{number of (second) seasons in a complete period (e.g. 12 for monthly, 4 for quarterly)}
 #' }
 #' }
 #' 
