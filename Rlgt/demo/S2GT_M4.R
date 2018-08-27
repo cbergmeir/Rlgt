@@ -1,5 +1,5 @@
 # Testing dual seasonalty method S2GT on hourly subset of the M4 Forecasting Competition set
-# We are showing two ways of passing data as either vector of numbers or msts object
+# We are showing three ways of passing data: as a vector of numbers, ts, or msts object
 
 options(width=180)
 
@@ -35,7 +35,7 @@ legend_cols_vect=c(legend_cols_vect, 'red')
 legend_char_vect=c(legend_char_vect,'-')
 
 
-#i=1
+i<-1
 sumSMAPE=0; sumQ99Loss=0; sumQ95Loss=0; sumQ5Loss=0;
 numOfCases95pExceeded=0; numOfCases5pExceeded=0;
 for (i in 1:NUM_OF_CASES) {

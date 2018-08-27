@@ -31,7 +31,7 @@
 #'
 #' @export
 
-# object=rstanmodel; xreg=NULL; h = H; level=c(90,98); NUM_OF_TRIALS=2000; MIN_VAL=0.001; MAX_VAL=1e38
+# library(sn); object=rstanmodel; xreg=NULL; h = H; level=c(90,98); NUM_OF_TRIALS=2000; MIN_VAL=0.001; MAX_VAL=1e38
 # library(sn)
                          
 
@@ -124,6 +124,9 @@ forecast.rlgtfit <- function(object,
   if (SEASONALITY2>1) {
     s2  <- object$params[["s2"]]
     sS2 <-rep(1,SEASONALITY2+h)
+		MAX_SEASONALITY=max(SEASONALITY,SEASONALITY2)
+		recentVals=rep(0,MAX_SEASONALITY+h)
+		recentVals[1:MAX_SEASONALITY]=object$x[(length(object$x)-MAX_SEASONALITY+1):length(object$x)]
   }
   
   # Initialise a matrix which contains the last level value
@@ -198,7 +201,11 @@ forecast.rlgtfit <- function(object,
         yf[irun,t] <- min(MAX_VAL,max(MIN_VAL,expVal+error))
         
         # find the currLevel
-        if (is.null(powSeasonS)){
+				if (SEASONALITY2>1) {
+					recentVals[MAX_SEASONALITY+t]=yf[irun,t]
+					newLevelP=mean(recentVals[(t+1):(t+MAX_SEASONALITY)])
+					currLevel=max(MIN_VAL,levSmS*newLevelP + (1-levSmS)*prevLevel) ;
+				} else if (is.null(powSeasonS)){
           currLevel <- max(MIN_VAL,levSmS*yf[irun,t]/seasonA + (1-levSmS)*prevLevel) ;
         } else {#gSTG model
           currLevel <- max(MIN_VAL,levSmS*(yf[irun,t]-seasonA*abs(prevLevel) ^ powSeasonS) + (1-levSmS)*prevLevel) ;
