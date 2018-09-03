@@ -121,6 +121,9 @@ forecast.rlgtfit <- function(object,
   if (seasonality2>1) {
     s2  <- object$params[["s2"]]
     sS2 <-rep(1,seasonality2+h)
+    minSeasonality=min(seasonality,seasonality2)
+		recentVals=rep(0,minSeasonality+h)
+		recentVals[1:minSeasonality]=object$x[(length(object$x)-minSeasonality+1):length(object$x)]
   }
   
   # Initialise a matrix which contains the last level value
@@ -211,7 +214,11 @@ forecast.rlgtfit <- function(object,
         yf[irun,t] <- min(MAX_VAL,max(MIN_VAL,expVal+error))
         
         # find the currLevel
-				if (is.null(powSeasonS)){
+        if (seasonality2>1) {
+					recentVals[minSeasonality+t]=yf[irun,t]
+					newLevelP=mean(recentVals[(t+1):(t+minSeasonality)])
+					currLevel=max(MIN_VAL,levSmS*newLevelP + (1-levSmS)*prevLevel) ;
+				} else if (is.null(powSeasonS)){
 					currLevel <- max(MIN_VAL,levSmS*(yf[irun,t]-r[t])/seasonA + (1-levSmS)*prevLevel) ;
 				} else {
 					currLevel <- max(MIN_VAL,levSmS*(yf[irun,t]-r[t]-seasonA) + (1-levSmS)*prevLevel) ;

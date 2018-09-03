@@ -19,9 +19,9 @@ data {
 }
 transformed data {
   real<lower=0> reg0CauchySd=mean(REG_CAUCHY_SD)*10;
-  int<lower=2> MAX_SEASONALITY=SEASONALITY;
-  if (MAX_SEASONALITY<SEASONALITY2)
-    MAX_SEASONALITY=SEASONALITY2;
+  int<lower=2> MIN_SEASONALITY=SEASONALITY;
+  if (SEASONALITY2<MIN_SEASONALITY)
+    MIN_SEASONALITY=SEASONALITY2;
 }
 parameters {
  	vector[J]  regCoef; real regOffset;
@@ -47,6 +47,8 @@ transformed parameters {
 	real r; //regression component
 	vector<lower=0>[N] expVal; 
 	real sumsu;
+	real newLevelP;
+	real movingSum;
 	
 	r=0;
 	if (USE_REGRESSION==1)
@@ -57,7 +59,7 @@ transformed parameters {
     		s[i] = initSu[i];
     	for (i in 1:SEASONALITY2) 
     		s2[i] = initSu2[i];	
-    	l[1] = y[1] - r;
+    	//l[1] = y[1] - r;
 	} else {
 		sumsu = 0;
 		for (i in 1:SEASONALITY) 
@@ -71,7 +73,7 @@ transformed parameters {
 		for (i in 1:SEASONALITY2) 
 			s2[i] = initSu2[i]*SEASONALITY2/sumsu;
 			
-		l[1] = (y[1]-r)/(s[1]*s2[1]);
+		//l[1] = (y[1]-r)/(s[1]*s2[1]);
 	}
 	s[SEASONALITY+1] = s[1];
 	s2[SEASONALITY2+1] = s2[1];
@@ -79,16 +81,30 @@ transformed parameters {
 	powTrend= (MAX_POW_TREND-MIN_POW_TREND)*powTrendBeta+MIN_POW_TREND;
 	expVal[1] = y[1];
 	
+	movingSum=y[1];
+	for (t in 2:MIN_SEASONALITY) 
+		movingSum=movingSum+y[t];
+	newLevelP=movingSum/MIN_SEASONALITY;
+	
+	for (t in 1:MIN_SEASONALITY)
+		l[t] = newLevelP;
+	
+	
 	for (t in 2:N) {
 		if (USE_REGRESSION==1)
 			r = xreg[t,:] * regCoef + regOffset;
+		if (t>MIN_SEASONALITY) {
+			movingSum=movingSum+y[t]-y[t-MIN_SEASONALITY];
+			newLevelP=movingSum/MIN_SEASONALITY;
+			l[t]  = levSm*newLevelP + (1-levSm)*l[t-1] ;
+		}
 		if (USE_GENERALIZED_SEASONALITY==1) {
-		    l[t]  = levSm*(y[t] - s[t]*l[t-1]^powSeason - s2[t]*l[t-1]^powSeason2 -r) + (1-levSm)*l[t-1] ;  //As usually, we skip global trend in the level update formula. Why? Becasue it works better :-)
+		    //l[t]  = levSm*(y[t] - s[t]*l[t-1]^powSeason - s2[t]*l[t-1]^powSeason2 -r) + (1-levSm)*l[t-1] ;  //As usually, we skip global trend in the level update formula. Why? Becasue it works better :-)
     		s[t+SEASONALITY]= sSm*(y[t] - l[t-1] - coefTrend*l[t-1]^powTrend - s2[t]*l[t-1]^powSeason2 - r)/l[t-1]^powSeason + (1-sSm)*s[t]; 
     		s2[t+SEASONALITY2]= s2Sm*(y[t] - l[t-1] - coefTrend*l[t-1]^powTrend - s[t]*l[t-1]^powSeason - r)/l[t-1]^powSeason2 + (1-s2Sm)*s2[t]; 
     		expVal[t]=l[t-1]+ coefTrend*l[t-1]^powTrend + s[t]*l[t-1]^powSeason + s2[t]*l[t-1]^powSeason2 + r;
 		} else {	
-			l[t]  = levSm*(y[t]-r)/(s[t]*s2[t]) + (1-levSm)*l[t-1];
+			//l[t]  = levSm*(y[t]-r)/(s[t]*s2[t]) + (1-levSm)*l[t-1];
 			s[t+SEASONALITY] = sSm*(y[t]-r)/(l[t]*s2[t])+(1-sSm)*s[t];
 			s2[t+SEASONALITY2] = s2Sm*(y[t]-r)/(l[t]*s[t])+(1-s2Sm)*s2[t];
 			expVal[t]=(l[t-1]+ coefTrend*l[t-1]^powTrend)*s[t]*s2[t] + r;
