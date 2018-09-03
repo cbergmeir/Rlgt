@@ -21,9 +21,9 @@ x.mat.test <- x.mat[(nrow(x.mat) - sizeTestSet + 1):nrow(x.mat),]
 mod <- list()
 forecasts <- list()
 #--------------------------------
-#Fit SGT model without Regression 
-mod[["SGT"]] <- rlgt(y.train, model.type="SGT", nCores=4, nChains=4,
-                     control=rlgt.control(MAX_NUM_OF_REPEATS=1, NUM_OF_ITER=1000), 
+#Fit SGT model without Regression,  
+mod[["SGT"]] <- rlgt(y.train, 
+                     control=rlgt.control(MAX_NUM_OF_REPEATS=1, NUM_OF_ITER=2000), 
                      verbose=TRUE)
 # print the model details
 print(mod[["SGT"]])
@@ -38,9 +38,9 @@ lines(y, col = 'red')
 
 #--------------------------------
 #Fit SGT model with Regression 
-mod[["SGT_REG"]] <- rlgt(y.train, model.type="SGT", nCores=4, nChains=4,
+mod[["SGT_REG"]] <- rlgt(y.train, 
                          xreg = x.mat.train,
-                         control=rlgt.control(MAX_NUM_OF_REPEATS=1, NUM_OF_ITER=1000),
+                         control=rlgt.control(MAX_NUM_OF_REPEATS=1, NUM_OF_ITER=2000),
                          verbose=TRUE)
 # print the model details
 print(mod[["SGT_REG"]])

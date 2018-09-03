@@ -6,13 +6,18 @@ data {
 	real<lower=0> MIN_SIGMA;
 	real<lower=1> MIN_NU; real<lower=1> MAX_NU;
 	int<lower=1> N;
-	int<lower=1> J;
 	vector<lower=0>[N] y;
-	matrix[N, J] xreg;  //if no seasonality: J==1, and xreg will be vector of zeros
-	real<lower=0> POW_TREND_ALPHA; real<lower=0> POW_TREND_BETA; 
+	real<lower=0> POW_TREND_ALPHA; real<lower=0> POW_TREND_BETA;
+	int<lower=0,upper=1> USE_REGRESSION;
+	int<lower=1> J;
+	matrix[N, J] xreg;  
+	vector<lower=0>[J] REG_CAUCHY_SD;
+}
+transformed data {
+	real<lower=0> reg0CauchySd=mean(REG_CAUCHY_SD)*10;
 }
 parameters {
-  vector[J]  regCoef;
+ 	vector[J]  regCoef; real regOffset;
 	real<lower=MIN_NU,upper=MAX_NU> nu; 
 	real<lower=0> sigma;
 	real <lower=0,upper=1>levSm;
@@ -26,17 +31,21 @@ parameters {
 } 
 transformed parameters {
 	real <lower=MIN_POW_TREND,upper=MAX_POW_TREND>powTrend;
-	vector<lower=0>[N] l;
+	vector<lower=0>[N] l; 
 	vector[N] b;
-	vector[N] r; //regression component
+	real r; //regression component
+	vector<lower=0>[N] expVal; 
 	
-	r[1] = xreg[1,:] * regCoef;
 	l[1] = y[1]; b[1] = bInit;
 	powTrend= (MAX_POW_TREND-MIN_POW_TREND)*powTrendBeta+MIN_POW_TREND;
+	expVal[1] = y[1];
+	r=0;
 
 	for (t in 2:N) {
-		r[t] = xreg[t,:] * regCoef;
-		l[t] = levSm*(y[t]-r[t]) + (1-levSm)*l[t-1] ;  //E(y[t])=l[t]=l[t-1]+coefTrend*l[t-1]^powTrend+locTrendFract*b[t-1]
+		if (USE_REGRESSION==1)
+			r = xreg[t,:] * regCoef + regOffset;
+		expVal[t]=l[t-1]+coefTrend*l[t-1]^powTrend+locTrendFract*b[t-1]+r;
+		l[t] = levSm*(y[t]-r) + (1-levSm)*l[t-1] ;  
 		b[t] = bSm*(l[t]-l[t-1]) + (1-bSm)*b[t-1] ;
 	}
 }
@@ -45,11 +54,11 @@ model {
 	offsetSigma ~ cauchy(MIN_SIGMA,CAUCHY_SD) T[MIN_SIGMA,];
 	coefTrend ~ cauchy(0,CAUCHY_SD);
 	powTrendBeta ~ beta(POW_TREND_ALPHA, POW_TREND_BETA);
-	bInit ~ normal(0,CAUCHY_SD);
-	regCoef ~ cauchy(0, CAUCHY_SD);
+	bInit ~ cauchy(0,CAUCHY_SD);
+	regCoef ~ cauchy(0, REG_CAUCHY_SD);
+	regOffset ~ cauchy(0, reg0CauchySd);
 	
 	for (t in 2:N) {
-		y[t] ~ student_t(nu, l[t-1] + coefTrend * l[t-1] ^ powTrend + locTrendFract * b[t-1] + r[t], 
-		sigma * l[t-1] ^ powx + offsetSigma) ;
+		y[t] ~ student_t(nu, expVal[t], sigma * l[t-1] ^ powx + offsetSigma) ;
 	}
 }

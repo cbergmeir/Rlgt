@@ -43,8 +43,8 @@ ret_df=foreach(i=1:NUM_OF_CASES, .combine=rbind, .inorder=FALSE, .packages=c("Rl
 	series=M3.data[[i]]$sn
 	data.train <- M3.data[[i]]$x
 	data.test <- M3.data[[i]]$xx
-	rstanmodel <- rlgt(data.train, model="gSGT", nCores=4, nChains=4,
-		control=rlgt.control(MAX_NUM_OF_REPEATS=3, NUM_OF_ITER=5000), #we do not need to specify SEASONALITY in rlgt.control, as it is extracted from M3.data[[i]]$x
+	rstanmodel <- rlgt(data.train, seasonality.type="generalized",
+		control=rlgt.control(MAX_NUM_OF_REPEATS=3, NUM_OF_ITER=5000), #we do not need to specify seasonality, as it is extracted from M3.data[[i]]$x
 		verbose=FALSE)
 	forec= forecast(rstanmodel, h = H, level=c(90,98))
 	sMAPE=mean(abs(forec$mean-data.test)/(forec$mean+data.test))*200

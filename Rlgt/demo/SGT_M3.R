@@ -25,7 +25,7 @@ legend_cols_vect=c(legend_cols_vect, 'blue')
 legend_char_vect=c(legend_char_vect,'-')
 
 legend_str_vect=c(legend_str_vect,"actuals")  #used for short displays
-legend_cols_vect=c(legend_cols_vect, 'red')
+legend_cols_vect=c(legend_cols_vect, 'black')
 legend_char_vect=c(legend_char_vect,'-')
 
 #i<-1; str(M3.data[[i]])
@@ -37,14 +37,14 @@ for (i in 1:NUM_OF_CASES) {
 	if (i==1) { #just for demo and testing. In your code stick to one of the two alternatives. Plotting, etc. is easier with ts inputs.
 		trainData <- as.numeric(M3.data[[i]]$x) #"naked" vector, so seasonality need to be specified in control
 		actuals <- as.numeric(M3.data[[i]]$xx) # actuals have to be matching trainData; both are of numeric class
-		rstanmodel <- rlgt(trainData, model="SGT", nCores=4, nChains=4,
-			control=rlgt.control(MAX_NUM_OF_REPEATS=3, NUM_OF_ITER=5000, SEASONALITY=SEASONALITY),   
+		rstanmodel <- rlgt(trainData, seasonality=SEASONALITY,
+			control=rlgt.control(NUM_OF_ITER=5000),   
 			verbose=TRUE)                                                  	
 	} else {
 		trainData <- M3.data[[i]]$x  # Becasue trainData is of ts class, the SEASONALITY will be extracted from it.
 		actuals <- M3.data[[i]]$xx   # class of actuals has to be the same as one of trainData; both are of ts class
-		rstanmodel <- rlgt(trainData, model="SGT", nCores=4, nChains=4,
-				control=rlgt.control(MAX_NUM_OF_REPEATS=3, NUM_OF_ITER=5000),    
+		rstanmodel <- rlgt(trainData, 
+				control=rlgt.control(NUM_OF_ITER=5000),    
 				verbose=TRUE)                                                   
 	}
   # str(rstanmodel, max.level=1)
@@ -54,10 +54,10 @@ for (i in 1:NUM_OF_CASES) {
 	plot(forec, main=series)
 	
 	if (inherits(trainData,"ts")) {
-		lines(actuals, col=2, lwd=2)	
+		lines(actuals, col=1, lwd=2)	
 	} else {
 		xs=seq(from=length(trainData)+1,to=length(trainData)+ length(actuals))
-		lines(xs,actuals, col=2, type='b',lwd=2)	
+		lines(xs,actuals, col=1, type='b',lwd=2)	
 	}
 	legend("topleft", legend_str_vect,
 			pch=legend_char_vect, 

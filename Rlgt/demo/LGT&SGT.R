@@ -10,10 +10,11 @@ sizeTestSet <- length(data.train )
 
 mod <- list()
 forecasts <- list()
+
 #--------------------------------
 #Fit LGT model
-mod[["LGT"]] <- rlgt(data.train, model.type ="LGT", nCores=4, nChains=4,
-  control=rlgt.control(MAX_NUM_OF_REPEATS=3, NUM_OF_ITER=2000), 
+mod[["LGT"]] <- rlgt(data.train, 
+  control=rlgt.control(MAX_NUM_OF_REPEATS=2, NUM_OF_ITER=2000), 
   verbose=TRUE)
 # print the model details
 print(mod[["LGT"]])
@@ -25,15 +26,17 @@ forecasts[["LGT"]] <- forecast(mod[["LGT"]], h = sizeTestSet/2,
                                level=c(80, 95, 98))
 plot(forecasts[["LGT"]], main=paste(curr_series,'by LGT'))
 
+
 # Use AirPassanger data as an example for a seasonal dataset
 seasonal_data <- AirPassengers
 curr_series <- "AirPassengers"
 data.train <- seasonal_data 
 sizeTestSet <- frequency(AirPassengers)
 #--------------------------------
+
 #Fit SGT model
-mod[["SGT"]] <- rlgt(data.train, model.type="SGT", nCores=4, nChains=4,
-  control=rlgt.control(MAX_NUM_OF_REPEATS=3, NUM_OF_ITER=2000), 
+mod[["SGT"]] <- rlgt(data.train, 
+  control=rlgt.control(MAX_NUM_OF_REPEATS=2, NUM_OF_ITER=2000), 
   verbose=TRUE)
 # print the model details
 print(mod[["SGT"]])
@@ -45,4 +48,11 @@ forecasts[["SGT"]] <- forecast(mod[["SGT"]], h = sizeTestSet, level=c(80, 95, 98
 plot(forecasts[["SGT"]],main=paste(curr_series,'by SGT'))
 
 
+#---------------
+#Fit SGT model with generalized seasonality
+mod[["gSGT"]] <- rlgt(data.train, seasonality.type="generalized",
+		control=rlgt.control(MAX_NUM_OF_REPEATS=2, NUM_OF_ITER=2000), 
+		verbose=TRUE)
 
+forecasts[["SGT"]] <- forecast(mod[["SGT"]], h = sizeTestSet, level=c(80, 95, 98))
+plot(forecasts[["SGT"]],main=paste(curr_series,'by gSGT'))

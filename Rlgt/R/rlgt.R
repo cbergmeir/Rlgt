@@ -1,20 +1,22 @@
 #' @title Fit an Rlgt model
-#' @description The main function to fit an rlgt model. It fitted the parameter values through MCMC simulations.
+#' @description The main function to fit an rlgt model. It fitts the parameter values with MCMC.
 #' @param y time-series data for training (provided as a numeric vector, or a ts, or msts object).
-#' @param model.type a chosen model from the Rlgt package.
-#' @param xreg Optionally, a vector or matrix of external regressors, which must have the same number of rows as y.
-#' @param control list of control parameters, i.e. hyperparameter values for the model's prior distribution.  
-#' @param nChains number of MCMC chains ro be produced. The number must be >=1. 
-#' More chains will improve the quality of the model, but will significantly increase 
-#' the run-time of the MCMC sampling procedure.Perhaps, an optimal number is around 4.
-#' @param nCores number of cores to be used. For performance reasons, it should be set to equal 
-#' to nChains, in case of nChains <= the number of cores available on the computer.  
-#' @param addJitter adding a bit of jitter is helping Stan in case of some flat time-series data.
-#' @param verbose whether verbose information should be printed (true/false value only)
+#' @param seasonality. This specification of seasonality will be overridden by frequency of y, if y is of ts or msts class. 
+#' 1 by default, i.e. no seasonality.
+#' @param seasonality2. Second seasonality. If larger than 1, a dual seasonality model will be used. 
+#' This specification of seasonality will be overridden by the second seasonality of y, if y is of msts class. 
+#' 1 by default, i.e. no seasonality or simgle seasonality.
+#' @param seasonality.type Either "multiplicative" (default) or "generalized". 
+#' The latter seasonality generalizes additive and multiplicative seasonality types.
+#' @param error.size.method It chooses a function providing size of the error. Either "std" (monotonically, but slower than proportionally, growing with the series values) or 
+#' "innov" (proportional to a smoothed abs size of innovations, i.e. surprises)  
+#' @param xreg Optionally, a vector or matrix of external regressors, which must have the same number of rows as y. Default is "std".
+#' @param control list of control parameters, e.g. hyperparameter values for the model's prior distributions, number of fitting interations etc.  
+#' @param verbose whether verbose information should be printed (true/false value only), default FALSE.
 #' @return rlgtfit object
 #' @examples
 #' \dontrun{
-#' rlgt_model <- rlgt(lynx, model="LGT", nCores=4, nChains=4,
+#' rlgt_model <- rlgt(lynx, 
 #' control=lgt.control(MAX_NUM_OF_REPEATS=1, NUM_OF_ITER=2000), 
 #' verbose=TRUE)
 
@@ -31,49 +33,59 @@
 #' @importMethodsFrom rstan summary
 #' @importFrom sn rst
 #' @export
-rlgt <- function(y, model.type=c("LGT", "LGTe", "SGT", "SGTe", "S2GT", "gSGT", "Trend"), 
-                 xreg = NULL,
-                 control=rlgt.control(), nChains=4, nCores=4, 
-                 addJitter=TRUE, verbose=FALSE) {
+rlgt <- function(y,  
+						seasonality=1, seasonality2=1, 
+						seasonality.type=c("multiplicative","generalized"),
+						error.size.method=c("std","innov"),
+            xreg = NULL,
+            control=rlgt.control(), 
+						verbose=FALSE) {
   # for safety
-  model.type <- model.type[1]
-  modelIsSeasonal <- model.type %in% c("SGT", "S2GT", "SGTe", "gSGT")
-  has.regression <- !is.null(xreg)
-  use.regression <- FALSE
-  if (has.regression) {
-    # regression components detected
-    if (model.type %in% c("LGT", "SGT")) {
-      use.regression <- TRUE
-    } else {
-      message("Current model do not support regression. Regression variables will be ignored.")
-    }
-  }
+  #model.type <- model.type[1]
+	error.size.method <- error.size.method[1]
+	seasonality.type <- seasonality.type[1]
+	useGeneralizedSeasonality=seasonality.type=="generalized"
+	nChains<-control$NUM_OF_CHAINS
+	nCores<-control$NUM_OF_CORES
+	addJitter<-control$ADD_JITTER
+	use.regression <- !is.null(xreg)
 	
-	if (substring(model.type,1,2)=="S2") { #dual seasonality
-		if (inherits(y,'msts')) {
-			control$SEASONALITY=attributes(y)$msts[1]
-			control$SEASONALITY2=attributes(y)$msts[2]
-		} else if (inherits(y,'ts')) {
-			control$SEASONALITY=frequency(y)
-		} 
-		if (control$SEASONALITY<=1 || control$SEASONALITY2<=1) {
-			stop("Dual seasonality model requires setting up both seasonalities")
-		}
-	} else if (modelIsSeasonal) { #single seasonality
-		if (inherits(y,'ts')) {
-			control$SEASONALITY=frequency(y)
-		} 
-		if (control$SEASONALITY<=1) {
-			stop("A seasonal model requires setting up the seasonality")
-			return (NULL)
-		}
-	} 	
+	if (inherits(y,'msts')) {
+		seasonality=attributes(y)$msts[1]
+		seasonality2=attributes(y)$msts[2]
+	} else if (inherits(y,'ts')) {
+		seasonality=frequency(y)
+	} 
 	
-
-  if(!inherits(model.type, "RlgtStanModel")) {
-    model <- initModel(model.type = model.type,
-                       use.regression = use.regression)
-  }
+	if (seasonality>1 || seasonality2>1) {
+		if (seasonality>1 && seasonality2>1) { #dual seasonality
+			if (error.size.method=="innov") {
+				model.type="S2GTe"
+			} else {
+				model.type="S2GT"
+			}
+		} else {#single seasonality
+			if (seasonality2>1) { #swap seasonalities
+				seasonality=seasonality2
+				seasonality2=1
+			}
+			if (error.size.method=="innov") {
+				model.type="SGTe"
+			} else {
+				model.type="SGT"
+			}
+		} 
+	} else { #non-seasonal
+		if (error.size.method=="innov") {
+			model.type="LGTe"
+		} else {
+			model.type="LGT"
+		}
+	}
+		
+	  
+  model <- initModel(model.type = model.type,   #here
+              use.regression = use.regression, useGeneralizedSeasonality=useGeneralizedSeasonality)
   
   MAX_RHAT_ALLOWED <- control$MAX_RHAT_ALLOWED
   NUM_OF_ITER <- control$NUM_OF_ITER
@@ -92,10 +104,11 @@ rlgt <- function(y, model.type=c("LGT", "LGTe", "SGT", "SGTe", "S2GT", "gSGT", "
   if(addJitter) y <- y + rnorm(n, 0, sd=abs(min(y)) * 0.0001)
   
   CauchySd <- max(y) / control$CAUCHY_SD_DIV
+	
   
   data <- list(CAUCHY_SD=CauchySd, 
-               SEASONALITY=control$SEASONALITY, 
-               SEASONALITY2=control$SEASONALITY2,
+               SEASONALITY=seasonality, 
+               SEASONALITY2=seasonality2,
                MIN_POW_TREND=control$MIN_POW_TREND, 
                MAX_POW_TREND=control$MAX_POW_TREND, 
                MIN_SIGMA=control$MIN_SIGMA,  
@@ -105,7 +118,10 @@ rlgt <- function(y, model.type=c("LGT", "LGTe", "SGT", "SGTe", "S2GT", "gSGT", "
                POW_SEASON_BETA=control$POW_SEASON_BETA,
                POW_TREND_ALPHA=control$POW_TREND_ALPHA, 
                POW_TREND_BETA=control$POW_TREND_BETA,
-               y=y, N=n) # to be passed on to Stan
+               y=y, N=n, 
+					 		 USE_GENERALIZED_SEASONALITY=as.integer(useGeneralizedSeasonality),
+							 USE_REGRESSION=as.integer(use.regression), 
+							 J=2, xreg=matrix(0,nrow=n, ncol=2), REG_CAUCHY_SD=rep(1,2)) #if this is a regression call, these three values will be overwritten in a moment below, I can't make it J==1, becasue then REG_CAUCHY_SD becomes number, not vector
   
   if(use.regression){
     data[['xreg']] <- xreg
@@ -113,7 +129,11 @@ rlgt <- function(y, model.type=c("LGT", "LGTe", "SGT", "SGTe", "S2GT", "gSGT", "
     if(nrow(xreg) != n){
       stop("Error: Number of rows supplied in regression matrix does not match length of y!")
     }
-  }
+		regCauchySd=mean(y)/apply(xreg,2,mean)/control$CAUCHY_SD_DIV #vector
+		data[['REG_CAUCHY_SD']]=regCauchySd
+  } 
+	
+	
   
   ### Repeat until Rhat is in an acceptable range (i.e. convergence is reached)
   avgRHat <- 1e200
@@ -122,13 +142,24 @@ rlgt <- function(y, model.type=c("LGT", "LGTe", "SGT", "SGTe", "S2GT", "gSGT", "
     initializations <- list()
     for (irr in 1:nChains) {
       initializations[[irr]]=list( 
-        ### Initialise seasonality factors
-        # for non-seasonal models it is not necessary, 
-        # but makes code simpler and is not a big overhead
-        initSu = rnorm(control$SEASONALITY, 1, 0.05), 
-        initSu2 = rnorm(control$SEASONALITY2, 1, 0.05),
-        innovSizeInit = abs(rnorm(1, 0, CauchySd))#used only for *GTe models 
+        # These initializations are strictly not necessary, but they improve performance (accuracy and calculation speed)
+        innovSizeInit = abs(rnorm(1, 0, CauchySd)),#used only for *GTe models 
+				bInit=rnorm(1,mean=0, sd=y[1]/control$CAUCHY_SD_DIV),
+				coefTrend=rnorm(1,mean=0, sd=0.01),
+				sigma=runif(1,min=control$MIN_SIGMA, max=0.01),
+				offsetSigma=runif(1,min=control$MIN_SIGMA, max=0.01)
       )
+			if(use.regression){
+				initializations[[irr]][['regCoef']]<-rnorm(ncol(xreg),mean=0, sd=regCauchySd)
+				initializations[[irr]][['regOffset']]<-rnorm(1,mean=0, sd=mean(regCauchySd))
+			}
+			if (useGeneralizedSeasonality) {
+				initializations[[irr]][['initSu']] = rnorm(seasonality, mean=0, sd=y[1:seasonality]*0.01) 
+				initializations[[irr]][['initSu2']] = rnorm(seasonality2, mean=0, sd=y[1:seasonality2]*0.01)
+			} else {  #multiplicative
+				initializations[[irr]][['initSu']] = rnorm(seasonality, 1, 0.05) 
+				initializations[[irr]][['initSu2']] = rnorm(seasonality2, 1, 0.05)
+			}
     }
     
     #Double the number of iterations for the next cycle
@@ -169,7 +200,7 @@ rlgt <- function(y, model.type=c("LGT", "LGTe", "SGT", "SGTe", "S2GT", "gSGT", "
         print(paste("currRHat",currRHat))
       }
       if (MAX_NUM_OF_REPEATS>irep) print (paste("trying to do better..."))
-    }
+		}
     #str(samples, max.level =4)
   }#repeat if needed
   
@@ -186,9 +217,6 @@ rlgt <- function(y, model.type=c("LGT", "LGTe", "SGT", "SGTe", "S2GT", "gSGT", "
   # Extract all of the parameter means
   for(param in model$parameters) {
     params[[param]] <- extract(samples)[[param]]
-    
-    # Find the mean, but for ETS components average based on each t
-    #paramMeans[[param]] <- if(param %in% c("l", "b", "s")) apply(params[[param]],2,mean) else mean(params[[param]])
   }
   
   #special processing for vector params, where only the last value counts
@@ -205,7 +233,9 @@ rlgt <- function(y, model.type=c("LGT", "LGTe", "SGT", "SGTe", "S2GT", "gSGT", "
     #paramMeans[["lastSmoothedInnovSize"]] <- mean(params[["lastSmoothedInnovSize"]])
   }
   
-  out <- rlgtfit(y_org, model.type, use.regression = use.regression,  #correct: y_org. Fitting has already been done. y_org is either numeric, or ts, or msts   
-             model, params, control, samples)
+	#correct: y_org. Fitting has already been done. y_org is either numeric, or ts, or msts 
+  out <- rlgtfit(y_org, model.type, use.regression = use.regression, useGeneralizedSeasonality=useGeneralizedSeasonality,  
+			seasonality=seasonality, seasonality2=seasonality2,   
+      model, params, control, samples)
   out
 }
