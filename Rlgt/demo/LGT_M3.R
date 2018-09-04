@@ -10,7 +10,7 @@ options(width=180)
 M3.data <- subset(M3,"yearly")
 M3.data <- sample(M3.data) #shuffle
 NUM_OF_CASES=length(M3.data)  # If you let it run its full course (comment out next line), you should see a very good result :-)
-NUM_OF_CASES=3
+NUM_OF_CASES=5
 
 quantileLoss<-function(forec, actual, tau) {
 	diff=actual-forec

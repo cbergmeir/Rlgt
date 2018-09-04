@@ -46,16 +46,17 @@ transformed parameters {
 	vector<lower=0>[N] l;
 	vector[N+SEASONALITY] s;
 	vector[N+SEASONALITY2] s2;
-	real r; //regression component
+	vector[N] r; //regression component
 	vector<lower=0>[N] expVal; 
 	vector<lower=0>[N] smoothedInnovSize;
 	real sumsu;
 	real newLevelP;
 	real movingSum;
 	
-	r=0;
 	if (USE_REGRESSION==1)
-		r = xreg[1,:] * regCoef + regOffset;
+		r = xreg * regCoef + regOffset;
+	else 
+		r=rep_vector(0, N);	
 		
 	if (USE_GENERALIZED_SEASONALITY==1) {
 		for (i in 1:SEASONALITY) 
@@ -86,9 +87,9 @@ transformed parameters {
 	powTrend= (MAX_POW_TREND-MIN_POW_TREND)*powTrendBeta+MIN_POW_TREND;
 	expVal[1] = y[1];
 	
-	movingSum=y[1];
+	movingSum=y[1]-r[1];
 	for (t in 2:MIN_SEASONALITY) 
-		movingSum=movingSum+y[t];
+		movingSum=movingSum+y[t]-r[t];
 	newLevelP=movingSum/MIN_SEASONALITY;
 	
 	for (t in 1:MIN_SEASONALITY)
@@ -96,24 +97,22 @@ transformed parameters {
 	
 	
 	for (t in 2:N) {
-		if (USE_REGRESSION==1)
-			r = xreg[t,:] * regCoef + regOffset;
 		if (t>MIN_SEASONALITY) {
-			movingSum=movingSum+y[t]-y[t-MIN_SEASONALITY];
+			movingSum=movingSum+(y[t]-r[t])-(y[t-MIN_SEASONALITY]-r[t-MIN_SEASONALITY]);
 			newLevelP=movingSum/MIN_SEASONALITY;
 			l[t]  = levSm*newLevelP + (1-levSm)*l[t-1] ;
 		}
 		if (USE_GENERALIZED_SEASONALITY==1) {
-		    //l[t]  = levSm*(y[t] - s[t]*l[t-1]^powSeason - s2[t]*l[t-1]^powSeason2 -r) + (1-levSm)*l[t-1] ;  //As usually, we skip global trend in the level update formula. Why? Becasue it works better :-)
-    		s[t+SEASONALITY]= sSm*(y[t] - l[t-1] - coefTrend*l[t-1]^powTrend - s2[t]*l[t-1]^powSeason2 - r)/l[t-1]^powSeason + (1-sSm)*s[t]; 
-    		s2[t+SEASONALITY2]= s2Sm*(y[t] - l[t-1] - coefTrend*l[t-1]^powTrend - s[t]*l[t-1]^powSeason - r)/l[t-1]^powSeason2 + (1-s2Sm)*s2[t]; 
-    		expVal[t]=l[t-1]+ coefTrend*l[t-1]^powTrend + s[t]*l[t-1]^powSeason + s2[t]*l[t-1]^powSeason2 + r;
+		    //l[t]  = levSm*(y[t] - s[t]*l[t-1]^powSeason - s2[t]*l[t-1]^powSeason2 -r[t]) + (1-levSm)*l[t-1] ;  //As usually, we skip global trend in the level update formula. Why? Becasue it works better :-)
+    		s[t+SEASONALITY]= sSm*(y[t] - l[t-1] - coefTrend*l[t-1]^powTrend - s2[t]*l[t-1]^powSeason2 - r[t])/l[t-1]^powSeason + (1-sSm)*s[t]; 
+    		s2[t+SEASONALITY2]= s2Sm*(y[t] - l[t-1] - coefTrend*l[t-1]^powTrend - s[t]*l[t-1]^powSeason - r[t])/l[t-1]^powSeason2 + (1-s2Sm)*s2[t]; 
+    		expVal[t]=l[t-1]+ coefTrend*l[t-1]^powTrend + s[t]*l[t-1]^powSeason + s2[t]*l[t-1]^powSeason2 + r[t];
     		smoothedInnovSize[t]=innovSm*fabs(y[t]-expVal[t])+(1-innovSm)*smoothedInnovSize[t-1];
 		} else {	
-			//l[t]  = levSm*(y[t]-r)/(s[t]*s2[t]) + (1-levSm)*l[t-1];
-			s[t+SEASONALITY] = sSm*(y[t]-r)/(l[t]*s2[t])+(1-sSm)*s[t];
-			s2[t+SEASONALITY2] = s2Sm*(y[t]-r)/(l[t]*s[t])+(1-s2Sm)*s2[t];
-			expVal[t]=(l[t-1]+ coefTrend*l[t-1]^powTrend)*s[t]*s2[t] + r;
+			//l[t]  = levSm*(y[t]-r[t])/(s[t]*s2[t]) + (1-levSm)*l[t-1];
+			s[t+SEASONALITY] = sSm*(y[t]-r[t])/(l[t]*s2[t])+(1-sSm)*s[t];
+			s2[t+SEASONALITY2] = s2Sm*(y[t]-r[t])/(l[t]*s[t])+(1-s2Sm)*s2[t];
+			expVal[t]=(l[t-1]+ coefTrend*l[t-1]^powTrend)*s[t]*s2[t] + r[t];
 			smoothedInnovSize[t]=innovSm*fabs(y[t]-expVal[t])/s[t]+(1-innovSm)*smoothedInnovSize[t-1];
 		}
 	}

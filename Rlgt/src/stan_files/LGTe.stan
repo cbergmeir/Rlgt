@@ -34,22 +34,26 @@ transformed parameters {
 	real <lower=MIN_POW_TREND,upper=MAX_POW_TREND>powTrend;
 	vector<lower=0>[N] l; 
 	vector[N] b;
-	real r; //regression component	
+	vector[N] r; //regression component
 	vector<lower=0>[N] expVal; 
 	vector<lower=0>[N] smoothedInnovSize;
 	
+	if (USE_REGRESSION==1)
+		r = xreg * regCoef + regOffset;
+	else 
+		r=rep_vector(0, N);		
+	
 	smoothedInnovSize[1]=innovSizeInit;
-	l[1] = y[1]; b[1] = bInit;
+	l[1] = y[1] - r[1]; 
+	b[1] = bInit;
 	powTrend= (MAX_POW_TREND-MIN_POW_TREND)*powTrendBeta+MIN_POW_TREND;
 	expVal[1] = y[1];
-	r=0;
+
 	
 	for (t in 2:N) {
-		if (USE_REGRESSION==1)
-			r = xreg[t,:] * regCoef + regOffset;
-		expVal[t]=l[t-1]+coefTrend*l[t-1]^powTrend+locTrendFract*b[t-1]+r;
+		expVal[t]=l[t-1]+coefTrend*l[t-1]^powTrend+locTrendFract*b[t-1]+r[t];
 		smoothedInnovSize[t]=innovSm*fabs(y[t]-expVal[t])+(1-innovSm)*smoothedInnovSize[t-1];
-		l[t] = levSm*(y[t]-r) + (1-levSm)*l[t-1]; 
+		l[t] = levSm*(y[t]-r[t]) + (1-levSm)*l[t-1]; 
 		b[t]  = bSm*(l[t]-l[t-1]) + (1-bSm)*b[t-1];
 	}
 }

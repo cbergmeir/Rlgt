@@ -36,25 +36,26 @@ transformed parameters {
 	real <lower=MIN_POW_TREND,upper=MAX_POW_TREND>powTrend;
 	vector<lower=0>[N] l;
 	vector[N+SEASONALITY] s;
-	real r; //regression component
+	vector[N] r; //regression component
 	vector<lower=0>[N] expVal; 
 	real sumsu;
 	
-	r=0;
 	if (USE_REGRESSION==1)
-		r = xreg[1,:] * regCoef + regOffset;
+		r = xreg * regCoef + regOffset;
+	else 
+		r=rep_vector(0, N);	
 		
 	if (USE_GENERALIZED_SEASONALITY==1) {
 		for (i in 1:SEASONALITY) 
     		s[i] = initSu[i];
-    	l[1] = y[1] - r;
+    	l[1] = y[1] - r[1];
 	} else {
 		sumsu = 0;
 		for (i in 1:SEASONALITY) 
 			sumsu = sumsu+ initSu[i];
 		for (i in 1:SEASONALITY) 
 			s[i] = initSu[i]*SEASONALITY/sumsu;	
-		l[1] = (y[1]-r)/s[1];
+		l[1] = (y[1]-r[1])/s[1];
 	}
 	s[SEASONALITY+1] = s[1];
 		
@@ -62,16 +63,14 @@ transformed parameters {
 	expVal[1] = y[1];
 
 	for (t in 2:N) {
-		if (USE_REGRESSION==1)
-			r = xreg[t,:] * regCoef + regOffset;
 		if (USE_GENERALIZED_SEASONALITY==1) {
-		    l[t]  = levSm*(y[t] - s[t]*l[t-1]^powSeason -r) + (1-levSm)*l[t-1] ;  //As usually, we skip global trend in the level update formula. Why? Becasue it works better :-)
-    		s[t+SEASONALITY]= sSm*(y[t] - l[t-1]- coefTrend*l[t-1]^powTrend -r)/l[t-1]^powSeason + (1-sSm)*s[t]; 
-    		expVal[t]=l[t-1]+ coefTrend*l[t-1]^powTrend + s[t]*l[t-1]^powSeason + r;
+		    l[t]  = levSm*(y[t] - s[t]*l[t-1]^powSeason -r[t]) + (1-levSm)*l[t-1] ;  //As usually, we skip global trend in the level update formula. Why? Becasue it works better :-)
+    		s[t+SEASONALITY]= sSm*(y[t] - l[t-1]- coefTrend*l[t-1]^powTrend -r[t])/l[t-1]^powSeason + (1-sSm)*s[t]; 
+    		expVal[t]=l[t-1]+ coefTrend*l[t-1]^powTrend + s[t]*l[t-1]^powSeason + r[t];
 		} else {	
-			l[t]  = levSm*(y[t]-r)/(s[t]) + (1-levSm)*l[t-1];
-			s[t+SEASONALITY] = sSm*(y[t]-r)/l[t]+(1-sSm)*s[t];
-			expVal[t]=(l[t-1]+ coefTrend*l[t-1]^powTrend)*s[t] + r;
+			l[t]  = levSm*(y[t]-r[t])/(s[t]) + (1-levSm)*l[t-1];
+			s[t+SEASONALITY] = sSm*(y[t]-r[t])/l[t]+(1-sSm)*s[t];
+			expVal[t]=(l[t-1]+ coefTrend*l[t-1]^powTrend)*s[t] + r[t];
 		}
 	}
 }

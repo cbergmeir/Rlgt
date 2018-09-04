@@ -1,7 +1,8 @@
 # Testing dual seasonalty method S2GT on hourly subset of the M4 Forecasting Competition set
 # We are showing three ways of passing data: as a vector of numbers, ts, or msts object. 
-# Finally, generalized season ality version is used. 
-#These are long series and dual seasonality models are more complicated to fit, expect each step to take 1 hour, even more.
+# Finally, generalized seasonality version is used. 
+#These are long series and dual seasonality models are more complicated to fit, 
+#each step may take from a few minutes to over 1 hour.
 
 options(width=180)
 
@@ -18,8 +19,8 @@ SEASONALITY2=168
 hourly=Filter(function(l) l$period == "Hourly", M4)
 hourly=sample(hourly) #shuffle
 
-NUM_OF_CASES=min(length(hourly),NUM_OF_CASES)  # If you let it run its full course (comment out next line)
-NUM_OF_CASES=4
+NUM_OF_CASES=length(hourly) #running over 400 cases would take quite a few days :-)
+NUM_OF_CASES=10
 
 quantileLoss<-function(forec, actual, tau) {
 	diff=actual-forec
@@ -47,32 +48,29 @@ for (i in 1:NUM_OF_CASES) {
 		trainData = as.numeric(hourly[[i]]$x) #"naked" vector, so both seasonalities need to be specified in control
 		actuals = as.numeric(hourly[[i]]$xx) # actuals have to be matching trainData; both are of numeric class
 		rstanmodel <- rlgt(trainData, seasonality=SEASONALITY, seasonality2=SEASONALITY2,
-			control=rlgt.control(MAX_NUM_OF_REPEATS=3, NUM_OF_ITER=2000, #longer time series, say several hundred points-long, require smaller number of iterations
+			control=rlgt.control(MAX_NUM_OF_REPEATS=2, NUM_OF_ITER=1000, #longer time series, say several hundred points-long, require smaller number of iterations
 			MAX_TREE_DEPTH = 12), 
 			verbose=TRUE)	
 	}	else if (i==2) {
 		trainData = hourly[[i]]$x # trainData is of ts class, so the SEASONALITY will be extracted from it. SEASONALITY2 has to be specified,  
 		actuals = hourly[[i]]$xx  # class of actuals has to be the same as one of trainData; both are of ts class
 		rstanmodel <- rlgt(trainData, seasonality2=SEASONALITY2,
-			control=rlgt.control(MAX_NUM_OF_REPEATS=3, NUM_OF_ITER=2000, 
-			MAX_TREE_DEPTH = 12 ), 
+			control=rlgt.control(MAX_NUM_OF_REPEATS=2, NUM_OF_ITER=1000), 
 			verbose=TRUE)			
-	}	else if (i==3){
-		#we convert input and actuals from ts to msts class
-		trainData=msts(hourly[[i]]$x, seasonal.periods=c(SEASONALITY,SEASONALITY2), ts.frequency =SEASONALITY, start=start(hourly[[i]]$x))
-		actuals=msts(hourly[[i]]$xx, seasonal.periods=c(SEASONALITY,SEASONALITY2), ts.frequency =SEASONALITY, start=start(hourly[[i]]$xx))
-		rstanmodel <- rlgt(trainData,  
-			control=rlgt.control(MAX_NUM_OF_REPEATS=3, NUM_OF_ITER=2000, 
-			MAX_TREE_DEPTH = 12 ),
-			verbose=TRUE)
-	} else {#try generalized seasonality
+	} else  if (i==3)  {
 		trainData = hourly[[i]]$x # trainData is of ts class, so the SEASONALITY will be extracted from it. SEASONALITY2 has to be specified,  
 		actuals = hourly[[i]]$xx  # class of actuals has to be the same as one of trainData; both are of ts class
-		rstanmodel <- rlgt(trainData, seasonality.type="generalized",
+		rstanmodel <- rlgt(trainData, seasonality.type="generalized",  #also try generalized seasonality
 				seasonality2=SEASONALITY2,
-				control=rlgt.control(MAX_NUM_OF_REPEATS=3, NUM_OF_ITER=2000, 
-						MAX_TREE_DEPTH = 12 ), 
+				control=rlgt.control(MAX_NUM_OF_REPEATS=2, NUM_OF_ITER=1000), 
 				verbose=TRUE)					
+	} else {
+		trainData = hourly[[i]]$x 
+		actuals = hourly[[i]]$xx  
+		rstanmodel <- rlgt(trainData, seasonality2=SEASONALITY2,
+				control=rlgt.control(NUM_OF_ITER=1000), 
+				verbose=TRUE)			
+		
 	}
 	
 	forec= forecast(rstanmodel, h = H, level=c(90,98))
