@@ -1,6 +1,5 @@
 # Testing dual seasonalty method S2GT on hourly subset of the M4 Forecasting Competition set
 # We are showing three ways of passing data: as a vector of numbers, ts, or msts object. 
-# Finally, generalized seasonality version is used. 
 #These are long series and dual seasonality models are more complicated to fit, 
 #each step may take from a few minutes to over 1 hour.
 
@@ -20,7 +19,7 @@ hourly=Filter(function(l) l$period == "Hourly", M4)
 hourly=sample(hourly) #shuffle
 
 NUM_OF_CASES=length(hourly) #running over 400 cases would take quite a few days :-)
-NUM_OF_CASES=10
+#NUM_OF_CASES=10
 
 quantileLoss<-function(forec, actual, tau) {
 	diff=actual-forec
@@ -48,29 +47,21 @@ for (i in 1:NUM_OF_CASES) {
 		trainData = as.numeric(hourly[[i]]$x) #"naked" vector, so both seasonalities need to be specified in control
 		actuals = as.numeric(hourly[[i]]$xx) # actuals have to be matching trainData; both are of numeric class
 		rstanmodel <- rlgt(trainData, seasonality=SEASONALITY, seasonality2=SEASONALITY2,
-			control=rlgt.control(MAX_NUM_OF_REPEATS=2, NUM_OF_ITER=1000, #longer time series, say several hundred points-long, require smaller number of iterations
+			control=rlgt.control(MAX_NUM_OF_REPEATS=2, NUM_OF_ITER=1500, #longer time series, say several hundred points-long, require smaller number of iterations
 			MAX_TREE_DEPTH = 12), 
 			verbose=TRUE)	
 	}	else if (i==2) {
 		trainData = hourly[[i]]$x # trainData is of ts class, so the SEASONALITY will be extracted from it. SEASONALITY2 has to be specified,  
 		actuals = hourly[[i]]$xx  # class of actuals has to be the same as one of trainData; both are of ts class
 		rstanmodel <- rlgt(trainData, seasonality2=SEASONALITY2,
-			control=rlgt.control(MAX_NUM_OF_REPEATS=2, NUM_OF_ITER=1000), 
+			control=rlgt.control(MAX_NUM_OF_REPEATS=2, NUM_OF_ITER=1500), 
 			verbose=TRUE)			
-	} else  if (i==3)  {
-		trainData = hourly[[i]]$x # trainData is of ts class, so the SEASONALITY will be extracted from it. SEASONALITY2 has to be specified,  
-		actuals = hourly[[i]]$xx  # class of actuals has to be the same as one of trainData; both are of ts class
-		rstanmodel <- rlgt(trainData, seasonality.type="generalized",  #also try generalized seasonality
-				seasonality2=SEASONALITY2,
-				control=rlgt.control(MAX_NUM_OF_REPEATS=2, NUM_OF_ITER=1000), 
-				verbose=TRUE)					
-	} else {
+	}  else {
 		trainData = hourly[[i]]$x 
 		actuals = hourly[[i]]$xx  
 		rstanmodel <- rlgt(trainData, seasonality2=SEASONALITY2,
-				control=rlgt.control(NUM_OF_ITER=1000), 
-				verbose=TRUE)			
-		
+				control=rlgt.control(NUM_OF_ITER=1500), 
+				verbose=TRUE)				
 	}
 	
 	forec= forecast(rstanmodel, h = H, level=c(90,98))
@@ -101,13 +92,13 @@ for (i in 1:NUM_OF_CASES) {
 	sumQ5Loss=sumQ5Loss+q5Loss
 	print(paste0(seriesName," sMAPE:",signif(sMAPE,3) ,' q5Loss:',signif(q5Loss,3),' q95Loss:',signif(q95Loss,3),' q99Loss:',signif(q99Loss,3) ))
 }
-sMAPE=sumSMAPE/NUM_OF_CASES
-q95Loss=sumQ95Loss/NUM_OF_CASES
-q99Loss=sumQ99Loss/NUM_OF_CASES
-q5Loss=sumQ5Loss/NUM_OF_CASES
-exceed95=numOfCases95pExceeded/(NUM_OF_CASES*H)*100
-exceed5=numOfCases5pExceeded/(NUM_OF_CASES*H)*100
-print(paste0("SUMMARY: Num of cases:", NUM_OF_CASES, ", sMAPE:",signif(sMAPE,4),
+sMAPE=sumSMAPE/i
+q95Loss=sumQ95Loss/i
+q99Loss=sumQ99Loss/i
+q5Loss=sumQ5Loss/i
+exceed95=numOfCases95pExceeded/(i*H)*100
+exceed5=numOfCases5pExceeded/(i*H)*100
+print(paste0("SUMMARY: Num of cases:", i, ", sMAPE:",signif(sMAPE,4),
   ', % of time 95p exceeded:',signif(exceed95,4), ', % of time 5p exceeded:',signif(exceed5,4), 
 	', q5Loss:',signif(q5Loss,4),', q95Loss:',signif(q95Loss,4),', q99Loss:',signif(q99Loss,4) ))
 

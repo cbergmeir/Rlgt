@@ -9,8 +9,8 @@ options(width=180)
 M3.data <- subset(M3,"quarterly")
 SEASONALITY=4
 M3.data <- sample(M3.data) #shuffle
-NUM_OF_CASES=length(M3.data)  # If you let it run its full course (comment out next line), you should see a very good result :-)
-NUM_OF_CASES=10
+NUM_OF_CASES=length(M3.data)  
+#NUM_OF_CASES=10
 
 
 quantileLoss<-function(forec, actual, tau) {
@@ -77,13 +77,13 @@ for (i in 1:NUM_OF_CASES) {
 	sumQ5Loss=sumQ5Loss+q5Loss
 	print(paste0(series," sMAPE:",signif(sMAPE,3) ,' q5Loss:',signif(q5Loss,3),' q95Loss:',signif(q95Loss,3),' q99Loss:',signif(q99Loss,3) ))
 }
-sMAPE=sumSMAPE/NUM_OF_CASES
-q95Loss=sumQ95Loss/NUM_OF_CASES
-q99Loss=sumQ99Loss/NUM_OF_CASES
-q5Loss=sumQ5Loss/NUM_OF_CASES
-exceed95=numOfCases95pExceeded/(NUM_OF_CASES*H)*100
-exceed5=numOfCases5pExceeded/(NUM_OF_CASES*H)*100
-print(paste0("SUMMARY: Num of cases:", NUM_OF_CASES, ", sMAPE:",signif(sMAPE,4),
+sMAPE=sumSMAPE/i
+q95Loss=sumQ95Loss/i
+q99Loss=sumQ99Loss/i
+q5Loss=sumQ5Loss/i
+exceed95=numOfCases95pExceeded/(i*H)*100
+exceed5=numOfCases5pExceeded/(i*H)*100
+print(paste0("SUMMARY: Num of cases:", i, ", sMAPE:",signif(sMAPE,4),
   ', % of time 95p exceeded:',signif(exceed95,4), ', % of time 5p exceeded:',signif(exceed5,4), 
 	', q5Loss:',signif(q5Loss,4),', q95Loss:',signif(q95Loss,4),', q99Loss:',signif(q99Loss,4) ))
 
