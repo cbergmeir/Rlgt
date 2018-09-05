@@ -28,7 +28,7 @@ legend_str_vect=c(legend_str_vect,"actuals")  #used for short displays
 legend_cols_vect=c(legend_cols_vect, 'black')
 legend_char_vect=c(legend_char_vect,'-')
 
-#i<-1; str(M3.data[[i]])
+i<-1; forecasts=list()
 H=length(M3.data[[1]]$xx)
 sumSMAPE=0; sumQ99Loss=0; sumQ95Loss=0; sumQ5Loss=0;
 numOfCases95pExceeded=0; numOfCases5pExceeded=0;
@@ -43,13 +43,14 @@ for (i in 1:NUM_OF_CASES) {
 	} else {
 		trainData <- M3.data[[i]]$x  # Becasue trainData is of ts class, the SEASONALITY will be extracted from it.
 		actuals <- M3.data[[i]]$xx   # class of actuals has to be the same as one of trainData; both are of ts class
-		rstanmodel <- rlgt(trainData,  seasonality.type="generalized",
+		rstanmodel <- rlgt(trainData,  #seasonality.type="generalized",
 				control=rlgt.control(NUM_OF_ITER=5000),    
 				verbose=TRUE)                                                   
 	}
   # str(rstanmodel, max.level=1)
 	
 	forec= forecast(rstanmodel, h = H, level=c(90,98))
+	forecasts[[series]]<-forec
 	# str(forec, max.level=1)
 	plot(forec, main=series)
 	

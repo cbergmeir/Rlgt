@@ -4,6 +4,7 @@
 #each step may take from a few minutes to over 1 hour.
 
 options(width=180)
+if (.Platform$OS.type=="windows")  memory.limit(5000)
 
 library(Rlgt)
 # install.packages("devtools")
@@ -37,11 +38,12 @@ legend_cols_vect=c(legend_cols_vect, 'black')
 legend_char_vect=c(legend_char_vect,'-')
 
 
-i<-1
+i<-1; forecasts=list()
 sumSMAPE=0; sumQ99Loss=0; sumQ95Loss=0; sumQ5Loss=0;
 numOfCases95pExceeded=0; numOfCases5pExceeded=0;
 for (i in 1:NUM_OF_CASES) {
 	seriesName=hourly[[i]]$st
+	print(paste("starting",seriesName))
 	
 	if (i==1) {  #just for demo and testing. In your code stick to one of the alternatives
 		trainData = as.numeric(hourly[[i]]$x) #"naked" vector, so both seasonalities need to be specified in control
@@ -65,6 +67,7 @@ for (i in 1:NUM_OF_CASES) {
 	}
 	
 	forec= forecast(rstanmodel, h = H, level=c(90,98))
+	forecasts[[seriesName]]<-forec
 	# str(forec, max.level=1)
 	plot(forec, main=seriesName)
 	
@@ -102,3 +105,11 @@ print(paste0("SUMMARY: Num of cases:", i, ", sMAPE:",signif(sMAPE,4),
   ', % of time 95p exceeded:',signif(exceed95,4), ', % of time 5p exceeded:',signif(exceed5,4), 
 	', q5Loss:',signif(q5Loss,4),', q95Loss:',signif(q95Loss,4),', q99Loss:',signif(q99Loss,4) ))
 
+
+# indx=223  this not 24 hour seasonality!!
+# indx=105
+# y=hourly[[indx]]$x
+# y=as.numeric(hourly[[indx]]$x)
+# plot(y[(length(y)-48+1):length(y)], main=indx, type='b')
+# plot(y[(length(y)-168+1):length(y)], main=indx, type='b')
+# a=acf(y)

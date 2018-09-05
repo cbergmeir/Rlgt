@@ -18,6 +18,13 @@ data {
 }
 transformed data {
 	real<lower=0> reg0CauchySd=mean(REG_CAUCHY_SD)*10;
+	vector[SEASONALITY] firstRatios;
+	real sumy = 0;
+	
+	for (i in 1:SEASONALITY) 
+		sumy = sumy+ y[i];
+	for (i in 1:SEASONALITY) 
+		firstRatios[i] = y[i]*SEASONALITY/sumy;	
 }
 parameters {
  	vector[J]  regCoef; real regOffset;
@@ -56,7 +63,7 @@ transformed parameters {
 		for (i in 1:SEASONALITY) 
 			sumsu = sumsu+ initSu[i];
 		for (i in 1:SEASONALITY) 
-			s[i] = initSu[i]*SEASONALITY/sumsu;	
+			s[i] = firstRatios[i]*initSu[i]*SEASONALITY/sumsu;	
 		l[1] = (y[1]-r[1])/s[1];
 	}
 	s[SEASONALITY+1] = s[1];
@@ -93,7 +100,7 @@ model {
 			initSu[t] ~ cauchy (0, y[t]*0.1);	
 	else
 		for (t in 1:SEASONALITY) 
-    		initSu[t] ~ cauchy (1, 0.3) T[0.01,];
+    		initSu[t] ~ cauchy (1, 0.15) T[0.01,];
     		
 	regCoef ~ cauchy(0, REG_CAUCHY_SD);
 	regOffset ~ cauchy(0, reg0CauchySd);

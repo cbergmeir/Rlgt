@@ -2,7 +2,7 @@
 
 data {  
 	int<lower=2> SEASONALITY;
-	int<lower=2> SEASONALITY2;
+	int<lower=SEASONALITY+1> SEASONALITY2;  //here checking that SEASONALITY<SEASONALITY2
 	real<lower=0> CAUCHY_SD;
 	real MIN_POW_TREND;  real MAX_POW_TREND;
 	real<lower=0> MIN_SIGMA;
@@ -19,9 +19,33 @@ data {
 }
 transformed data {
   real<lower=0> reg0CauchySd=mean(REG_CAUCHY_SD)*10;
-  int<lower=2> MIN_SEASONALITY=SEASONALITY;
-  if (SEASONALITY2<MIN_SEASONALITY)
-    MIN_SEASONALITY=SEASONALITY2;
+	vector[SEASONALITY] firstRatios;
+	vector[SEASONALITY2] firstRatios2;
+    
+	real sumy = 0; int j=1;   
+ 	while(j*SEASONALITY<=SEASONALITY2)  {
+    	sumy=0; 
+	for (i in 1:SEASONALITY) 
+			sumy = sumy+ y[(j-1)*SEASONALITY+i];
+	for (i in 1:SEASONALITY) 
+		  if (j==1) 
+		  	firstRatios[i] = y[(j-1)*SEASONALITY+i]*SEASONALITY/sumy;
+		  else
+				firstRatios[i] = firstRatios[i]+y[(j-1)*SEASONALITY+i]*SEASONALITY/sumy;	   
+		j=j+1;
+	}
+	j=j-1;
+	for (i in 1:SEASONALITY) {
+		firstRatios[i]=firstRatios[i]/j;
+		//print(firstRatios[i]) ;	
+	}	
+	sumy = 0;
+	for (i in 1:SEASONALITY2) 
+		sumy = sumy+ y[i];
+	for (i in 1:SEASONALITY2) { 
+		firstRatios2[i] = y[i]*SEASONALITY2/sumy/firstRatios[(i-1)%SEASONALITY+1];
+		//print(i, " ",firstRatios2[i]);
+	}	
 }
 parameters {
  	vector[J]  regCoef; real regOffset;
@@ -69,13 +93,13 @@ transformed parameters {
 		for (i in 1:SEASONALITY) 
 			sumsu = sumsu+ initSu[i];
 		for (i in 1:SEASONALITY) 
-			s[i] = initSu[i]*SEASONALITY/sumsu;	
+			s[i] = firstRatios[i]*initSu[i]*SEASONALITY/sumsu;	
 		
 		sumsu = 0;
 		for (i in 1:SEASONALITY2) 
 			sumsu = sumsu+ initSu2[i];
 		for (i in 1:SEASONALITY2) 
-			s2[i] = initSu2[i]*SEASONALITY2/sumsu;
+			s2[i] = firstRatios2[i]*initSu2[i]*SEASONALITY2/sumsu;
 			
 		//l[1] = (y[1]-r)/(s[1]*s2[1]);
 	}
@@ -88,18 +112,18 @@ transformed parameters {
 	expVal[1] = y[1];
 	
 	movingSum=y[1]-r[1];
-	for (t in 2:MIN_SEASONALITY) 
+	for (t in 2:SEASONALITY) 
 		movingSum=movingSum+y[t]-r[t];
-	newLevelP=movingSum/MIN_SEASONALITY;
+	newLevelP=movingSum/SEASONALITY;
 	
-	for (t in 1:MIN_SEASONALITY)
+	for (t in 1:SEASONALITY)
 		l[t] = newLevelP;
 	
 	
 	for (t in 2:N) {
-		if (t>MIN_SEASONALITY) {
-			movingSum=movingSum+(y[t]-r[t])-(y[t-MIN_SEASONALITY]-r[t-MIN_SEASONALITY]);
-			newLevelP=movingSum/MIN_SEASONALITY;
+		if (t>SEASONALITY) {
+			movingSum=movingSum+(y[t]-r[t])-(y[t-SEASONALITY]-r[t-SEASONALITY]);
+			newLevelP=movingSum/SEASONALITY;
 			l[t]  = levSm*newLevelP + (1-levSm)*l[t-1] ;
 		}
 		if (USE_GENERALIZED_SEASONALITY==1) {
@@ -133,9 +157,9 @@ model {
 			initSu2[t] ~ cauchy (0, y[t]*0.1);		
 	} else {
 		for (t in 1:SEASONALITY) 
-    		initSu[t] ~ cauchy (1, 0.3) T[0.01,];
+    		initSu[t] ~ cauchy (1, 0.15) T[0.01,];
 		for (t in 1:SEASONALITY2)
-			initSu2[t] ~ cauchy (1, 0.3) T[0.01,];
+			initSu2[t] ~ cauchy (1, 0.15) T[0.01,];
 	}
 	regCoef ~ cauchy(0, REG_CAUCHY_SD);
 	regOffset ~ cauchy(0, reg0CauchySd);
