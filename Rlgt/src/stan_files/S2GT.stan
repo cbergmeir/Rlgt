@@ -1,4 +1,4 @@
-// Dual Seasonal Global Trend (S2GT) algorithm
+// Dual Seasonal Global Trend (S2GT) algorithm. 
 
 data {  
 	int<lower=2> SEASONALITY;
@@ -13,6 +13,7 @@ data {
 	real<lower=0> POW_SEASON_ALPHA; real<lower=0> POW_SEASON_BETA;
 	int<lower=0,upper=1> USE_REGRESSION;
 	int<lower=0,upper=1> USE_GENERALIZED_SEASONALITY;
+	int<lower=0,upper=1> USE_SMOOTHED_ERROR;
 	int<lower=0,upper=2> LEVEL_CALC_METHOD;  //0-classical, 1-avg over SEASONALITY, 2-avg over SEASONALITY2  
 	int<lower=1> J;
 	matrix[N, J] xreg;  
@@ -32,7 +33,7 @@ transformed data {
 		  if (j==1) 
 		  	firstRatios[i] = y[(j-1)*SEASONALITY+i]*SEASONALITY/sumy;		//at this stage we do not have access to the regression
 		  else
-				firstRatios[i] = firstRatios[i]+y[(j-1)*SEASONALITY+i]*SEASONALITY/sumy;	   
+			firstRatios[i] = firstRatios[i]+y[(j-1)*SEASONALITY+i]*SEASONALITY/sumy;	   
 		j=j+1;
 	}
 	j=j-1;
@@ -59,6 +60,8 @@ parameters {
 	real <lower=0,upper=1> powTrendBeta;
 	real coefTrend;
 	real <lower=MIN_SIGMA> offsetSigma;
+	real <lower=0,upper=1>innovSm;
+	real <lower=0> innovSizeInit;
 	vector[SEASONALITY] initSu;
 	real <lower=0,upper=1> powSeason;
 	vector[SEASONALITY2] initSu2;
@@ -71,16 +74,17 @@ transformed parameters {
 	vector[N+SEASONALITY2] s2;
 	vector[N] r; //regression component
 	vector<lower=0>[N] expVal; 
+	vector<lower=0>[N] smoothedInnovSize;
 	real sumsu;
 	real newLevelP;
 	real movingSum=0;
 	
-	if (USE_REGRESSION==1)
+	if (USE_REGRESSION)
 		r = xreg * regCoef + regOffset;
 	else 
 		r=rep_vector(0, N);	
 		
-	if (USE_GENERALIZED_SEASONALITY==1) {
+	if (USE_GENERALIZED_SEASONALITY) {
 		for (i in 1:SEASONALITY) 
     		s[i] = initSu[i];
     	for (i in 1:SEASONALITY2) 
@@ -103,6 +107,11 @@ transformed parameters {
 	}
 	s[SEASONALITY+1] = s[1];
 	s2[SEASONALITY2+1] = s2[1];
+	
+	if (USE_SMOOTHED_ERROR)
+	  smoothedInnovSize[1]=innovSizeInit;
+	else
+	  smoothedInnovSize[1]=1;
 	
 	powTrend= (MAX_POW_TREND-MIN_POW_TREND)*powTrendBeta+MIN_POW_TREND;
 	expVal[1] = y[1];
@@ -134,7 +143,7 @@ transformed parameters {
 			movingSum=movingSum+(y[t]-r[t])-(y[t-SEASONALITY2]-r[t-SEASONALITY2]);
 		} 
 		
-		if (USE_GENERALIZED_SEASONALITY==1) {
+		if (USE_GENERALIZED_SEASONALITY) {
 		  if (LEVEL_CALC_METHOD==0)
 				newLevelP=y[t] - s[t]*l[t-1]^powSeason - s2[t]*l[t-1]^powSeason2 -r[t];
 			else if (LEVEL_CALC_METHOD==1)
@@ -159,6 +168,11 @@ transformed parameters {
 			s2[t+SEASONALITY2] = s2Sm*(y[t]-r[t])/(l[t]*s[t])+(1-s2Sm)*s2[t];
 			expVal[t]=(l[t-1]+ coefTrend*l[t-1]^powTrend)*s[t]*s2[t] + r[t];
 		}
+		if (USE_SMOOTHED_ERROR)
+			smoothedInnovSize[t]=innovSm*fabs(y[t]-expVal[t])+(1-innovSm)*smoothedInnovSize[t-1];
+		else	
+			smoothedInnovSize[t]=1;
+		//print(innovSm, " ",t," ",smoothedInnovSize[t]);
 	}
 }
 model {
@@ -166,10 +180,17 @@ model {
 	offsetSigma ~ cauchy(MIN_SIGMA,CAUCHY_SD) T[MIN_SIGMA,];	
 	coefTrend ~ cauchy(0, CAUCHY_SD);
 	powTrendBeta ~ beta(POW_TREND_ALPHA, POW_TREND_BETA);
-	powSeason ~ beta(POW_SEASON_ALPHA, POW_SEASON_BETA);
-	powSeason2 ~ beta(POW_SEASON_ALPHA, POW_SEASON_BETA);
 	
-	if (USE_GENERALIZED_SEASONALITY==1) {
+	if(USE_SMOOTHED_ERROR)
+		innovSizeInit~ cauchy(y[1]/100,CAUCHY_SD) T[0,];
+		
+	if (USE_REGRESSION) {
+		regCoef ~ cauchy(0, REG_CAUCHY_SD);
+		regOffset ~ cauchy(0, reg0CauchySd);
+	}		
+	if (USE_GENERALIZED_SEASONALITY) {
+		powSeason ~ beta(POW_SEASON_ALPHA, POW_SEASON_BETA); 
+		powSeason2 ~ beta(POW_SEASON_ALPHA, POW_SEASON_BETA);
 		for (t in 1:SEASONALITY)
 			initSu[t] ~ cauchy (0, y[t]*0.1);	
 		for (t in 1:SEASONALITY2)
@@ -180,10 +201,11 @@ model {
 		for (t in 1:SEASONALITY2)
 			initSu2[t] ~ cauchy (1, 0.15) T[0.01,];
 	}
-	regCoef ~ cauchy(0, REG_CAUCHY_SD);
-	regOffset ~ cauchy(0, reg0CauchySd);
 	
 	for (t in 2:N) {
-	  y[t] ~ student_t(nu, expVal[t], sigma*expVal[t]^powx+ offsetSigma);
+	  if (USE_SMOOTHED_ERROR==0)
+	  	y[t] ~ student_t(nu, expVal[t], sigma*expVal[t]^powx+ offsetSigma);
+	  else
+	  	y[t] ~ student_t(nu, expVal[t], sigma*smoothedInnovSize[t-1] + offsetSigma);
 	}
 }

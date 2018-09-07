@@ -35,8 +35,9 @@ sizeTestSet <- frequency(AirPassengers)
 #--------------------------------
 
 #Fit SGT model
+#y=data.train;  seasonality.type="multiplicative"; error.size.method="std"; level.method="classical"; xreg = NULL; control=rlgt.control(MAX_NUM_OF_REPEATS=2, NUM_OF_ITER=2000);verbose=TRUE; seasonality2=1
 mod[["SGT"]] <- rlgt(data.train, 
-  control=rlgt.control(MAX_NUM_OF_REPEATS=2, NUM_OF_ITER=2000), 
+  control=rlgt.control(MAX_NUM_OF_REPEATS=2, NUM_OF_ITER=3000), 
   verbose=TRUE)
 # print the model details
 print(mod[["SGT"]])
@@ -51,7 +52,7 @@ plot(forecasts[["SGT"]],main=paste(curr_series,'by SGT'))
 #---------------
 #Fit SGT model with generalized seasonality
 mod[["gSGT"]] <- rlgt(data.train, seasonality.type="generalized",
-		control=rlgt.control(MAX_NUM_OF_REPEATS=2, NUM_OF_ITER=2000), 
+		control=rlgt.control(MAX_NUM_OF_REPEATS=2, NUM_OF_ITER=3000), 
 		verbose=TRUE)
 
 forecasts[["SGT"]] <- forecast(mod[["SGT"]], h = sizeTestSet, level=c(80, 95, 98))

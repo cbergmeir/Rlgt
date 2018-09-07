@@ -52,7 +52,8 @@ rlgt <- function(y,
 	} else if (level.method=="seas2Avg") {
 		levelMethodId=2
 	}	
-	useGeneralizedSeasonality=seasonality.type=="generalized"
+	useGeneralizedSeasonality<-seasonality.type=="generalized"
+	useSmoothingMethodForError<-error.size.method=="innov"
 	nChains<-control$NUM_OF_CHAINS
 	nCores<-control$NUM_OF_CORES
 	addJitter<-control$ADD_JITTER
@@ -67,28 +68,21 @@ rlgt <- function(y,
 	
 	if (seasonality>1 || seasonality2>1) {
 		if (seasonality>1 && seasonality2>1) { #dual seasonality
-			if (error.size.method=="innov") {
-				model.type="S2GTe"
-			} else {
-				model.type="S2GT"
+			if (seasonality>seasonality2) { #swap seasonalities
+				temp=seasonality
+				seasonality=seasonality2
+				seasonality2=temp
 			}
+			model.type="S2GT"
 		} else {#single seasonality
 			if (seasonality2>1) { #swap seasonalities
 				seasonality=seasonality2
 				seasonality2=1
 			}
-			if (error.size.method=="innov") {
-				model.type="SGTe"
-			} else {
-				model.type="SGT"
-			}
+			model.type="SGT"
 		} 
 	} else { #non-seasonal
-		if (error.size.method=="innov") {
-			model.type="LGTe"
-		} else {
 			model.type="LGT"
-		}
 	}
 		
 	if (seasonality2<=1 && levelMethodId!=0) {
@@ -96,7 +90,9 @@ rlgt <- function(y,
 	}  
 	
   model <- initModel(model.type = model.type,   #here
-              use.regression = use.regression, useGeneralizedSeasonality=useGeneralizedSeasonality)
+              use.regression = use.regression, 
+							useGeneralizedSeasonality=useGeneralizedSeasonality,
+							useSmoothingMethodForError=useSmoothingMethodForError)
   
   MAX_RHAT_ALLOWED <- control$MAX_RHAT_ALLOWED
   NUM_OF_ITER <- control$NUM_OF_ITER
@@ -130,6 +126,7 @@ rlgt <- function(y,
                POW_TREND_ALPHA=control$POW_TREND_ALPHA, 
                POW_TREND_BETA=control$POW_TREND_BETA,
                y=y, N=n, 
+							 USE_SMOOTHED_ERROR=as.integer(useSmoothingMethodForError),
 					 		 USE_GENERALIZED_SEASONALITY=as.integer(useGeneralizedSeasonality),
 							 USE_REGRESSION=as.integer(use.regression), 
 							 LEVEL_CALC_METHOD=levelMethodId,
@@ -248,6 +245,7 @@ rlgt <- function(y,
 	#correct: y_org. Fitting has already been done. y_org is either numeric, or ts, or msts 
   out <- rlgtfit(y_org, model.type, use.regression = use.regression, 
 			useGeneralizedSeasonality=useGeneralizedSeasonality, levelMethodId=levelMethodId,  
+			useSmoothingMethodForError=useSmoothingMethodForError,
 			seasonality=seasonality, seasonality2=seasonality2,   
       model, params, control, samples)
   out

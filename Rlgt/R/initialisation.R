@@ -6,11 +6,12 @@
 #' @param model.type type of the forecasting model selected, a character object
 #' @param use.regression binary parameter indicating whether additional regressors will be used for forecasting in multivariate settings.
 #' @param useGeneralizedSeasonality If generalized seasonality is to be used. Default FALSE.
+#' @param useSmoothingMethodForError If the non-standard function for error size should be used, one based on smoothed innovations or surprises 
 #' @return an RLGT skeleton model
 #' 
 #' @importFrom rstan stan_model
 #' @export
-initModel <- function(model.type=NULL, use.regression=FALSE, useGeneralizedSeasonality=FALSE) {
+initModel <- function(model.type=NULL, use.regression=FALSE, useGeneralizedSeasonality=FALSE, useSmoothingMethodForError=FALSE) {
   
   if(is.null(model.type)) {
     print("No model type was provided, generating an LGT model.")
@@ -22,60 +23,50 @@ initModel <- function(model.type=NULL, use.regression=FALSE, useGeneralizedSeaso
 	#model[["parameters"]] are those parameters we are interested in extracting. So e.g. if the model does not use regression, although the Stan code lists regression coefs, we are not listing them here
   if(model.type=="LGT")  {
     #Non-Seasonal Local Global Trend model
-    model[["parameters"]] <- c("l", "b",
-			"coefTrend",  "powTrend",  "locTrendFract",
-			"nu",  "levSm",  "bSm",
-      "powx", "sigma", "offsetSigma"
-			)
+		if (useSmoothingMethodForError) {
+			model[["parameters"]] <- c("l", "b", "smoothedInnovSize", "innovSm",
+					"coefTrend",  "powTrend", "locTrendFract", "sigma", "offsetSigma",
+					"levSm", "bSm", "nu")		
+		} else {
+			model[["parameters"]] <- c("l", "b",
+					"coefTrend",  "powTrend", "locTrendFract", "sigma", "offsetSigma",
+					"levSm", "bSm", "nu", "powx")	
+		}	
 		model[["model"]] <- stanmodels$LGT
 		class(model) <- c("RlgtStanModelLGT")
-  }
-	else if (model.type=="LGTe") {
-		#Non-Seasonal Local Global Trend model with smoothed error size
-		model[["parameters"]] <- c("l", "b", "smoothedInnovSize", 
-				"coefTrend",  "powTrend", "locTrendFract",
-				"nu",  "levSm",  "bSm",
-				"innovSm", "sigma", "offsetSigma"
-				)
-		model[["model"]] <- stanmodels$LGTe
-		class(model) <- c("RlgtStanModelLGTe")
-	} 	
+  }	
 	else if(model.type=="SGT") {
 		#Seasonal Global Trend model
-		model[["parameters"]] <- c("l", "s", "sSm","nu", "sigma", "levSm", 
-				"powx", "coefTrend", "powTrend", "offsetSigma")
+		if (useSmoothingMethodForError) {
+			model[["parameters"]] <- c("l", "s", "smoothedInnovSize", "innovSm",
+					"coefTrend", "powTrend", "sigma", "offsetSigma",
+					"levSm", "sSm", "nu")
+		} else {
+			model[["parameters"]] <- c("l", "s", 
+					"coefTrend", "powTrend", "sigma", "offsetSigma",
+					"levSm", "sSm", "nu", "powx")
+		}
 		model[["model"]] <- stanmodels$SGT
 		class(model) <- c("RlgtStanModelSGT")
 	}  
-	else if (model.type=="SGTe") {
-		#Seasonal Global Trend model with smoothed error size 
-		model[["parameters"]] <- c("l", "s", "smoothedInnovSize", 
-				"coefTrend", "powTrend", "sigma", "offsetSigma",
-				"levSm", "sSm", "innovSm", "nu")
-		model[["model"]] <- stanmodels$SGTe
-		class(model) <- c("RlgtStanModelSGTe")
-	}
-	else if(model.type=="S2GT")  {
-		#Non-Seasonal Local Global Trend model
-		model[["parameters"]] <- c("l", "s", "s2", "sSm", "s2Sm", "nu", "sigma", "levSm", 
-				"powx", "coefTrend", "powTrend", "offsetSigma")
+	else if(model.type=="S2GT")  { #dual seasonal
+		if (useSmoothingMethodForError) {
+			model[["parameters"]] <- c("l", "s", "s2", "smoothedInnovSize", "innovSm",
+					"coefTrend", "powTrend", "sigma", "offsetSigma", 
+					"levSm", "sSm", "s2Sm", "nu")			
+		} else {
+			model[["parameters"]] <- c("l", "s", "s2", 
+					"coefTrend", "powTrend", "sigma", "offsetSigma",
+					"levSm", "sSm", "s2Sm", "nu", "powx")
+		}
 		if (useGeneralizedSeasonality) { #powSeason added later
 			model[["parameters"]]<-c(model[["parameters"]],"powSeason2")
 		}
+		
 		model[["model"]] <- stanmodels$S2GT
 		class(model) <- c("RlgtStanModelS2GT")
 	}
-	else if(model.type=="S2GTe")  {
-		#Non-Seasonal Local Global Trend model
-		model[["parameters"]] <- c("l", "s", "s2", "sSm", "s2Sm", "nu", "sigma", "levSm", 
-				"powx", "coefTrend", "powTrend", "offsetSigma")
-		if (useGeneralizedSeasonality) { #powSeason added later
-			model[["parameters"]]<-c(model[["parameters"]],"powSeason2")
-		}
-		model[["model"]] <- stanmodels$S2GTe
-		class(model) <- c("RlgtStanModelS2GTe")
-	}
-	
+
   if (use.regression) {
 		model[["parameters"]]=c(model[["parameters"]],"regCoef","regOffset","r")     
   }
@@ -107,7 +98,7 @@ initModel <- function(model.type=NULL, use.regression=FALSE, useGeneralizedSeaso
 #' @return an rlgtfit instance
 
 rlgtfit <- function(y, model.type, use.regression,
-		useGeneralizedSeasonality,  levelMethodId=levelMethodId, 
+		useGeneralizedSeasonality,  levelMethodId=0, useSmoothingMethodForError=FALSE,
 		seasonality, seasonality2,
     rlgtmodel, params, control, samples) {
 	# we can add our own integrity checks
@@ -115,6 +106,7 @@ rlgtfit <- function(y, model.type, use.regression,
 	              use.regression = use.regression,
 								useGeneralizedSeasonality=useGeneralizedSeasonality,
 								levelMethodId=levelMethodId,  
+								useSmoothingMethodForError=useSmoothingMethodForError,
 								seasonality=seasonality, seasonality2=seasonality2,
 	              model = rlgtmodel, params = params, 
 	              control = control, samples = samples)

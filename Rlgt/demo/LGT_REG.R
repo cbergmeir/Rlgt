@@ -33,7 +33,7 @@ forecasts <- list()
 #--------------------------------
 #Fit LGT model without Regression 
 mod[["LGT"]] <- rlgt(y.train, 
-                     control=rlgt.control(MAX_NUM_OF_REPEATS=2, NUM_OF_ITER=2000), 
+                     control=rlgt.control(MAX_NUM_OF_REPEATS=2, NUM_OF_ITER=3000), 
                      verbose=TRUE)
 # print the model details
 print(mod[["LGT"]])
@@ -50,7 +50,7 @@ lines(y, col = 'red')
 #Fit LGT model with Regression 
 mod[["LGT_REG"]] <- rlgt(y.train, 
                          xreg = x.mat.train,
-                         control=rlgt.control(MAX_NUM_OF_REPEATS=2, NUM_OF_ITER=2000), 
+                         control=rlgt.control(MAX_NUM_OF_REPEATS=2, NUM_OF_ITER=3000), 
                          verbose=TRUE)
 # print the model details
 print(mod[["LGT_REG"]])

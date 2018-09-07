@@ -46,7 +46,7 @@ for (i in 1:NUM_OF_CASES) {
 	print(paste("starting",seriesName))
 	
 	if (i==1) {  #just for demo and testing. In your code stick to one of the alternatives
-		trainData = as.numeric(hourly[[i]]$x) #"naked" vector, so both seasonalities need to be specified in control
+		trainData = as.numeric(hourly[[i]]$x) #"naked" vector, so both seasonalities need to be specified
 		actuals = as.numeric(hourly[[i]]$xx) # actuals have to be matching trainData; both are of numeric class
 		rstanmodel <- rlgt(trainData, level.method="seas2Avg",
 				seasonality=SEASONALITY,seasonality2=SEASONALITY2,

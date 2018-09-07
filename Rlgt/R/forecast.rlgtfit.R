@@ -48,7 +48,7 @@ forecast.rlgtfit <- function(object,
       # override horizon input h here
       h <- nrow(xreg)
     } else {
-      message("Current model do not support regression. Regression variables will be ignored.")
+      message("Current model do not support regression. Regression variables will be ignored.")  #actually, all models currently support regression, but maybe leave for future
     }
   } else {
     if (object$use.regression) {
@@ -163,13 +163,12 @@ forecast.rlgtfit <- function(object,
     }
     
     sigmaS <- object$params[["sigma"]][indx]
+		offsetsigmaS <- object$params[["offsetSigma"]][indx]
     if (!is.null(lastSmoothedInnovSize)) {
       innovSize <- lastSmoothedInnovSize[indx] # we are not updating innovSize in simulation 
       #innovSmS <- object$params[["innovSm"]][indx]
-      offsetsigmaS <- object$params[["offsetSigma"]][indx]
     } else if (!is.null(powx)) {
-      powxS <- powx[indx]
-      offsetsigmaS <- object$params[["offsetSigma"]][indx]
+      powxS <- powx[indx]      
     }
     
     #t=1; irun=1

@@ -9,6 +9,7 @@ data {
 	vector<lower=0>[N] y;
 	real<lower=0> POW_TREND_ALPHA; real<lower=0> POW_TREND_BETA;
 	int<lower=0,upper=1> USE_REGRESSION;
+	int<lower=0,upper=1> USE_SMOOTHED_ERROR;
 	int<lower=1> J;
 	matrix[N, J] xreg;  
 	vector<lower=0>[J] REG_CAUCHY_SD;
@@ -28,6 +29,8 @@ parameters {
 	real coefTrend;
 	real <lower=MIN_SIGMA> offsetSigma;
 	real <lower=0,upper=1> locTrendFract;
+	real <lower=0,upper=1>innovSm;
+	real <lower=0> innovSizeInit;
 } 
 transformed parameters {
 	real <lower=MIN_POW_TREND,upper=MAX_POW_TREND>powTrend;
@@ -35,12 +38,18 @@ transformed parameters {
 	vector[N] b;
 	vector[N] r; //regression component
 	vector<lower=0>[N] expVal; 
+	vector<lower=0>[N] smoothedInnovSize;
 	
-	if (USE_REGRESSION==1)
+	if (USE_REGRESSION)
 		r = xreg * regCoef + regOffset;
 	else 
 		r=rep_vector(0, N);	
 	
+	if (USE_SMOOTHED_ERROR)
+	  smoothedInnovSize[1]=innovSizeInit;
+	else
+	  smoothedInnovSize[1]=1;
+	  
 	l[1] = y[1] - r[1]; 
 	b[1] = bInit;
 	powTrend= (MAX_POW_TREND-MIN_POW_TREND)*powTrendBeta+MIN_POW_TREND;
@@ -51,6 +60,10 @@ transformed parameters {
 		expVal[t]=l[t-1]+coefTrend*l[t-1]^powTrend+locTrendFract*b[t-1]+r[t];
 		l[t] = levSm*(y[t]-r[t]) + (1-levSm)*l[t-1] ;  
 		b[t] = bSm*(l[t]-l[t-1]) + (1-bSm)*b[t-1] ;
+		if (USE_SMOOTHED_ERROR)
+			smoothedInnovSize[t]=innovSm*fabs(y[t]-expVal[t])+(1-innovSm)*smoothedInnovSize[t-1];
+		else	
+			smoothedInnovSize[t]=1;
 	}
 }
 model {
@@ -58,11 +71,20 @@ model {
 	offsetSigma ~ cauchy(MIN_SIGMA,CAUCHY_SD) T[MIN_SIGMA,];
 	coefTrend ~ cauchy(0,CAUCHY_SD);
 	powTrendBeta ~ beta(POW_TREND_ALPHA, POW_TREND_BETA);
-	bInit ~ cauchy(0,CAUCHY_SD);
-	regCoef ~ cauchy(0, REG_CAUCHY_SD);
-	regOffset ~ cauchy(0, reg0CauchySd);
+	
+	if(USE_SMOOTHED_ERROR)
+		innovSizeInit~ cauchy(y[1]/100,CAUCHY_SD) T[0,];
+		
+	if (USE_REGRESSION) {
+		regCoef ~ cauchy(0, REG_CAUCHY_SD);
+		regOffset ~ cauchy(0, reg0CauchySd);
+	}	
+  	bInit ~ cauchy(0,CAUCHY_SD);
 	
 	for (t in 2:N) {
-		y[t] ~ student_t(nu, expVal[t], sigma * l[t-1] ^ powx + offsetSigma) ;
+	  if (USE_SMOOTHED_ERROR==0)
+	  	y[t] ~ student_t(nu, expVal[t], sigma*expVal[t]^powx+ offsetSigma);
+	  else
+	  	y[t] ~ student_t(nu, expVal[t], sigma*smoothedInnovSize[t-1] + offsetSigma);
 	}
 }

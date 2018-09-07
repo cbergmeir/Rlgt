@@ -12,6 +12,7 @@ data {
 	real<lower=0> POW_SEASON_ALPHA; real<lower=0> POW_SEASON_BETA;
 	int<lower=0,upper=1> USE_REGRESSION;
 	int<lower=0,upper=1> USE_GENERALIZED_SEASONALITY;
+	int<lower=0,upper=1> USE_SMOOTHED_ERROR;
 	int<lower=1> J;
 	matrix[N, J] xreg;  
 	vector<lower=0>[J] REG_CAUCHY_SD;
@@ -36,6 +37,8 @@ parameters {
 	real <lower=0,upper=1> powTrendBeta;
 	real coefTrend;
 	real <lower=MIN_SIGMA> offsetSigma;
+	real <lower=0,upper=1>innovSm;
+	real <lower=0> innovSizeInit;
 	vector[SEASONALITY] initSu;
 	real <lower=0,upper=1> powSeason;
 } 
@@ -45,14 +48,15 @@ transformed parameters {
 	vector[N+SEASONALITY] s;
 	vector[N] r; //regression component
 	vector<lower=0>[N] expVal; 
+	vector<lower=0>[N] smoothedInnovSize;
 	real sumsu;
 	
-	if (USE_REGRESSION==1)
+	if (USE_REGRESSION)
 		r = xreg * regCoef + regOffset;
 	else 
-		r=rep_vector(0, N);	 	
+		r=rep_vector(0, N);	
 		
-	if (USE_GENERALIZED_SEASONALITY==1) {
+	if (USE_GENERALIZED_SEASONALITY) {
 		for (i in 1:SEASONALITY) 
     		s[i] = initSu[i];
     	l[1] = y[1] - r[1];
@@ -65,12 +69,17 @@ transformed parameters {
 		l[1] = (y[1]-r[1])/s[1];
 	}
 	s[SEASONALITY+1] = s[1];
-		
+	
+	if (USE_SMOOTHED_ERROR)
+	  smoothedInnovSize[1]=innovSizeInit;
+	else
+	  smoothedInnovSize[1]=1;
+	
 	powTrend= (MAX_POW_TREND-MIN_POW_TREND)*powTrendBeta+MIN_POW_TREND;
 	expVal[1] = y[1];
 
 	for (t in 2:N) {
-		if (USE_GENERALIZED_SEASONALITY==1) {
+		if (USE_GENERALIZED_SEASONALITY) {
 		    l[t]  = levSm*(y[t] - s[t]*l[t-1]^powSeason -r[t]) + (1-levSm)*l[t-1] ;  //As usually, we skip global trend in the level update formula. Why? Becasue it works better :-)
     		s[t+SEASONALITY]= sSm*(y[t] - l[t-1]- coefTrend*l[t-1]^powTrend -r[t])/l[t-1]^powSeason + (1-sSm)*s[t]; 
     		expVal[t]=l[t-1]+ coefTrend*l[t-1]^powTrend + s[t]*l[t-1]^powSeason + r[t];
@@ -79,6 +88,10 @@ transformed parameters {
 			s[t+SEASONALITY] = sSm*(y[t]-r[t])/l[t]+(1-sSm)*s[t];
 			expVal[t]=(l[t-1]+ coefTrend*l[t-1]^powTrend)*s[t] + r[t];
 		}
+		if (USE_SMOOTHED_ERROR)
+			smoothedInnovSize[t]=innovSm*fabs(y[t]-expVal[t])+(1-innovSm)*smoothedInnovSize[t-1];
+		else	
+			smoothedInnovSize[t]=1;
 	}
 }
 model {
@@ -86,19 +99,26 @@ model {
 	offsetSigma ~ cauchy(MIN_SIGMA,CAUCHY_SD) T[MIN_SIGMA,];	
 	coefTrend ~ cauchy(0, CAUCHY_SD);
 	powTrendBeta ~ beta(POW_TREND_ALPHA, POW_TREND_BETA);
-	powSeason ~ beta(POW_SEASON_ALPHA, POW_SEASON_BETA);
 	
-	if (USE_GENERALIZED_SEASONALITY==1) 
+	if(USE_SMOOTHED_ERROR)
+		innovSizeInit~ cauchy(y[1]/100,CAUCHY_SD) T[0,];
+		
+	if (USE_REGRESSION) {
+		regCoef ~ cauchy(0, REG_CAUCHY_SD);
+		regOffset ~ cauchy(0, reg0CauchySd);
+	}		
+	if (USE_GENERALIZED_SEASONALITY)  {
+		powSeason ~ beta(POW_SEASON_ALPHA, POW_SEASON_BETA);
 		for (t in 1:SEASONALITY)
 			initSu[t] ~ cauchy (0, y[t]*0.1);	
-	else
+	} else
 		for (t in 1:SEASONALITY) 
     		initSu[t] ~ cauchy (1, 0.15) T[0.01,];
-    		
-	regCoef ~ cauchy(0, REG_CAUCHY_SD);
-	regOffset ~ cauchy(0, reg0CauchySd);
 	
 	for (t in 2:N) {
-	  y[t] ~ student_t(nu, expVal[t], sigma*expVal[t]^powx+ offsetSigma);
+	  if (USE_SMOOTHED_ERROR==0)
+	  	y[t] ~ student_t(nu, expVal[t], sigma*expVal[t]^powx+ offsetSigma);
+	  else
+	  	y[t] ~ student_t(nu, expVal[t], sigma*smoothedInnovSize[t-1] + offsetSigma);
 	}
 }
