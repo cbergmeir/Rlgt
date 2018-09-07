@@ -272,7 +272,7 @@ forecast.rlgtfit <- function(object,
       for (t in 1:h) {
         expVal <- prevLevel + coefTrendS*(abs(prevLevel)) ^ powTrendS + locTrendFractS * bS + r[t]
         if (!is.null(powx)) {
-          omega <- sigmaS * (abs(prevLevel)) ^ powxS + offsetsigmaS
+					omega <- sigmaS*(abs(expVal))^powxS+offsetsigmaS
         } else if (!is.null(lastSmoothedInnovSize)) {
           omega <- sigmaS * innovSize + offsetsigmaS
         } else {

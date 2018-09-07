@@ -4,7 +4,7 @@
 #each step may take from a few minutes to over 1 hour.
 
 options(width=180)
-if (.Platform$OS.type=="windows")  memory.limit(10000)
+if (.Platform$OS.type=="windows")  memory.limit(5000)
 
 library(Rlgt)
 # install.packages("devtools")
@@ -41,36 +41,35 @@ legend_char_vect=c(legend_char_vect,'-')
 i<-1; forecasts=list()
 sumSMAPE=0; sumQ99Loss=0; sumQ95Loss=0; sumQ5Loss=0;
 numOfCases95pExceeded=0; numOfCases5pExceeded=0;
-for (i in 1:NUM_OF_CASES) {
+
+#
+for (i in 1:3) {
 	seriesName=hourly[[i]]$st
 	print(paste("starting",seriesName))
 	
 	if (i==1) {  #just for demo and testing. In your code stick to one of the alternatives
-		trainData = as.numeric(hourly[[i]]$x) #"naked" vector, so both seasonalities need to be specified
+		trainData = as.numeric(hourly[[i]]$x) #"naked" vector, so both seasonalities need to be specified in control
 		actuals = as.numeric(hourly[[i]]$xx) # actuals have to be matching trainData; both are of numeric class
-		rstanmodel <- rlgt(trainData, level.method="seas2Avg",
-				seasonality=SEASONALITY,seasonality2=SEASONALITY2,
-			control=rlgt.control(MAX_NUM_OF_REPEATS=2, NUM_OF_ITER=1500, #longer time series, say several hundred points-long, require smaller number of iterations
+		rstanmodel <- rlgt(trainData, seasonality=SEASONALITY, seasonality2=SEASONALITY2,
+			control=rlgt.control(MAX_NUM_OF_REPEATS=3, NUM_OF_ITER=2000, #longer time series, say several hundred points-long, require smaller number of iterations
 			MAX_TREE_DEPTH = 12), 
 			verbose=TRUE)	
 	}	else if (i==2) {
 		trainData = hourly[[i]]$x # trainData is of ts class, so the SEASONALITY will be extracted from it. SEASONALITY2 has to be specified,  
 		actuals = hourly[[i]]$xx  # class of actuals has to be the same as one of trainData; both are of ts class
-		rstanmodel <- rlgt(trainData, level.method="seasAvg", 
-			seasonality2=SEASONALITY2,
-			control=rlgt.control(MAX_NUM_OF_REPEATS=2, NUM_OF_ITER=1500), 
+		rstanmodel <- rlgt(trainData, seasonality2=SEASONALITY2,
+			control=rlgt.control(MAX_NUM_OF_REPEATS=3, NUM_OF_ITER=2000), 
 			verbose=TRUE)			
-	}  else {
-		trainData = hourly[[i]]$x 
-		actuals = hourly[[i]]$xx  
+	}	else if (i==3){
+		#we convert input and actuals from ts to msts class
+		trainData=msts(hourly[[i]]$x, seasonal.periods=c(SEASONALITY,SEASONALITY2), ts.frequency =SEASONALITY, start=start(hourly[[i]]$x))
+		actuals=msts(hourly[[i]]$xx, seasonal.periods=c(SEASONALITY,SEASONALITY2), ts.frequency =SEASONALITY, start=start(hourly[[i]]$xx))
 		rstanmodel <- rlgt(trainData,  
-				seasonality2=SEASONALITY2,
-				control=rlgt.control(NUM_OF_ITER=1500), 
-				verbose=TRUE)				
+			control=rlgt.control(MAX_NUM_OF_REPEATS=3, NUM_OF_ITER=2000),
+			verbose=TRUE)
 	}
-	
 	forec= forecast(rstanmodel, h = H, level=c(90,98))
-	forecasts[[seriesName]]<-forec
+	forecasts[[seriesName]]<-list(mean=forec$mean, lower=forec$lower, upper=forec$upper)
 	# str(forec, max.level=1)
 	plot(forec, main=seriesName)
 	
@@ -97,7 +96,55 @@ for (i in 1:NUM_OF_CASES) {
 	q5Loss=quantileLoss(forec$lower[,1], actuals, 0.05)
 	sumQ5Loss=sumQ5Loss+q5Loss
 	print(paste0(seriesName," sMAPE:",signif(sMAPE,3) ,' q5Loss:',signif(q5Loss,3),' q95Loss:',signif(q95Loss,3),' q99Loss:',signif(q99Loss,3) ))
+}	
+	
+
+i=4
+for (seasonality.type in c("multiplicative","generalized")){
+	for (level.method in c("classical","seasAvg","seas2Avg")) {
+		for (error.size.method in c("std","innov")) {
+			seriesName=hourly[[i]]$st
+			print(paste("starting",seriesName))
+			
+			trainData = hourly[[i]]$x # trainData is of ts class, so the SEASONALITY will be extracted from it. SEASONALITY2 has to be specified,  
+			actuals = hourly[[i]]$xx  # class of actuals has to be the same as one of trainData; both are of ts class
+			rstanmodel <- rlgt(trainData,seasonality2=SEASONALITY2, 
+					seasonality.type=seasonality.type, level.method=level.method, error.size.method=error.size.method, 
+					verbose=TRUE)					
+			forec= forecast(rstanmodel, h = H, level=c(90,98))
+			# str(forec, max.level=1)
+			
+			forecasts[[seriesName]]<-list(mean=forec$mean, lower=forec$lower, upper=forec$upper)
+			plot(forec, main=seriesName)
+			
+			if (inherits(trainData,"ts")) {
+				lines(actuals, col=1, lwd=2)	
+			} else {
+				xs=seq(from=length(trainData)+1,to=length(trainData)+ length(actuals))
+				lines(xs,actuals, col=1, type='b',lwd=2)	
+			}
+			legend("topleft", legend_str_vect,
+					pch=legend_char_vect, 
+					col=legend_cols_vect, cex=1)
+			
+			sMAPE=mean(abs(forec$mean-actuals)/(forec$mean+actuals))*200
+			sumSMAPE=sumSMAPE+sMAPE
+			
+			numOfCases95pExceeded=numOfCases95pExceeded+sum(actuals>forec$upper[,1])
+			numOfCases5pExceeded=numOfCases5pExceeded+sum(actuals<forec$lower[,1])
+			
+			q95Loss=quantileLoss(forec$upper[,1], actuals, 0.95)
+			sumQ95Loss=sumQ95Loss+q95Loss
+			q99Loss=quantileLoss(forec$upper[,2], actuals, 0.99)
+			sumQ99Loss=sumQ99Loss+q99Loss
+			q5Loss=quantileLoss(forec$lower[,1], actuals, 0.05)
+			sumQ5Loss=sumQ5Loss+q5Loss
+			print(paste0(seriesName," sMAPE:",signif(sMAPE,3) ,' q5Loss:',signif(q5Loss,3),' q95Loss:',signif(q95Loss,3),' q99Loss:',signif(q99Loss,3) ))
+			i=i+1
+		}
+	}
 }
+
 sMAPE=sumSMAPE/i
 q95Loss=sumQ95Loss/i
 q99Loss=sumQ99Loss/i
