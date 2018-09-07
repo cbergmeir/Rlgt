@@ -77,7 +77,7 @@ initModel <- function(model.type=NULL, use.regression=FALSE, useGeneralizedSeaso
 	}
 	
   if (use.regression) {
-		model[["parameters"]]=c(model[["parameters"]],"regCoef","regOffset")     
+		model[["parameters"]]=c(model[["parameters"]],"regCoef","regOffset","r")     
   }
 	if (useGeneralizedSeasonality) {
 		model[["parameters"]]<-c(model[["parameters"]],"powSeason")
@@ -96,6 +96,7 @@ initModel <- function(model.type=NULL, use.regression=FALSE, useGeneralizedSeaso
 #' @param model.type the type of rlgt model
 #' @param use.regression whether the data has any additional variables to be used with forecasting, i.e. multivariate time-series.
 #' @param useGeneralizedSeasonality If generalized seasonality is to be used.
+#' @param levelMethodId Used with dual seasonality models
 #' @param seasonality 
 #' @param seasonality2 
 #' @param rlgtmodel an rlgt model.
@@ -106,13 +107,14 @@ initModel <- function(model.type=NULL, use.regression=FALSE, useGeneralizedSeaso
 #' @return an rlgtfit instance
 
 rlgtfit <- function(y, model.type, use.regression,
-		useGeneralizedSeasonality,  
+		useGeneralizedSeasonality,  levelMethodId=levelMethodId, 
 		seasonality, seasonality2,
     rlgtmodel, params, control, samples) {
 	# we can add our own integrity checks
 	value <- list(x = y, model.type = model.type,
 	              use.regression = use.regression,
 								useGeneralizedSeasonality=useGeneralizedSeasonality,
+								levelMethodId=levelMethodId,  
 								seasonality=seasonality, seasonality2=seasonality2,
 	              model = rlgtmodel, params = params, 
 	              control = control, samples = samples)

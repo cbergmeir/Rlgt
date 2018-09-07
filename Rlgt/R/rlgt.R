@@ -37,6 +37,7 @@ rlgt <- function(y,
 						seasonality=1, seasonality2=1, 
 						seasonality.type=c("multiplicative","generalized"),
 						error.size.method=c("std","innov"),
+						level.method=c("classical","seasAvg","seas2Avg"),
             xreg = NULL,
             control=rlgt.control(), 
 						verbose=FALSE) {
@@ -44,6 +45,13 @@ rlgt <- function(y,
   #model.type <- model.type[1]
 	error.size.method <- error.size.method[1]
 	seasonality.type <- seasonality.type[1]
+	level.method<-level.method[1]
+	levelMethodId=0
+	if (level.method=="seasAvg") {
+		levelMethodId=1
+	} else if (level.method=="seas2Avg") {
+		levelMethodId=2
+	}	
 	useGeneralizedSeasonality=seasonality.type=="generalized"
 	nChains<-control$NUM_OF_CHAINS
 	nCores<-control$NUM_OF_CORES
@@ -83,7 +91,10 @@ rlgt <- function(y,
 		}
 	}
 		
-	  
+	if (seasonality2<=1 && levelMethodId!=0) {
+		print("Warning: nonstandard level methods implemented only for dual seasonality models. level.method will be ignored")
+	}  
+	
   model <- initModel(model.type = model.type,   #here
               use.regression = use.regression, useGeneralizedSeasonality=useGeneralizedSeasonality)
   
@@ -121,6 +132,7 @@ rlgt <- function(y,
                y=y, N=n, 
 					 		 USE_GENERALIZED_SEASONALITY=as.integer(useGeneralizedSeasonality),
 							 USE_REGRESSION=as.integer(use.regression), 
+							 LEVEL_CALC_METHOD=levelMethodId,
 							 J=2, xreg=matrix(0,nrow=n, ncol=2), REG_CAUCHY_SD=rep(1,2)) #if this is a regression call, these three values will be overwritten in a moment below, I can't make it J==1, becasue then REG_CAUCHY_SD becomes number, not vector
   
   if(use.regression){
@@ -234,7 +246,8 @@ rlgt <- function(y,
   }
   
 	#correct: y_org. Fitting has already been done. y_org is either numeric, or ts, or msts 
-  out <- rlgtfit(y_org, model.type, use.regression = use.regression, useGeneralizedSeasonality=useGeneralizedSeasonality,  
+  out <- rlgtfit(y_org, model.type, use.regression = use.regression, 
+			useGeneralizedSeasonality=useGeneralizedSeasonality, levelMethodId=levelMethodId,  
 			seasonality=seasonality, seasonality2=seasonality2,   
       model, params, control, samples)
   out

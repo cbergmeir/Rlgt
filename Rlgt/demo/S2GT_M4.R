@@ -4,7 +4,7 @@
 #each step may take from a few minutes to over 1 hour.
 
 options(width=180)
-if (.Platform$OS.type=="windows")  memory.limit(5000)
+if (.Platform$OS.type=="windows")  memory.limit(10000)
 
 library(Rlgt)
 # install.packages("devtools")
@@ -48,20 +48,23 @@ for (i in 1:NUM_OF_CASES) {
 	if (i==1) {  #just for demo and testing. In your code stick to one of the alternatives
 		trainData = as.numeric(hourly[[i]]$x) #"naked" vector, so both seasonalities need to be specified in control
 		actuals = as.numeric(hourly[[i]]$xx) # actuals have to be matching trainData; both are of numeric class
-		rstanmodel <- rlgt(trainData, seasonality=SEASONALITY, seasonality2=SEASONALITY2,
+		rstanmodel <- rlgt(trainData, level.method="seas2Avg",
+				seasonality=SEASONALITY,seasonality2=SEASONALITY2,
 			control=rlgt.control(MAX_NUM_OF_REPEATS=2, NUM_OF_ITER=1500, #longer time series, say several hundred points-long, require smaller number of iterations
 			MAX_TREE_DEPTH = 12), 
 			verbose=TRUE)	
 	}	else if (i==2) {
 		trainData = hourly[[i]]$x # trainData is of ts class, so the SEASONALITY will be extracted from it. SEASONALITY2 has to be specified,  
 		actuals = hourly[[i]]$xx  # class of actuals has to be the same as one of trainData; both are of ts class
-		rstanmodel <- rlgt(trainData, seasonality2=SEASONALITY2,
+		rstanmodel <- rlgt(trainData, level.method="seasAvg", 
+			seasonality2=SEASONALITY2,
 			control=rlgt.control(MAX_NUM_OF_REPEATS=2, NUM_OF_ITER=1500), 
 			verbose=TRUE)			
 	}  else {
 		trainData = hourly[[i]]$x 
 		actuals = hourly[[i]]$xx  
-		rstanmodel <- rlgt(trainData, seasonality2=SEASONALITY2,
+		rstanmodel <- rlgt(trainData,  
+				seasonality2=SEASONALITY2,
 				control=rlgt.control(NUM_OF_ITER=1500), 
 				verbose=TRUE)				
 	}

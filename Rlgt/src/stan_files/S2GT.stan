@@ -13,6 +13,7 @@ data {
 	real<lower=0> POW_SEASON_ALPHA; real<lower=0> POW_SEASON_BETA;
 	int<lower=0,upper=1> USE_REGRESSION;
 	int<lower=0,upper=1> USE_GENERALIZED_SEASONALITY;
+	int<lower=0,upper=2> LEVEL_CALC_METHOD;  //0-classical, 1-avg over SEASONALITY, 2-avg over SEASONALITY2  
 	int<lower=1> J;
 	matrix[N, J] xreg;  
 	vector<lower=0>[J] REG_CAUCHY_SD;
@@ -29,7 +30,7 @@ transformed data {
 			sumy = sumy+ y[(j-1)*SEASONALITY+i];
 		for (i in 1:SEASONALITY) 
 		  if (j==1) 
-		  	firstRatios[i] = y[(j-1)*SEASONALITY+i]*SEASONALITY/sumy;
+		  	firstRatios[i] = y[(j-1)*SEASONALITY+i]*SEASONALITY/sumy;		//at this stage we do not have access to the regression
 		  else
 				firstRatios[i] = firstRatios[i]+y[(j-1)*SEASONALITY+i]*SEASONALITY/sumy;	   
 		j=j+1;
@@ -72,7 +73,7 @@ transformed parameters {
 	vector<lower=0>[N] expVal; 
 	real sumsu;
 	real newLevelP;
-	real movingSum;
+	real movingSum=0;
 	
 	if (USE_REGRESSION==1)
 		r = xreg * regCoef + regOffset;
@@ -84,7 +85,7 @@ transformed parameters {
     		s[i] = initSu[i];
     	for (i in 1:SEASONALITY2) 
     		s2[i] = initSu2[i];	
-    	//l[1] = y[1] - r;
+    	l[1] = y[1] - r[1];
 	} else {
 		sumsu = 0;
 		for (i in 1:SEASONALITY) 
@@ -98,7 +99,7 @@ transformed parameters {
 		for (i in 1:SEASONALITY2) 
 			s2[i] = firstRatios2[i]*initSu2[i]*SEASONALITY2/sumsu;
 			
-		//l[1] = (y[1]-r)/(s[1]*s2[1]);
+		l[1] = (y[1]-r[1])/(s[1]*s2[1]);  //initialization for LEVEL_CALC_METHOD==0, it will get overwritten in other cases
 	}
 	s[SEASONALITY+1] = s[1];
 	s2[SEASONALITY2+1] = s2[1];
@@ -106,28 +107,54 @@ transformed parameters {
 	powTrend= (MAX_POW_TREND-MIN_POW_TREND)*powTrendBeta+MIN_POW_TREND;
 	expVal[1] = y[1];
 	
-	movingSum=y[1]-r[1];
-	for (t in 2:SEASONALITY) 
-		movingSum=movingSum+y[t]-r[t];
-	newLevelP=movingSum/SEASONALITY;
+	if (LEVEL_CALC_METHOD==1) {
+		movingSum=y[1]-r[1];
+		for (t in 2:SEASONALITY) 
+			movingSum=movingSum+y[t]-r[t];
+		newLevelP=movingSum/SEASONALITY;
 	
-	for (t in 1:SEASONALITY)
-		l[t] = newLevelP;
+		for (t in 1:SEASONALITY)
+			l[t] = newLevelP;	
+			
+	} else if (LEVEL_CALC_METHOD==2) {
+		movingSum=y[1]-r[1];
+		for (t in 2:SEASONALITY2) 
+			movingSum=movingSum+y[t]-r[t];
+		newLevelP=movingSum/SEASONALITY2;
 	
+		for (t in 1:SEASONALITY2)
+			l[t] = newLevelP;
+	}
+
 	
 	for (t in 2:N) {
-		if (t>SEASONALITY) {
+		if (LEVEL_CALC_METHOD==1 && t>SEASONALITY) {
 			movingSum=movingSum+(y[t]-r[t])-(y[t-SEASONALITY]-r[t-SEASONALITY]);
-			newLevelP=movingSum/SEASONALITY;
-			l[t]  = levSm*newLevelP + (1-levSm)*l[t-1] ;
-		}
+		} else if (LEVEL_CALC_METHOD==2 && t>SEASONALITY2) {
+			movingSum=movingSum+(y[t]-r[t])-(y[t-SEASONALITY2]-r[t-SEASONALITY2]);
+		} 
+		
 		if (USE_GENERALIZED_SEASONALITY==1) {
-		    //l[t]  = levSm*(y[t] - s[t]*l[t-1]^powSeason - s2[t]*l[t-1]^powSeason2 -r[t]) + (1-levSm)*l[t-1] ;  //As usually, we skip global trend in the level update formula. Why? Becasue it works better :-)
+		  if (LEVEL_CALC_METHOD==0)
+				newLevelP=y[t] - s[t]*l[t-1]^powSeason - s2[t]*l[t-1]^powSeason2 -r[t];
+			else if (LEVEL_CALC_METHOD==1)
+				newLevelP=movingSum/SEASONALITY - s2[t]*l[t-1]^powSeason2;
+			else
+				newLevelP=movingSum/SEASONALITY2;
+				
+			l[t]  = levSm*newLevelP + (1-levSm)*l[t-1];	
     		s[t+SEASONALITY]= sSm*(y[t] - l[t-1] - coefTrend*l[t-1]^powTrend - s2[t]*l[t-1]^powSeason2 - r[t])/l[t-1]^powSeason + (1-sSm)*s[t]; 
     		s2[t+SEASONALITY2]= s2Sm*(y[t] - l[t-1] - coefTrend*l[t-1]^powTrend - s[t]*l[t-1]^powSeason - r[t])/l[t-1]^powSeason2 + (1-s2Sm)*s2[t]; 
     		expVal[t]=l[t-1]+ coefTrend*l[t-1]^powTrend + s[t]*l[t-1]^powSeason + s2[t]*l[t-1]^powSeason2 + r[t];
 		} else {	
-			//l[t]  = levSm*(y[t]-r[t])/(s[t]*s2[t]) + (1-levSm)*l[t-1];
+			if (LEVEL_CALC_METHOD==0)
+				newLevelP=y[t]/(s[t]*s2[t]);
+			else if (LEVEL_CALC_METHOD==1)
+				newLevelP=movingSum/SEASONALITY/s2[t];
+			else
+				newLevelP=movingSum/SEASONALITY2;
+				
+			l[t]  = levSm*newLevelP + (1-levSm)*l[t-1];	
 			s[t+SEASONALITY] = sSm*(y[t]-r[t])/(l[t]*s2[t])+(1-sSm)*s[t];
 			s2[t+SEASONALITY2] = s2Sm*(y[t]-r[t])/(l[t]*s[t])+(1-s2Sm)*s2[t];
 			expVal[t]=(l[t-1]+ coefTrend*l[t-1]^powTrend)*s[t]*s2[t] + r[t];

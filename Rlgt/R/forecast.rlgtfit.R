@@ -119,11 +119,20 @@ forecast.rlgtfit <- function(object,
     sS <- rep(1,seasonality+h)
   }
   if (seasonality2>1) {
+		if (seasonality>seasonality2) {
+			stop("seasonality has to be smaller than seasonality2")
+			return (NULL)  #for god measure
+ 		}
     s2  <- object$params[["s2"]]
     sS2 <-rep(1,seasonality2+h)
-    minSeasonality=min(seasonality,seasonality2)
-		recentVals=rep(0,minSeasonality+h)
-		recentVals[1:minSeasonality]=object$x[(length(object$x)-minSeasonality+1):length(object$x)]
+		
+		if (object$levelMethodId==1) {
+			recentVals=rep(0,seasonality+h)
+			recentVals[1:seasonality]=object$x[(length(object$x)-seasonality+1):length(object$x)]	
+		} else if (object$levelMethodId==2) {
+			recentVals=rep(0,seasonality2+h)
+			recentVals[1:seasonality2]=object$x[(length(object$x)-seasonality2+1):length(object$x)]	
+		}
   }
   
   # Initialise a matrix which contains the last level value
@@ -175,6 +184,14 @@ forecast.rlgtfit <- function(object,
       if (seasonality2>1) {
         sS2[1:seasonality2]=s2[indx,(ncol(s2)-seasonality2+1):ncol(s2)]
 				powSeasonS2 <- object$params[["powSeason2"]][indx]
+				if(use.regression && object$levelMethodId>0){
+					regFittedS<-object$params[["r"]][indx]
+					if (object$levelMethodId==1) {
+						recentVals[1:seasonality]=recentVals[1:seasonality]-regFittedS[(length(regFittedS)-seasonality+1):length(regFittedS)]
+					} else {
+						recentVals[1:seasonality2]=recentVals[1:seasonality2]-regFittedS[(length(regFittedS)-seasonality2+1):length(regFittedS)]
+					}
+				}
       }
 			
       for (t in 1:h) {
@@ -215,8 +232,27 @@ forecast.rlgtfit <- function(object,
         
         # find the currLevel
         if (seasonality2>1) {
-					recentVals[minSeasonality+t]=yf[irun,t]
-					newLevelP=mean(recentVals[(t+1):(t+minSeasonality)])
+					if (is.null(powSeasonS)) {
+						if (object$levelMethodId==0) {
+							newLevelP=(yf[irun,t]-r[t])/seasonA
+						} else if (object$levelMethodId==1) {
+							recentVals[seasonality+t]=yf[irun,t]-r[t]
+							newLevelP=mean(recentVals[(t+1):(t+seasonality)])/sS2[t]
+						} else if (object$levelMethodId==2) {
+							recentVals[seasonality2+t]=yf[irun,t]-r[t]
+							newLevelP=mean(recentVals[(t+1):(t+seasonality2)])
+						}	
+					} else { #generalized seasonality
+						if (object$levelMethodId==0) {
+							newLevelP=yf[irun,t]-r[t]-seasonA
+						} else if (object$levelMethodId==1) {
+							recentVals[seasonality+t]=yf[irun,t]-r[t]
+							newLevelP=mean(recentVals[(t+1):(t+seasonality)]) - sS2[t]*abs(prevLevel)^powSeasonS2
+						} else if (object$levelMethodId==2) {
+							recentVals[seasonality2+t]=yf[irun,t]-r[t]
+							newLevelP=mean(recentVals[(t+1):(t+seasonality2)])
+						}							
+					}
 					currLevel=max(MIN_VAL,levSmS*newLevelP + (1-levSmS)*prevLevel) ;
 				} else if (is.null(powSeasonS)){
 					currLevel <- max(MIN_VAL,levSmS*(yf[irun,t]-r[t])/seasonA + (1-levSmS)*prevLevel) ;
