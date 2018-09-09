@@ -1,10 +1,12 @@
 # Testing dual seasonalty method S2GT on hourly subset of the M4 Forecasting Competition set
-# We are showing three ways of passing data: as a vector of numbers, ts, or msts object. 
+# We are showing three ways of passing data: as a vector of numbers, ts, or msts object.
+#Then, we are tryin all possible combinations of seasonality types, error and level methods.
 #These are long series and dual seasonality models are more complicated to fit, 
-#each step may take from a few minutes to over 1 hour.
+#each step may take from a few minutes to over 1 hour (especially slow can be models with the "innov" method for error size)
+
 
 options(width=180)
-if (.Platform$OS.type=="windows")  memory.limit(5000)
+if (.Platform$OS.type=="windows")  memory.limit(10000)
 
 library(Rlgt)
 # install.packages("devtools")
@@ -71,8 +73,8 @@ for (i in 1:3) {
 	forec= forecast(rstanmodel, h = H, level=c(90,98))
 	forecasts[[seriesName]]<-list(mean=forec$mean, lower=forec$lower, upper=forec$upper)
 	# str(forec, max.level=1)
-	plot(forec, main=seriesName)
 	
+	plot(forec, main=seriesName)	
 	if (inherits(trainData,"ts")) {
 		lines(actuals, col=1, lwd=2)	
 	} else {
@@ -106,8 +108,8 @@ for (seasonality.type in c("multiplicative","generalized")){
 			seriesName=hourly[[i]]$st
 			print(paste("starting",seriesName))
 			
-			trainData = hourly[[i]]$x # trainData is of ts class, so the SEASONALITY will be extracted from it. SEASONALITY2 has to be specified,  
-			actuals = hourly[[i]]$xx  # class of actuals has to be the same as one of trainData; both are of ts class
+			trainData = hourly[[i]]$x 
+			actuals = hourly[[i]]$xx  
 			rstanmodel <- rlgt(trainData,seasonality2=SEASONALITY2, 
 					seasonality.type=seasonality.type, level.method=level.method, error.size.method=error.size.method, 
 					verbose=TRUE)					
@@ -115,7 +117,7 @@ for (seasonality.type in c("multiplicative","generalized")){
 			# str(forec, max.level=1)
 			
 			forecasts[[seriesName]]<-list(mean=forec$mean, lower=forec$lower, upper=forec$upper)
-			plot(forec, main=seriesName)
+			plot(forec, main=paste(seriesName,seasonality.type,level.method,error.size.method))
 			
 			if (inherits(trainData,"ts")) {
 				lines(actuals, col=1, lwd=2)	
