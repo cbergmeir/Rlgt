@@ -1,4 +1,3 @@
-#' 
 #' @title Rlgt forecast
 #' @description  produce forecasts from an rlgtfit object
 #' @param object rlgtfit object
