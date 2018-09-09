@@ -6,7 +6,7 @@
 #' This function is used in conjunction of used with the \code{\link{rlgt}} function. 
 #' @param	ADAPT_DELTA Target Metropolis acceptance rate. See Stan manual. Suggested range is between (0.85-0.97).
 #' @param	MAX_TREE_DEPTH NUTS maximum tree depth. See Stan manual for more details. Suggested range is between (10-15), defaut is 12.
-#' @oaram NUM_OF_CHAINS Number of MCMC chains. Suggested range is 3 to 4. Defauls is 4.
+#' @param NUM_OF_CHAINS Number of MCMC chains. Suggested range is 3 to 4. Defauls is 4.
 #' @param NUM_OF_CORES Number of cores used for calculations. It can be smaller than NUM_OF_CHAINS, 
 #' but for best computational speed, it should be equal to NUM_OF_CHAINS. Defauls is 4. 
 #' @param ADD_JITTER Whether to add a very small amount (sd=min(y)*0.0001) of jitter to the input series. 
