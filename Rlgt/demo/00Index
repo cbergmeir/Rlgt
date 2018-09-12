@@ -6,4 +6,5 @@ S2GT_M4 It demos several ways of passing data to dual seasonality models, and se
 S2GT_M4Hourly_parallel Parallel implementation of S2GT (and occasionally SGT) models on hourly time-series of M4-competition dataset
 SGT_M3 It uses quarterly subset of M3 data to demo ways of passing seasonal data
 SGT_M3parallel Parallel implementation of SGT model on monthly time-series data from M3-competition dataset
+SGT_M4Weekly_parallel Parallel implementation of SGT model with non-integer seasonality on weekly time-series data from M4-competition dataset
 SGT_REG Runs SGT forecast with and without a regression component.

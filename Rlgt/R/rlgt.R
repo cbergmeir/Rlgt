@@ -41,6 +41,10 @@ rlgt <- function(y,
             xreg = NULL,
             control=rlgt.control(), 
 						verbose=FALSE) {
+					
+	oldWidth=options("width")
+	options(width=180)
+	
   # for safety
   #model.type <- model.type[1]
 	error.size.method <- error.size.method[1]
@@ -112,10 +116,13 @@ rlgt <- function(y,
   
   CauchySd <- max(y) / control$CAUCHY_SD_DIV
 	
+	
   
   data <- list(CAUCHY_SD=CauchySd, 
-               SEASONALITY=seasonality, 
-               SEASONALITY2=seasonality2,
+               SEASONALITY=as.integer(seasonality),
+							 SEASONALITY_F=seasonality,
+               SEASONALITY2=as.integer(seasonality2),
+							 SEASONALITY2_F=seasonality2,
                MIN_POW_TREND=control$MIN_POW_TREND, 
                MAX_POW_TREND=control$MAX_POW_TREND, 
                MIN_SIGMA=control$MIN_SIGMA,  
@@ -242,6 +249,7 @@ rlgt <- function(y,
     #paramMeans[["lastSmoothedInnovSize"]] <- mean(params[["lastSmoothedInnovSize"]])
   }
   
+	options(width=oldWidth[[1]])
 	#correct: y_org. Fitting has already been done. y_org is either numeric, or ts, or msts 
   out <- rlgtfit(y_org, model.type, use.regression = use.regression, 
 			useGeneralizedSeasonality=useGeneralizedSeasonality, levelMethodId=levelMethodId,  

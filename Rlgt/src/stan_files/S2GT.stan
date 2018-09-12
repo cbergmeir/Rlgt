@@ -2,7 +2,9 @@
 
 data {  
 	int<lower=2> SEASONALITY;
+	real<lower=SEASONALITY,upper=SEASONALITY+1> SEASONALITY_F;  //possibly non-integer seasonality. Normally SEASONALITY_F=SEASONALITY
 	int<lower=SEASONALITY+1> SEASONALITY2;  //here checking that SEASONALITY<SEASONALITY2
+	real<lower=SEASONALITY2,upper=SEASONALITY2+1> SEASONALITY2_F;  //possibly non-integer seasonality. Normally SEASONALITY2_F=SEASONALITY2
 	real<lower=0> CAUCHY_SD;
 	real MIN_POW_TREND;  real MAX_POW_TREND;
 	real<lower=0> MIN_SIGMA;
@@ -20,9 +22,10 @@ data {
 	vector<lower=0>[J] REG_CAUCHY_SD;
 }
 transformed data {
+  real <lower=0,upper=1> fractSeasonality;
+  real <lower=0,upper=1> fractSeasonality2;
   real<lower=0> reg0CauchySd=mean(REG_CAUCHY_SD)*10;
 	vector[SEASONALITY] firstRatios;    
-	vector[SEASONALITY2] firstRatios2;
 	
 	real sumy = 0; int j=1;   
  	while(j*SEASONALITY<=SEASONALITY2)  {
@@ -40,14 +43,21 @@ transformed data {
 	for (i in 1:SEASONALITY) {
 		firstRatios[i]=firstRatios[i]/j;
 		//print(firstRatios[i]) ;	
-	}	
-	sumy = 0;
-	for (i in 1:SEASONALITY2) 
-		sumy = sumy+ y[i];
-	for (i in 1:SEASONALITY2) { 
-		firstRatios2[i] = y[i]*SEASONALITY2/sumy/firstRatios[(i-1)%SEASONALITY+1];
-		//print(i, " ",firstRatios2[i]);
-	}	
+	}		
+	
+	if (SEASONALITY_F>SEASONALITY) {
+		fractSeasonality=SEASONALITY_F-SEASONALITY;
+		print("Non-integer seasonality used.");
+	}
+	else
+		fractSeasonality=0;
+		
+	if (SEASONALITY2_F>SEASONALITY2) {
+		fractSeasonality2=SEASONALITY2_F-SEASONALITY2;
+		print("Non-integer seasonality2 used.");
+	}
+	else
+		fractSeasonality2=0;	
 }
 parameters {
  	vector[J]  regCoef; real regOffset;
@@ -70,11 +80,12 @@ parameters {
 transformed parameters {
 	real <lower=MIN_POW_TREND,upper=MAX_POW_TREND>powTrend;
 	vector<lower=0>[N] l;
-	vector[N+SEASONALITY] s;
-	vector[N+SEASONALITY2] s2;
+	vector[N+SEASONALITY+1] s;  //1 extra in case of non-integer seasonality
+	vector[N+SEASONALITY2+1] s2;
 	vector[N] r; //regression component
 	vector<lower=0>[N] expVal; 
 	vector<lower=0>[N] smoothedInnovSize;
+	real seasonalityP; real seasonalityP2;
 	real sumsu;
 	real newLevelP;
 	real movingSum=0;
@@ -101,12 +112,14 @@ transformed parameters {
 		for (i in 1:SEASONALITY2) 
 			sumsu = sumsu+ initSu2[i];
 		for (i in 1:SEASONALITY2) 
-			s2[i] = firstRatios2[i]*initSu2[i]*SEASONALITY2/sumsu;
+			s2[i] = initSu2[i]*SEASONALITY2/sumsu;
 			
 		l[1] = (y[1]-r[1])/(s[1]*s2[1]);  //initialization for LEVEL_CALC_METHOD==0, it will get overwritten in other cases
 	}
 	s[SEASONALITY+1] = s[1];
+	s[SEASONALITY+2] = s[2]; //needed in case of non-integer seasonality, otherwise s[SEASONALITY+2] will get overwritten
 	s2[SEASONALITY2+1] = s2[1];
+	s2[SEASONALITY2+2] = s2[2];
 	
 	if (USE_SMOOTHED_ERROR)
 	  smoothedInnovSize[1]=innovSizeInit;
@@ -152,8 +165,9 @@ transformed parameters {
 				newLevelP=movingSum/SEASONALITY2;
 				
 			l[t]  = levSm*newLevelP + (1-levSm)*l[t-1];	
-    		s[t+SEASONALITY]= sSm*(y[t] - l[t-1] - coefTrend*l[t-1]^powTrend - s2[t]*l[t-1]^powSeason2 - r[t])/l[t-1]^powSeason + (1-sSm)*s[t]; 
-    		s2[t+SEASONALITY2]= s2Sm*(y[t] - l[t-1] - coefTrend*l[t-1]^powTrend - s[t]*l[t-1]^powSeason - r[t])/l[t-1]^powSeason2 + (1-s2Sm)*s2[t]; 
+			
+			seasonalityP=sSm*(y[t] - l[t-1] - coefTrend*l[t-1]^powTrend - s2[t]*l[t-1]^powSeason2 - r[t])/l[t-1]^powSeason + (1-sSm)*s[t]; 
+    		seasonalityP2= s2Sm*(y[t] - l[t-1] - coefTrend*l[t-1]^powTrend - s[t]*l[t-1]^powSeason - r[t])/l[t-1]^powSeason2 + (1-s2Sm)*s2[t]; 
     		expVal[t]=l[t-1]+ coefTrend*l[t-1]^powTrend + s[t]*l[t-1]^powSeason + s2[t]*l[t-1]^powSeason2 + r[t];
 		} else {	
 			if (LEVEL_CALC_METHOD==0)
@@ -164,10 +178,22 @@ transformed parameters {
 				newLevelP=movingSum/SEASONALITY2;
 				
 			l[t]  = levSm*newLevelP + (1-levSm)*l[t-1];	
-			s[t+SEASONALITY] = sSm*(y[t]-r[t])/(l[t]*s2[t])+(1-sSm)*s[t];
-			s2[t+SEASONALITY2] = s2Sm*(y[t]-r[t])/(l[t]*s[t])+(1-s2Sm)*s2[t];
+			seasonalityP = sSm*(y[t]-r[t])/(l[t]*s2[t])+(1-sSm)*s[t];
+			seasonalityP2 = s2Sm*(y[t]-r[t])/(l[t]*s[t])+(1-s2Sm)*s2[t];
 			expVal[t]=(l[t-1]+ coefTrend*l[t-1]^powTrend)*s[t]*s2[t] + r[t];
 		}
+		if (fractSeasonality>0) {
+    		s[t+SEASONALITY+1]=seasonalityP;  //with fractSeasonality weight
+    		s[t+SEASONALITY]=fractSeasonality*s[t+SEASONALITY]+(1-fractSeasonality)*seasonalityP;
+    	} else
+    		s[t+SEASONALITY]=seasonalityP;
+    		
+		if (fractSeasonality2>0) {
+    		s2[t+SEASONALITY2+1]=seasonalityP2;  //with fractSeasonality weight
+    		s2[t+SEASONALITY2]=fractSeasonality2*s2[t+SEASONALITY2]+(1-fractSeasonality2)*seasonalityP2;
+    	} else
+    		s2[t+SEASONALITY2]=seasonalityP2;
+    	
 		if (USE_SMOOTHED_ERROR)
 			smoothedInnovSize[t]=innovSm*fabs(y[t]-expVal[t])+(1-innovSm)*smoothedInnovSize[t-1];
 		else	
@@ -197,9 +223,9 @@ model {
 			initSu2[t] ~ cauchy (0, y[t]*0.1);		
 	} else {
 		for (t in 1:SEASONALITY) 
-    		initSu[t] ~ cauchy (1, 0.15) T[0.01,];
+    		initSu[t] ~ cauchy (1, 0.3) T[0.01,];
 		for (t in 1:SEASONALITY2)
-			initSu2[t] ~ cauchy (1, 0.15) T[0.01,];
+			initSu2[t] ~ cauchy (1, 0.3) T[0.01,];
 	}
 	
 	for (t in 2:N) {

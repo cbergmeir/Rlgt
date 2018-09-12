@@ -2,11 +2,12 @@
 
 data {  
 	int<lower=2> SEASONALITY;
+	real<lower=SEASONALITY,upper=SEASONALITY+1> SEASONALITY_F;  //possibly non-integer seasonality. Normally SEASONALITY_F=SEASONALITY
 	real<lower=0> CAUCHY_SD;
 	real MIN_POW_TREND;  real MAX_POW_TREND;
 	real<lower=0> MIN_SIGMA;
 	real<lower=1> MIN_NU; real<lower=1> MAX_NU;
-	int<lower=SEASONALITY> N;
+	int<lower=SEASONALITY+1> N;
 	vector<lower=0>[N] y;
 	real<lower=0> POW_TREND_ALPHA; real<lower=0> POW_TREND_BETA;
 	real<lower=0> POW_SEASON_ALPHA; real<lower=0> POW_SEASON_BETA;
@@ -18,14 +19,16 @@ data {
 	vector<lower=0>[J] REG_CAUCHY_SD;
 }
 transformed data {
+  real <lower=0,upper=1> fractSeasonality;
 	real<lower=0> reg0CauchySd=mean(REG_CAUCHY_SD)*10;
-	vector[SEASONALITY] firstRatios;
 	real sumy = 0;
-	
-	for (i in 1:SEASONALITY) 
-		sumy = sumy+ y[i];
-	for (i in 1:SEASONALITY) 
-		firstRatios[i] = y[i]*SEASONALITY/sumy;	
+			
+	if (SEASONALITY_F>SEASONALITY) {
+		fractSeasonality=SEASONALITY_F-SEASONALITY;
+		//print("Non-integer seasonality used.");
+	}
+	else
+		fractSeasonality=0;
 }
 parameters {
  	vector[J]  regCoef; real regOffset;
@@ -45,10 +48,11 @@ parameters {
 transformed parameters {
 	real <lower=MIN_POW_TREND,upper=MAX_POW_TREND>powTrend;
 	vector<lower=0>[N] l;
-	vector[N+SEASONALITY] s;
+	vector[N+SEASONALITY+1] s;  //1 extra in case of non-integer seasonality
 	vector[N] r; //regression component
 	vector<lower=0>[N] expVal; 
 	vector<lower=0>[N] smoothedInnovSize;
+	real seasonalityP;
 	real sumsu;
 	
 	if (USE_REGRESSION)
@@ -65,10 +69,11 @@ transformed parameters {
 		for (i in 1:SEASONALITY) 
 			sumsu = sumsu+ initSu[i];
 		for (i in 1:SEASONALITY) 
-			s[i] = firstRatios[i]*initSu[i]*SEASONALITY/sumsu;	
+			s[i] = initSu[i]*SEASONALITY/sumsu;	
 		l[1] = (y[1]-r[1])/s[1];
 	}
 	s[SEASONALITY+1] = s[1];
+	s[SEASONALITY+2] = s[2]; //needed in case of non-integer seasonality, otherwise s[SEASONALITY+2] will get overwritten
 	
 	if (USE_SMOOTHED_ERROR)
 	  smoothedInnovSize[1]=innovSizeInit;
@@ -81,13 +86,20 @@ transformed parameters {
 	for (t in 2:N) {
 		if (USE_GENERALIZED_SEASONALITY) {
 		    l[t]  = levSm*(y[t] - s[t]*l[t-1]^powSeason -r[t]) + (1-levSm)*l[t-1] ;  //As usually, we skip global trend in the level update formula. Why? Becasue it works better :-)
-    		s[t+SEASONALITY]= sSm*(y[t] - l[t-1]- coefTrend*l[t-1]^powTrend -r[t])/l[t-1]^powSeason + (1-sSm)*s[t]; 
+    		seasonalityP=sSm*(y[t] - l[t-1]- coefTrend*l[t-1]^powTrend -r[t])/l[t-1]^powSeason + (1-sSm)*s[t];
     		expVal[t]=l[t-1]+ coefTrend*l[t-1]^powTrend + s[t]*l[t-1]^powSeason + r[t];
 		} else {	
 			l[t]  = levSm*(y[t]-r[t])/(s[t]) + (1-levSm)*l[t-1];
-			s[t+SEASONALITY] = sSm*(y[t]-r[t])/l[t]+(1-sSm)*s[t];
+			seasonalityP = sSm*(y[t]-r[t])/l[t]+(1-sSm)*s[t];
 			expVal[t]=(l[t-1]+ coefTrend*l[t-1]^powTrend)*s[t] + r[t];
 		}
+		
+		if (fractSeasonality>0) {
+    		s[t+SEASONALITY+1]=seasonalityP;  //with fractSeasonality weight
+    		s[t+SEASONALITY]=fractSeasonality*s[t+SEASONALITY]+(1-fractSeasonality)*seasonalityP;
+    	} else
+    		s[t+SEASONALITY]=seasonalityP;
+    	 
 		if (USE_SMOOTHED_ERROR)
 			smoothedInnovSize[t]=innovSm*fabs(y[t]-expVal[t])+(1-innovSm)*smoothedInnovSize[t-1];
 		else	
@@ -113,7 +125,7 @@ model {
 			initSu[t] ~ cauchy (0, y[t]*0.1);	
 	} else
 		for (t in 1:SEASONALITY) 
-    		initSu[t] ~ cauchy (1, 0.15) T[0.01,];
+    		initSu[t] ~ cauchy (1, 0.3) T[0.01,];
 	
 	for (t in 2:N) {
 	  if (USE_SMOOTHED_ERROR==0)
