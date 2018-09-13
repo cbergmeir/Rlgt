@@ -116,8 +116,11 @@ transformed parameters {
 			
 		l[1] = (y[1]-r[1])/(s[1]*s2[1]);  //initialization for LEVEL_CALC_METHOD==0, it will get overwritten in other cases
 	}
+	s[N+SEASONALITY+1]=1;  //for integer seasonality the last value is not filled and Stan does not like it
 	s[SEASONALITY+1] = s[1];
 	s[SEASONALITY+2] = s[2]; //needed in case of non-integer seasonality, otherwise s[SEASONALITY+2] will get overwritten
+	
+	s2[N+SEASONALITY2+1]=1;  //for integer seasonality the last value is not filled and Stan does not like it
 	s2[SEASONALITY2+1] = s2[1];
 	s2[SEASONALITY2+2] = s2[2];
 	

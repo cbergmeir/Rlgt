@@ -72,6 +72,7 @@ transformed parameters {
 			s[i] = initSu[i]*SEASONALITY/sumsu;	
 		l[1] = (y[1]-r[1])/s[1];
 	}
+	s[N+SEASONALITY+1]=1;  //for integer seasonality the last value is not filled and Stan does not like it
 	s[SEASONALITY+1] = s[1];
 	s[SEASONALITY+2] = s[2]; //needed in case of non-integer seasonality, otherwise s[SEASONALITY+2] will get overwritten
 	
