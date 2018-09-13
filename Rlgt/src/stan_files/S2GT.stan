@@ -16,20 +16,26 @@ data {
 	int<lower=0,upper=1> USE_REGRESSION;
 	int<lower=0,upper=1> USE_GENERALIZED_SEASONALITY;
 	int<lower=0,upper=1> USE_SMOOTHED_ERROR;
+	int<lower=0> NUM_OF_SEASON_INIT_CYCLES;
 	int<lower=0,upper=2> LEVEL_CALC_METHOD;  //0-classical, 1-avg over SEASONALITY, 2-avg over SEASONALITY2  
 	int<lower=1> J;
 	matrix[N, J] xreg;  
 	vector<lower=0>[J] REG_CAUCHY_SD;
 }
 transformed data {
-  real <lower=0,upper=1> fractSeasonality;
-  real <lower=0,upper=1> fractSeasonality2;
-  real<lower=0> reg0CauchySd=mean(REG_CAUCHY_SD)*10;
+	real <lower=0,upper=1> fractSeasonality;
+	real <lower=0,upper=1> fractSeasonality2;
+	real<lower=0> reg0CauchySd=mean(REG_CAUCHY_SD)*10;
 	vector[SEASONALITY] firstRatios;    
+	vector[SEASONALITY2] firstRatios2;
+	real sumy; int j;   
 	
-	real sumy = 0; int j=1;   
- 	while(j*SEASONALITY<=SEASONALITY2)  {
-    	sumy=0; 
+	for (i in 1:SEASONALITY)
+		firstRatios[i]=1;	
+					
+	sumy = 0; j=1;
+ 	while(j<=NUM_OF_SEASON_INIT_CYCLES && j*SEASONALITY<=N)  {
+    sumy=0; 
 		for (i in 1:SEASONALITY) 
 			sumy = sumy+ y[(j-1)*SEASONALITY+i];
 		for (i in 1:SEASONALITY) 
@@ -39,12 +45,38 @@ transformed data {
 			firstRatios[i] = firstRatios[i]+y[(j-1)*SEASONALITY+i]*SEASONALITY/sumy;	   
 		j=j+1;
 	}
-	j=j-1;
-	for (i in 1:SEASONALITY) {
-		firstRatios[i]=firstRatios[i]/j;
-		//print(firstRatios[i]) ;	
-	}		
+	if (j>1) {
+		j=j-1;
+		for (i in 1:SEASONALITY) {
+			firstRatios[i]=firstRatios[i]/j;
+			//print(firstRatios[i]) ;	
+		}
+	}	
 	
+	
+	for (i in 1:SEASONALITY2)
+		firstRatios2[i]=1;	
+					
+	sumy = 0; j=1;
+ 	while(j<=NUM_OF_SEASON_INIT_CYCLES && j*SEASONALITY2<=N)  {
+    	sumy=0; 
+		for (i in 1:SEASONALITY2) 
+			sumy = sumy+ y[(j-1)*SEASONALITY2+i];
+		for (i in 1:SEASONALITY2) 
+		  if (j==1) 
+		  	firstRatios2[i] = y[(j-1)*SEASONALITY2+i]*SEASONALITY2/sumy/firstRatios[(i-1)%SEASONALITY+1];		//at this stage we do not have access to the regression
+		  else
+			firstRatios2[i] = firstRatios2[i]+y[(j-1)*SEASONALITY2+i]*SEASONALITY2/sumy/firstRatios[(i-1)%SEASONALITY+1];
+		j=j+1;
+	}
+	if (j>1) {
+		j=j-1;
+		for (i in 1:SEASONALITY2) {
+			firstRatios2[i]=firstRatios2[i]/j;
+			//print(i, " ",firstRatios2[i]);
+		}
+	}
+		
 	if (SEASONALITY_F>SEASONALITY) {
 		fractSeasonality=SEASONALITY_F-SEASONALITY;
 		print("Non-integer seasonality used.");
@@ -112,7 +144,7 @@ transformed parameters {
 		for (i in 1:SEASONALITY2) 
 			sumsu = sumsu+ initSu2[i];
 		for (i in 1:SEASONALITY2) 
-			s2[i] = initSu2[i]*SEASONALITY2/sumsu;
+			s2[i] = firstRatios2[i]*initSu2[i]*SEASONALITY2/sumsu;
 			
 		l[1] = (y[1]-r[1])/(s[1]*s2[1]);  //initialization for LEVEL_CALC_METHOD==0, it will get overwritten in other cases
 	}

@@ -28,7 +28,7 @@ legend_str_vect=c(legend_str_vect,"actuals")  #used for short displays
 legend_cols_vect=c(legend_cols_vect, 'black')
 legend_char_vect=c(legend_char_vect,'-')
 
-i<-1; forecasts=list()
+i<-530; forecasts=list()
 H=length(M3.data[[1]]$xx)
 sumSMAPE=0; sumQ99Loss=0; sumQ95Loss=0; sumQ5Loss=0;
 numOfCases95pExceeded=0; numOfCases5pExceeded=0;

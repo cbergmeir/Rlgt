@@ -14,6 +14,7 @@ data {
 	int<lower=0,upper=1> USE_REGRESSION;
 	int<lower=0,upper=1> USE_GENERALIZED_SEASONALITY;
 	int<lower=0,upper=1> USE_SMOOTHED_ERROR;
+	int<lower=0> NUM_OF_SEASON_INIT_CYCLES;
 	int<lower=1> J;
 	matrix[N, J] xreg;  
 	vector<lower=0>[J] REG_CAUCHY_SD;
@@ -21,8 +22,32 @@ data {
 transformed data {
   real <lower=0,upper=1> fractSeasonality;
 	real<lower=0> reg0CauchySd=mean(REG_CAUCHY_SD)*10;
-	real sumy = 0;
-			
+	vector[SEASONALITY] firstRatios;
+	real sumy; int j;   
+	
+	for (i in 1:SEASONALITY) 
+		firstRatios[i]=1;	
+					
+	sumy = 0; j=1;
+ 	while(j<=NUM_OF_SEASON_INIT_CYCLES && j*SEASONALITY<=N)  {
+		sumy=0; 
+		for (i in 1:SEASONALITY) 
+			sumy = sumy+ y[(j-1)*SEASONALITY+i];
+		for (i in 1:SEASONALITY) 
+		  if (j==1) 
+		  	firstRatios[i] = y[(j-1)*SEASONALITY+i]*SEASONALITY/sumy;		//at this stage we do not have access to the regression
+		  else
+				firstRatios[i] = firstRatios[i]+y[(j-1)*SEASONALITY+i]*SEASONALITY/sumy;	   
+		j=j+1;
+	}
+	if (j>1) {
+		j=j-1;
+		for (i in 1:SEASONALITY) {
+			firstRatios[i]=firstRatios[i]/j;
+			//print(firstRatios[i]) ;	
+		}
+	}	
+	
 	if (SEASONALITY_F>SEASONALITY) {
 		fractSeasonality=SEASONALITY_F-SEASONALITY;
 		//print("Non-integer seasonality used.");
@@ -69,7 +94,7 @@ transformed parameters {
 		for (i in 1:SEASONALITY) 
 			sumsu = sumsu+ initSu[i];
 		for (i in 1:SEASONALITY) 
-			s[i] = initSu[i]*SEASONALITY/sumsu;	
+			s[i] = firstRatios[i]*initSu[i]*SEASONALITY/sumsu;	
 		l[1] = (y[1]-r[1])/s[1];
 	}
 	s[N+SEASONALITY+1]=1;  //for integer seasonality the last value is not filled and Stan does not like it

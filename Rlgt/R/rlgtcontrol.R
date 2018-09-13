@@ -19,10 +19,11 @@
 #' Some models e.g. those with "innov" error size method are more difficult to fit require more iterations. 
 #' @param MAX_NUM_OF_REPEATS Maximum number of the sampling procedure repeats if the fit is unsatisfactorily, i.e. avgRHat>MAX_RHAT_ALLOWED.
 #' Each round will double the number of iterationsm which could potentially double the running time. 
-#' Suggested range is between (2,4). Default is 3.  
+#' Suggested range is between (2,4). Default is 2.  
 #' @param MAX_RHAT_ALLOWED Maximum average value of Rhat's that suggests a good fit, i.e. the treshold 
 #' below which the fit is considered as acceptable. Consult Stan's manual for more details on Rhat. 
 #' Suggested range is between (1.005,1.02). Default is 1.006. 
+#' @param NUM_OF_SEASON_INIT_CYCLES For seasonal models, number of seasonality periods used for establishing initial seasonality coefficients. Default is 3.
 #' @param MIN_NU Minimum degrees of freedom of the Student's distribution, that is used in most models. Suggested range(1.2, 5). Default 2.
 #' @param MAX_NU Maximum degrees of freedom of the Student's distribution. Suggested range is between (15,30). Default 20. 
 #' @param MIN_POW_TREND Minimum value of the global trend power coefficient. Suggested range is between (-1,0). Default -.5
@@ -51,8 +52,9 @@ rlgt.control <- function(
 	ADD_JITTER=TRUE,
 	CAUCHY_SD_DIV=150,
 	NUM_OF_ITER=2500,
-	MAX_NUM_OF_REPEATS=3,
+	MAX_NUM_OF_REPEATS=2,
 	MAX_RHAT_ALLOWED=1.006,
+	NUM_OF_SEASON_INIT_CYCLES=3,
 	MIN_NU=2,
   MAX_NU=20,
   MIN_POW_TREND=-0.5,
@@ -71,6 +73,7 @@ rlgt.control <- function(
 		ADD_JITTER=ADD_JITTER, 
 		CAUCHY_SD_DIV=CAUCHY_SD_DIV,
     MAX_RHAT_ALLOWED=MAX_RHAT_ALLOWED,
+		NUM_OF_SEASON_INIT_CYCLES=NUM_OF_SEASON_INIT_CYCLES,
     NUM_OF_ITER=NUM_OF_ITER,
     MAX_NUM_OF_REPEATS=MAX_NUM_OF_REPEATS,
     MIN_SIGMA=MIN_SIGMA,
