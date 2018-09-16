@@ -125,7 +125,7 @@
 #' \item{\eqn{b}}{Normally distributed with a mean of 0 and standard deviation of 1/200 of the maximum value of y.}
 #' \item{\eqn{\phi}}{Uniformly distributed between -1 and 1}
 #' \item{\eqn{\alpha, \beta, \zeta, \delta}}{Uniform between 0 and 1}
-#' \item{\eqn{ s_{t}, w_{t}}{ s{t}, w{t}} for \eqn{t<= m,d respectively}}{ (i.i.d) normal with a mean of 1 and standard deviation of 0.3 before being normalised}
+#' \item{\eqn{ s_{t}, w_{t}}{ s{t}, w{t}} for \eqn{t<= m,d}{ (i.i.d) normal with a mean of 1 and standard deviation of 0.3 before being normalised}
 #' \item{\eqn{\rho}}{Uniform between -0.5 and 1.0}
 #' \item{\eqn{\nu}}{Uniformly distributed between 2 and 20}
 #' \item{\eqn{\tau}}{Beta distribution with shape parameters  \eqn{\alpha =1}  and \eqn{\beta =1 }}
