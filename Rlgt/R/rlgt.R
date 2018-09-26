@@ -107,8 +107,8 @@ rlgt <- function(y,
     options(mc.cores = nCores)    
   }
 	
-  y_org<-y
-	y<-as.numeric(y)
+  y_org <- y
+	y <-as.numeric(y)
   n <- length(y)
   
   #' @importFrom stats rnorm
@@ -140,10 +140,10 @@ rlgt <- function(y,
 							 LEVEL_CALC_METHOD=levelMethodId,
 							 J=2, xreg=matrix(0,nrow=n, ncol=2), REG_CAUCHY_SD=rep(1,2)) #if this is a regression call, these three values will be overwritten in a moment below, I can't make it J==1, becasue then REG_CAUCHY_SD becomes number, not vector
   
-  if(use.regression){
+  if (use.regression) {
     data[['xreg']] <- xreg
     data[['J']] <- ncol(xreg)
-    if(nrow(xreg) != n){
+    if (nrow(xreg) != n) {
       stop("Error: Number of rows supplied in regression matrix does not match length of y!")
     }
 		regCauchySd=mean(y)/apply(xreg,2,mean)/control$CAUCHY_SD_DIV #vector
@@ -166,16 +166,16 @@ rlgt <- function(y,
 				sigma=runif(1,min=control$MIN_SIGMA, max=0.01),
 				offsetSigma=runif(1,min=control$MIN_SIGMA, max=0.01)
       )
-			if(use.regression){
-				initializations[[irr]][['regCoef']]<-rnorm(ncol(xreg),mean=0, sd=regCauchySd)
-				initializations[[irr]][['regOffset']]<-rnorm(1,mean=0, sd=mean(regCauchySd))
+			if (use.regression) {
+				initializations[[irr]][['regCoef']] <- rnorm(ncol(xreg),mean=0, sd=regCauchySd)
+				initializations[[irr]][['regOffset']] <- rnorm(1,mean=0, sd=mean(regCauchySd))
 			}
 			if (useGeneralizedSeasonality) {
-				initializations[[irr]][['initSu']] = rnorm(seasonality, mean=0, sd=min(y[1:seasonality])*0.003) 
-				initializations[[irr]][['initSu2']] = rnorm(seasonality2, mean=0, sd=min(y[1:seasonality2])*0.003)
+				initializations[[irr]][['initSu']] <- rnorm(seasonality, mean=0, sd=min(y[1:seasonality])*0.003) 
+				initializations[[irr]][['initSu2']] <- rnorm(seasonality2, mean=0, sd=min(y[1:seasonality2])*0.003)
 			} else {  #multiplicative
-				initializations[[irr]][['initSu']] = rnorm(seasonality, 1, 0.05) 
-				initializations[[irr]][['initSu2']] = rnorm(seasonality2, 1, 0.05)
+				initializations[[irr]][['initSu']] <- rnorm(seasonality, 1, 0.05) 
+				initializations[[irr]][['initSu2']] <- rnorm(seasonality2, 1, 0.05)
 			}
     }
     

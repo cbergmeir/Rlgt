@@ -21,7 +21,7 @@ initModel <- function(model.type=NULL, use.regression=FALSE, useGeneralizedSeaso
   model <- list()
   
 	#model[["parameters"]] are those parameters we are interested in extracting. So e.g. if the model does not use regression, although the Stan code lists regression coefs, we are not listing them here
-  if(model.type=="LGT")  {
+  if (model.type=="LGT")  {
     #Non-Seasonal Local Global Trend model
 		if (useSmoothingMethodForError) {
 			model[["parameters"]] <- c("l", "b", "smoothedInnovSize", "innovSm",
@@ -60,7 +60,7 @@ initModel <- function(model.type=NULL, use.regression=FALSE, useGeneralizedSeaso
 					"levSm", "sSm", "s2Sm", "nu", "powx")
 		}
 		if (useGeneralizedSeasonality) { #powSeason added later
-			model[["parameters"]]<-c(model[["parameters"]],"powSeason2")
+			model[["parameters"]] <- c(model[["parameters"]], "powSeason2")
 		}
 		
 		model[["model"]] <- stanmodels$S2GT
@@ -68,10 +68,10 @@ initModel <- function(model.type=NULL, use.regression=FALSE, useGeneralizedSeaso
 	}
 
   if (use.regression) {
-		model[["parameters"]]=c(model[["parameters"]],"regCoef","regOffset","r")     
+		model[["parameters"]] <- c(model[["parameters"]], "regCoef", "regOffset", "r")     
   }
 	if (useGeneralizedSeasonality) {
-		model[["parameters"]]<-c(model[["parameters"]],"powSeason")
+		model[["parameters"]] <- c(model[["parameters"]],"powSeason")
 	}
   
   class(model) <- c("RlgtStanModel", class(model))
