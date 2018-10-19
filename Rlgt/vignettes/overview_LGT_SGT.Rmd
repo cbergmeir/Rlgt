@@ -1,6 +1,5 @@
 ---
-title: "Overview of LGT&SGT Model"
-author: "Wibowo"
+title: "Overview of the LGT and SGT Models"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
@@ -18,9 +17,7 @@ knitr::opts_chunk$set(
 
 
 ## Introduction  
-This vignette will provide an overview of the theoretical construction of LGT and SGT family models. A more complete description will be provided in the accompanying research paper which is planned to be released in 2019.The idea of the construction of LGT & SGT models originally came from Smyl in 2016 and has evolved over time in the collaboration process of writing this package.
-
-The "LGT" model stands for Local-Global Trend and is devised to forecast on non-seasonal time series data. Meanwhile, the "SGT" model stands for Seasonal-Global Trend and is devised to complement the former model on seasonal time series data. The combination of these models were tested on the 3003 time-series data, available from the M3-competition dataset, and has been shown to outperform all of the models originally participating in the competition by a significant margin.
+This vignette will provide an overview of the theoretical construction of the LGT and SGT family models. The "LGT" model stands for Local-Global Trend and is devised to forecast on non-seasonal time series data. Meanwhile, the "SGT" model stands for Seasonal-Global Trend and is devised to complement the former model on seasonal time series data. The combination of these models were tested on the 3003 time-series data available from the M3-competition dataset, and they have been shown to outperform all of the models originally participating in the competition by a significant margin.
  
 | Model         |sMAPE  |MASE   |
 |---------------|-------|-------|
@@ -31,14 +28,14 @@ The "LGT" model stands for Local-Global Trend and is devised to forecast on non-
 
 The details of the benchmark models are as follow:
 
-1. Dampen-M3: The implementation of Dampen algtortihm as it appears in original M3 competition.
-2. Best M3 model: In this case, the best model is Theta (cite paper)
-3. Dampen-fpp2 : An implementation of ETS model from fpp2, a popular forecasting package available from CRAN (cite Hyndmann).
+1. Dampen-M3: The implementation of Dampen algorithm as it appears in the original M3 competition.
+2. Best M3 model: In this case, the best model is the Theta method
+3. Dampen-fpp2 : An implementation of the ETS model from fpp2, a popular forecasting package available from CRAN.
 
 
-The LGT&SGT models are inherently Bayesian ETS (Exponential Smoothing) models which are implemented with the aid of RStan package. As bayesian models, the LGT&SGT models will require specification of prior distributions (with default priors provided) and might also take extended running time in some unusual cases. Generally, the running time should be acceptable if the models are run with the default prior and sampling algorithm. In unusual circumstances, some modifications on the prior distributions and Bayesian sampling algorithm might be required to speed up the running time of the models.
+The LGT&SGT models are inherently Bayesian ETS (Exponential Smoothing) models which are implemented with the aid of the RStan package. As Bayesian models, the LGT&SGT models require specification of prior distributions (with default priors provided) and also take extended running time in some unusual cases. Generally, the running time should be acceptable if the models are run with the default prior and sampling algorithm. In unusual circumstances, some modifications on the prior distributions and Bayesian sampling algorithm might be required to speed up the running time of the models.
 
-As a caveat, the current version of the models only support time series data with entirely positive data values. Many time series data fall into this category, while for others, simple transformations can be performed to obtain the required positive time-series data. Therefore, the constraint should not be too restrictive for most general applications.
+As a caveat, the current version of the models only supports time series data with entirely positive data values. Many time series data fall into this category, while for others, simple transformations can be performed to obtain the required positive time-series data. Therefore, the constraint should not be too restrictive for most general applications.
  
 The following sections will briefly describe the mathematical constructions 
 and the rationale for these models.
@@ -97,15 +94,15 @@ The inclusion of these features on each individual equation of the model is disc
  
 * **eq. 1.5. Heteroscedastic Error**
 
-    In addition to accounting for possible fat-tailed error distribution, the error function also allows the variance of the error to change as the    level changes. This is achieved by allowing the scale (deviation) parameter  of the assumed Student's t-distribution to vary in proportion to the         current level of the time series. This will account for common situations,   where the magnitude of the error will increase as the value of the data      points increases.Moreover, this relationship does not necessarily be linear  as the parameter $\tau$  controls the growth of the variance of the error    term. 
+    In addition to accounting for a possible fat-tailed error distribution, the error function also allows the variance of the error to change as the    level changes. This is achieved by allowing the scale (deviation) parameter  of the assumed Student's t-distribution to vary in proportion to the         current level of the time series. This will account for common situations,   where the magnitude of the error will increase as the value of the data      points increases. Moreover, this relationship does not necessarily have to be linear  as the parameter $\tau$  controls the growth of the variance of the error    term. 
 
 
-    In practice, the values taken by the parameter is often limited between 0 and 1. A value of 0 corresponds to constant variance, i.e. homoscedasticity, whereas a value of 1 approximates the behaviour of the multiplicative error ETS model. The value between 0 and 1 will describe an error function which grows in relation to the increase in data value, but at a slower pace than linear growth.
+    In practice, the value taken by the parameter is often limited between 0 and 1. A value of 0 corresponds to constant variance, i.e. homoscedasticity, whereas a value of 1 approximates the behaviour of the multiplicative error ETS model. The value between 0 and 1 will describe an error function which grows in relation to the increase in data value, but at a slower pace than linear growth.
  
  
 * **eq. 1.2: One-step Ahead Prediction Equation**
 
-    There are three distinct terms that constitute this Bayesian ETS model: a level term, and a couple of different trends. The first term $l_{t}$ is the level term, while the second term  $l_{t}^{ \rho }$  refers to the global trend which increases with the level of the dependent variables  $l_{t}$  at a constant rate $\gamma$ . Similar to the heteroscedasticity in eq. 1.5, the change in the value of the dependant variable does not necessarily grow linearly with respect to the level of the variable. This relationship can be tuned in by the use of exponential parameter $\rho$. 
+    There are three distinct terms that constitute this Bayesian ETS model: a level term, and a couple of different trends. The first term $l_{t}$ is the level term, while the second term  $l_{t}^{ \rho }$  refers to the global trend which increases with the level of the dependent variables  $l_{t}$  at a constant rate $\gamma$ . Similar to the heteroscedasticity in eq. 1.5, the change in the value of the dependent variable does not necessarily grow linearly with respect to the level of the variable. This relationship can be tuned in by the use of the exponential parameter $\rho$. 
     
     The interpretation of this global trend is also analogous to the time-varying error term, i.e. the value of  $ 0< \rho <1$  indicates a global trend which grows faster than the additive models but slower than the multiplicative model. 
 
@@ -128,7 +125,7 @@ with smoothing parameter $\alpha$.
  
 ## SGT (Seasonal, Global Trend)
  
-SGT model was designed as a seasonal counterpart to the LGT model. 
+The SGT model was designed as a seasonal counterpart to the LGT model. 
 Similar to LGT, this model is devised to allow for global trend term and heteroscedastic error.
  
 ### Model Equations
@@ -154,7 +151,7 @@ $$\widehat{\sigma}_{t+1}= \sigma \widehat{y}_{t+1}^{ \tau}+ \xi \quad (eq. 2.5)$
 
 ### Rationale for Mathematical Equations
  
-Most of the components of the model is similar to the non-seasonal LGT model above. A couple of modifications have been applied to this model in comparison to LGT:
+Most of the components of the model are similar to the non-seasonal LGT model above. A couple of modifications have been applied to this model in comparison to LGT:
  
 1. Removal of local dampen trend
 2. Addition of multiplicative seasonality term
@@ -163,24 +160,24 @@ The mathematical equations have also been adjusted accordingly:
  
 * **eq. 2.2.One-step Ahead Prediction Equation**
 
-    Comparing eq. 2.2 with eq. 1.2, it is apparent that the local trend term  $\lambda b_{t}$  has been removed from the SGT model. Consequently, the equation governing the evolution of local trend over time (eq. 2.4) is no longer needed. Based on empirical evidence, the role of the local trend was found to be insignificant for the purpose of forecasting seasonal data in M3-competition.
+    Comparing eq. 2.2 with eq. 1.2, it is apparent that the local trend term  $\lambda b_{t}$  has been removed from the SGT model. Consequently, the equation governing the evolution of local trend over time (eq. 2.4) is no longer needed. Based on empirical evidence, the role of the local trend was found to be insignificant for the purpose of forecasting seasonal data in the M3 competition.
     
-    Moreover, there is also an addition of multiplicative seasonality term modelled after Holt-Winters seasonality term. In this case, the data value is decomposed into level value and seasonal value (i.e.  $y_{t}=l_{t} s_{t}$). Thus, it follows that the one-step prediction value of  { y_{t+1} }  (eq. 2.2) is obtained by multiplying the predicted level term  $l_{t}+\gamma l_{t}^{ \rho }$ with the seasonal term  $s_{t+1}$. 
+    Moreover, there is also an addition of a multiplicative seasonality term modelled after the Holt-Winters seasonality term. In this case, the data value is decomposed into a level value and a seasonal value (i.e.  $y_{t}=l_{t} s_{t}$). Thus, it follows that the one-step prediction value of  { y_{t+1} }  (eq. 2.2) is obtained by multiplying the predicted level term  $l_{t}+\gamma l_{t}^{ \rho }$ with the seasonal term  $s_{t+1}$. 
 
 
 * **eq. 2.4.Seasonal Factors Adjustment Equation**
  
-    The evolution of the seasonal component in eq. 2.4. is also based on standard ETS model, i.e. a weighted average of predicted seasonal level  $\left( \frac{y_{t}}{l_{t}} \right)$  and previous seasonal value from the past observations $s_{t}$ .
+    The evolution of the seasonal component in eq. 2.4. is also based on the standard ETS model, i.e. a weighted average of predicted seasonal level  $\left( \frac{y_{t}}{l_{t}} \right)$  and previous seasonal value from the past observations $s_{t}$ .
  
 * **eq. 2.3.Level Adjustment Equation**
 
-    The evolution of level term in eq. 2.3 is defined analogously to the level term in LGT model. The level term of time t  $\left( l_{t} \right)$  is calculated as a weighted average of predicted current level value at time t  
+    The evolution of the level term in eq. 2.3 is defined analogously to the level term in the LGT model. The level term of time t  $\left( l_{t} \right)$  is calculated as a weighted average of the predicted current level value at time t  
 $\frac{y_{t}}{s_{t}}$  and the previous estimate of the level at time t 
 given information up to t-1, i.e.  $l_{t-1}+ \gamma l_{t-1}^{ \rho }$  
  
 * **eq. 2.5.Heteroscedastic Error**
 
-    There is also a straightforward modification to the error term in SGT eq. 2.5 due to the introduction of seasonal factors. Compared to eq. 1.5, the error termin SGT is allowed to vary in proportion to $y$ instead of  $l_{t}$. The reason for that is because the error term is likely to become larger during the peak seasons (i.e. seasons with high seasonality coefficient). Hence, it is intuitive to link the dispersion of the error to the predicted value of the dependent variable. 
+    There is also a straightforward modification to the error term in SGT eq. 2.5 due to the introduction of seasonal factors. Compared to eq. 1.5, the error term in SGT is allowed to vary in proportion to $y$ instead of  $l_{t}$. The reason for this is that the error term is likely to become larger during the peak seasons (i.e. seasons with high seasonality coefficient). Hence, it is intuitive to link the dispersion of the error to the predicted value of the dependent variable. 
 
     Note that in the case of LGT, the predicted value of y is also a function of the previous level  $l_{t-1}$  and thus, the error term can be defined in terms of  $l_{t-1}$  instead.
 
@@ -188,7 +185,7 @@ given information up to t-1, i.e.  $l_{t-1}+ \gamma l_{t-1}^{ \rho }$
 
 ## S2GT (Double Seasonal, Global Trend)
  
-S2GT is designed as an extension to SGT in time-series data which exhibit two seasonality patterns. The additional second seasonality factor generalises the model to capture a number of seasonalities that exist in the data. A classic example of this type of data is the hourly electricity consumption data which are affected by the time of the day as well as the day in the week. 
+S2GT is designed as an extension to SGT in time-series data which exhibit two seasonality patterns. The additional second seasonality factor generalises the model to capture a number of seasonalities that exist in the data. A classic example of this type of data are hourly electricity consumption data which are affected by the time of the day as well as the day of the week. 
 
 The mathematical modelling is based on the classical Double Seasonal Exponential Smoothing model by Taylor (2003).
  
@@ -215,21 +212,21 @@ $$\sigma _{t+1}= \sigma y_{t+1}^{ \tau}+ \varsigma  \quad (eq. 3.6)$$
 
 ### Rationale for Mathematical Equations
 
-Compared to the SGT model, there is an addition of second seasonality factor in S2GT model.
+Compared to the SGT model, there is an addition of a second seasonality factor in the S2GT model.
 
-The mathematical equations have been adjusted as follow:
+The mathematical equations have been adjusted as follows:
  
 * **eq. 3.2. One-step Ahead Prediction Equation**
 
-    Comparing eq. 2.2 with eq. 2.2, there is an addition of the second seasonality factor in multiplicative form. Thus, both seasonality factors will affect the proportionality between the expected value of the observed data and the level. 
+    Comparing eq. 3.2 with eq. 2.2, there is an addition of the second seasonality factor in multiplicative form. Thus, both seasonality factors will affect the proportionality between the expected value of the observed data and the level. 
  
 * **eq. 3.3. Level Adjustment Equation**
 
-    The evolution of level term in eq. 3.3 is largely identical to eq.2.3. The mere difference is that since the observed value is now seen as a product of the level terms with both seasonality factors, the predicted current levelvalue at time t is calculated as   $\frac{y_{t}}{l_{t}s_{t}}$. The weighted average in the right-hand side of the equation is then adjusted accordingly.
+    The evolution of the level term in eq. 3.3 is largely identical to eq. 2.3. The difference is that since the observed value is now seen as a product of the level terms with both seasonality factors, the predicted current level value at time t is calculated as   $\frac{y_{t}}{l_{t}s_{t}}$. The weighted average in the right-hand side of the equation is then adjusted accordingly.
  
 * **eq. 3.4. First Seasonal Factors Adjustment Equation**
 
-    The evolution of the seasonal component in eq. 3.4. is also similar to eq. 2.4. Again, the predicted seasonal level based on current observation has been changed to  $\frac{y_{t}}{l_{t}w_{t}}$ to undo the effect of the other seasonality factor on the observed data value. 
+    The evolution of the seasonal component in eq. 3.4. is also similar to eq. 2.4. Again, the predicted seasonal level based on the current observation has been changed to  $\frac{y_{t}}{l_{t}w_{t}}$ to undo the effect of the other seasonality factor on the observed data value. 
  
 * **eq. 3.5. Second Seasonal Factors Adjustment Equation**
 
