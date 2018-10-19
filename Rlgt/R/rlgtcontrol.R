@@ -1,30 +1,30 @@
 #' @title Sets and initializes the control parameters
 #' @description This function initializes and sets the control parameters, i.e. 
-#' hyperparameter values which control the prior distribution of the Rlgt model. 
-#' The purpose of this function is mainly to provide a default value for each of the hyperparameter. 
+#' hyperparameter values which control the prior distribution of the \code{\link{rlgtfit}} model. 
+#' The purpose of this function is mainly to provide a default value for each of the hyperparameters. 
 #' The function also accepts a customised set of values of the parameters as provided in the input of this function. 
-#' This function is used in conjunction of used with the \code{\link{rlgt}} function. 
+#' This function is used in conjunction with the \code{\link{rlgt}} function. 
 #' @param	ADAPT_DELTA Target Metropolis acceptance rate. See Stan manual. Suggested range is between (0.85-0.97).
 #' @param	MAX_TREE_DEPTH NUTS maximum tree depth. See Stan manual for more details. Suggested range is between (10-15), defaut is 12.
-#' @param NUM_OF_CHAINS Number of MCMC chains. Suggested range is 3 to 4. Defauls is 4.
+#' @param NUM_OF_CHAINS Number of MCMC chains. Suggested range is 3 to 4. Default is 4.
 #' @param NUM_OF_CORES Number of cores used for calculations. It can be smaller than NUM_OF_CHAINS, 
-#' but for best computational speed, it should be equal to NUM_OF_CHAINS. Defauls is 4. 
+#' but for best computational speed, it should be equal to NUM_OF_CHAINS. Default is 4. 
 #' @param ADD_JITTER Whether to add a very small amount (sd=min(y)*0.0001) of jitter to the input series. 
 #' It is sometimes useful in cases of series with some perfectly flat sections. Default is TRUE. 
 #' @param CAUCHY_SD_DIV Cauchy distribution is used for some parameters with non-obvious range. The error size hyperparameter 
-#' of this distribution is calculated by dividing max value of the time series by this constant. 
+#' of this distribution is calculated by dividing the max value of the time series by this constant. 
 #' Suggested range is between (100,300). Default 150.
 #' @param NUM_OF_ITER Number of iterations for each chain. Suggested range is between (1000,5000). Default is 2500.
 #' Generally, the longer the series, the smaller is the value to reach convergence. 
-#' Some models e.g. those with "innov" error size method are more difficult to fit require more iterations. 
+#' Some models e.g. those with "innov" error size method are more difficult to fit and require more iterations. 
 #' @param MAX_NUM_OF_REPEATS Maximum number of the sampling procedure repeats if the fit is unsatisfactorily, i.e. avgRHat>MAX_RHAT_ALLOWED.
-#' Each round will double the number of iterationsm which could potentially double the running time. 
+#' Each round will double the number of iterations which could potentially double the running time. 
 #' Suggested range is between (2,4). Default is 2.  
 #' @param MAX_RHAT_ALLOWED Maximum average value of Rhat's that suggests a good fit, i.e. the treshold 
 #' below which the fit is considered as acceptable. Consult Stan's manual for more details on Rhat. 
 #' Suggested range is between (1.005,1.02). Default is 1.006. 
 #' @param NUM_OF_SEASON_INIT_CYCLES For seasonal models, number of seasonality periods used for establishing initial seasonality coefficients. Default is 3.
-#' @param MIN_NU Minimum degrees of freedom of the Student's distribution, that is used in most models. Suggested range(1.2, 5). Default 2.
+#' @param MIN_NU Minimum degrees of freedom of the Student's distribution that is used in most models. Suggested range(1.2, 5). Default 2.
 #' @param MAX_NU Maximum degrees of freedom of the Student's distribution. Suggested range is between (15,30). Default 20. 
 #' @param MIN_POW_TREND Minimum value of the global trend power coefficient. Suggested range is between (-1,0). Default -.5
 #' @param MAX_POW_TREND Maximum value of the global trend power coefficient. It should be 1 to allow the model to approach exponential growth when needed.

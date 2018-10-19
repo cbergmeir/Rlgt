@@ -5,7 +5,7 @@ library(Rlgt)
 
 str(lynx)
 
-SEASONALITY=9.5  #by looking at the graph and runnung acf()
+SEASONALITY=9.5  #by looking at the graph and running acf()
 SEASONALITY2=38
 
 train=lynx[1:80]

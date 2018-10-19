@@ -1,13 +1,13 @@
 
 #' Initialize a model from the Rlgt family
 #' 
-#' A building block:to validate the model type and generate the corresponding list of parameters for the model.
+#' This is an internal function that usually won't be called by users directly. It validates the model type and generates the corresponding list of parameters for the model.
 #' 
 #' @param model.type type of the forecasting model selected, a character object
 #' @param use.regression binary parameter indicating whether additional regressors will be used for forecasting in multivariate settings.
-#' @param useGeneralizedSeasonality If generalized seasonality is to be used. Default FALSE.
-#' @param useSmoothingMethodForError If the non-standard function for error size should be used, one based on smoothed innovations or surprises 
-#' @return an RLGT skeleton model
+#' @param useGeneralizedSeasonality if generalized seasonality is to be used. Default is \code{FALSE}.
+#' @param useSmoothingMethodForError if the non-standard function for error size should be used, one based on smoothed innovations or surprises 
+#' @return an Rlgt skeleton model
 #' 
 #' @importFrom rstan stan_model
 #' @export
@@ -81,15 +81,19 @@ initModel <- function(model.type=NULL, use.regression=FALSE, useGeneralizedSeaso
 
 
 #' @title rlgtfit class
-#' @description A building block: a constructor function for the "rlgtfit" class. 
-#' This class will be used as an output to the \code{\link{rlgt}} function.
-#' @param y time-series data for training (provided as a vector or a ts object).
+#' @description A constructor function for objects of class \code{rlgtfit}, the main class of the package. Objects of this class 
+#' are output from the \code{\link{rlgt}} function. This constructor will usually not be called by users directly.
+#' @param y time series data for training (provided as a vector or a ts object).
 #' @param model.type the type of rlgt model
 #' @param use.regression whether the data has any additional variables to be used with forecasting, i.e. multivariate time-series.
-#' @param useGeneralizedSeasonality If generalized seasonality is to be used.
-#' @param levelMethodId Used with dual seasonality models
-#' @param seasonality 
-#' @param seasonality2 
+#' @param useGeneralizedSeasonality if generalized seasonality is to be used.
+#' @param levelMethodId used with dual seasonality models
+#' @param useSmoothingMethodForError if the non-standard function for error size should be used, one based on smoothed innovations or surprises 
+#' @param seasonality This specification of seasonality will be overridden by frequency of y, if y is of ts or msts class. 
+#' 1 by default, i.e. no seasonality.
+#' @param seasonality2 Second seasonality. If larger than 1, a dual seasonality model will be used. 
+#' This specification of seasonality will be overridden by the second seasonality of y, if y is of msts class. 
+#' 1 by default, i.e. no seasonality or single seasonality.
 #' @param rlgtmodel an rlgt model.
 #' @param params list of parameters of the model (to be fitted).
 #' @param control list of control parameters, i.e. hyperparameter values 

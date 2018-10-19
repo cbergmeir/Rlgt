@@ -8,22 +8,24 @@
 #' @import Rcpp
 #' @import rstantools
 #' @importFrom rstan sampling
+#' @importFrom stats frequency
+#' @importFrom stats runif
 #' 
 #' @docType package
 #' @title Getting started with the Rlgt package
 #' @description An implementation of innovative Bayesian ETS models named
-#' LGT (for non-seasonal time series data) and SGT (for time series data).
-#'  These models have been tested on M3-competition dataset in which they 
+#' LGT (for non-seasonal time series data) and SGT (for seasonal time series data).
+#'  These models have been tested on the M3 competition dataset in which they 
 #'  outperform all of the models originally participating in the competition.
 #' 
-#' @section LGT(Local and Global Trend):
-#' LGT model is constructed based on Holt’s linear trend method. 
-#' The model is designed to allow for more general term of error by allowing 
-#' for heterescedasticity and an addition of constant "global" trend in the model.
+#' @section LGT (Local and Global Trend):
+#' The LGT model is constructed based on Holt’s linear trend method. 
+#' The model is designed to allow for a more general term of error by allowing 
+#' for heteroscedasticity and an addition of constant "global" trend in the model.
 #' 
 #' \subsection{Model Equations}{
 #' 
-#' In terms of mathematical notation, the model can be fully represented as follow:
+#' In terms of mathematical notation, the model can be fully represented as follows:
 #' 
 #' \deqn{y_{t+1} \sim Student (\nu,y_{t+1}, \sigma _{t+1}) \quad (eq.1.1)}{y{t+1} ~ Student (\nu, yf{t+1}, \sigma{t+1})  ....(eq.1.1)}   
 #' \deqn{\widehat{y}_{t+1}=l_{t}+ \gamma l_{t}^{ \rho }+ \lambda b_{t}  \quad  (eq. 1.2)}{yf{t+1} = l{t}+ \gamma*l{t}^\rho + \lambda*b{t}   ....(eq. 1.2)}
@@ -62,8 +64,8 @@
 #' 
 #' @section SGT (Seasonal, Global Trend):
 #' 
-#' SGT model was designed as a seasonal counterpart to the LGT model. 
-#' Similar to LGT, this model is devised to allow for global trend term and heteroscedastic error.
+#' The SGT model was designed as a seasonal counterpart to the LGT model. 
+#' Similar to LGT, this model is devised to allow for a global trend term and heteroscedastic error.
 #' 
 #' \subsection{Model Equations}{
 #' 
@@ -92,7 +94,7 @@
 #' 
 #' @section S2GT (Double Seasonal, Global Trend):
 #' 
-#' S2GT is designed as an extension to SGT in time-series data which exhibit two seasonality patterns. 
+#' S2GT is designed as an extension to SGT for time series data which exhibit two seasonality patterns. 
 #' 
 #' \subsection{Model Equations}{
 #' 
@@ -133,8 +135,8 @@
 #' 
 #' Note that some of these prior distributions can be adjusted by the users in the \code{rlgt} function
 #' 
-#' @references 
-#' Stan Development Team (2017). RStan: the R interface to Stan. R package version 2.16.2. http://mc-stan.org
-#' 
+# @references 
+# Stan Development Team (2017). RStan: the R interface to Stan. R package version 2.16.2. http://mc-stan.org
+# 
 NULL
 

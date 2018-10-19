@@ -1,25 +1,25 @@
 #' @title Fit an Rlgt model
-#' @description The main function to fit an rlgt model. It fitts the parameter values with MCMC.
+#' @description The main function to fit an rlgt model. It fits the parameter values with MCMC.
 #' @param y time-series data for training (provided as a numeric vector, or a ts, or msts object).
-#' @param seasonality. This specification of seasonality will be overridden by frequency of y, if y is of ts or msts class. 
+#' @param seasonality This specification of seasonality will be overridden by frequency of y, if y is of ts or msts class. 
 #' 1 by default, i.e. no seasonality.
-#' @param seasonality2. Second seasonality. If larger than 1, a dual seasonality model will be used. 
+#' @param seasonality2 Second seasonality. If larger than 1, a dual seasonality model will be used. 
 #' This specification of seasonality will be overridden by the second seasonality of y, if y is of msts class. 
 #' 1 by default, i.e. no seasonality or simgle seasonality.
 #' @param seasonality.type Either "multiplicative" (default) or "generalized". 
 #' The latter seasonality generalizes additive and multiplicative seasonality types.
 #' @param error.size.method It chooses a function providing size of the error. Either "std" (monotonically, but slower than proportionally, growing with the series values) or 
 #' "innov" (proportional to a smoothed abs size of innovations, i.e. surprises)  
+#' @param level.method one of "classical", "seasAvg", or "seas2Avg"
 #' @param xreg Optionally, a vector or matrix of external regressors, which must have the same number of rows as y. Default is "std".
 #' @param control list of control parameters, e.g. hyperparameter values for the model's prior distributions, number of fitting interations etc.  
-#' @param verbose whether verbose information should be printed (true/false value only), default FALSE.
-#' @return rlgtfit object
+#' @param verbose whether verbose information should be printed (Boolean value only), default \code{FALSE}.
+#' @return \code{\link{rlgtfit}} object
 #' @examples
 #' \dontrun{
-#' rlgt_model <- rlgt(lynx, 
-#' control=lgt.control(MAX_NUM_OF_REPEATS=1, NUM_OF_ITER=2000), 
-#' verbose=TRUE)
-
+#' rlgt_model <- rlgt(lynx, control=lgt.control(MAX_NUM_OF_REPEATS=1, NUM_OF_ITER=2000), 
+#'      verbose=TRUE)
+#'
 #' # print the model details
 #' print(rlgt_model)
 #'}

@@ -1,21 +1,21 @@
 #' @title Rlgt forecast
-#' @description  produce forecasts from an rlgtfit object
+#' @description  produce forecasts from an \code{\link{rlgtfit}} object
 #' @param object rlgtfit object
 #' @param xreg input regression matrix
-#' @param h Forecasting horizon (the default is 10 for annual and 2*periods otherwise)
-#' @param level Confidence levels for prediction intervals a.k.a. coverage percentiles. Musat be between 0 and 100.
-#' @param NUM_OF_TRIALS Number of simulations to run. Suggested range is between (1000,5000), but it needs 
+#' @param h forecasting horizon (the default is 10 for annual and 2*periods otherwise)
+#' @param level confidence levels for prediction intervals a.k.a. coverage percentiles. Musat be between 0 and 100.
+#' @param NUM_OF_TRIALS number of simulations to run. Suggested range is between (1000,5000), but it needs 
 #' to be higher for good coverage for very high levels, e.g. 99.8. 
-#' @return returns a forecast object compatible with the forecast package
+#' @param ... currently not used
+#' @return returns a forecast object compatible with the forecast package in R
 #' @S3method forecast rlgtfit
 #' @method forecast rlgtfit
 #' @importFrom forecast forecast 
 #' @examples 
 #' \dontrun{
-#' rlgt_model <- rlgt(lynx,
-#' control=rlgt.control(MAX_NUM_OF_REPEATS=1, NUM_OF_ITER=2000), 
-#' verbose=TRUE)
-
+#' rlgt_model <- rlgt(lynx, 
+#'        control=rlgt.control(MAX_NUM_OF_REPEATS=1, NUM_OF_ITER=2000), verbose=TRUE)
+#'
 #' # print the model details
 #' print(rlgt_model)
 #' 
@@ -33,7 +33,7 @@ forecast.rlgtfit <- function(object,
                              h=ifelse(frequency(object$x)>1, 
                                       2*frequency(object$x), 10),
                              level=c(80,95),
-                             NUM_OF_TRIALS=2000) {
+                             NUM_OF_TRIALS=2000, ...) {
   
   # check if you have non-null and names matched xreg...
   has.regression <- !is.null(xreg)

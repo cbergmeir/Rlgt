@@ -1,4 +1,4 @@
-#' This is a method of rlgt object to produce posterior interval
+#' This is a method of the \code{link{rlgtfit}} class to produce posterior intervals
 #' 
 #' @title rlgtfit posterior interval
 #' @param object an object of class rlgtfit
@@ -12,9 +12,8 @@
 #' @examples 
 #'\dontrun{
 #' rlgt_model <- rlgt(lynx, model="LGT", nCores=4, nChains=4,
-#' control=rlgt.control(MAX_NUM_OF_REPEATS=1, NUM_OF_ITER=2000), 
-#' verbose=TRUE)
-
+#'      control=rlgt.control(MAX_NUM_OF_REPEATS=1, NUM_OF_ITER=2000), verbose=TRUE)
+#'
 #' # print the model details
 #' posterior_interval(rlgt_model)
 #'}

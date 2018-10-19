@@ -1,6 +1,6 @@
-#' Print out some characteristics of a \code{\link{rlgtfit}} model.
+#' Print out some characteristics of an \code{\link{rlgtfit}} model.
 #'  
-#' @title Generic print function for lgt models
+#' @title Generic print function for rlgtfit models
 #' @param x an rlgtfit object
 #' @param ... additional function parameters (currently not used)
 #' @aliases summary.rlgt
