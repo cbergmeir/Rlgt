@@ -13,11 +13,26 @@
 #' 
 #' @docType package
 #' @title Getting started with the Rlgt package
-#' @description An implementation of innovative Bayesian ETS models named
+#' @description An implementation of Bayesian ETS models named
 #' LGT (for non-seasonal time series data) and SGT (for seasonal time series data).
 #'  These models have been tested on the M3 competition dataset in which they 
 #'  outperform all of the models originally participating in the competition.
 #' 
+#' @section Getting started:
+#' 
+#' The best way to get started with the package is to have a look at the various demos that ship with the package. 
+#' To get a list of all the available demos, type:
+#' 
+#' \code{library(Rlgt)}
+#' 
+#' \code{demo()}
+#'  
+#'  Then, e.g. to run the demo for LGT with external regressors, type:
+#'  
+#' \code{demo(LGT_REG)}
+#' 
+#' The package contains models for seasonal and non-seasonal data, allows for external regressors, and different error distributions.
+#'   
 #' @section LGT (Local and Global Trend):
 #' The LGT model is constructed based on Holt’s linear trend method. 
 #' The model is designed to allow for a more general term of error by allowing 

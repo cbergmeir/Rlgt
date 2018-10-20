@@ -17,7 +17,7 @@
 #' @return \code{\link{rlgtfit}} object
 #' @examples
 #' \dontrun{
-#' rlgt_model <- rlgt(lynx, control=lgt.control(MAX_NUM_OF_REPEATS=1, NUM_OF_ITER=2000), 
+#' rlgt_model <- rlgt(lynx, control=rlgt.control(MAX_NUM_OF_REPEATS=1, NUM_OF_ITER=2000), 
 #'      verbose=TRUE)
 #'
 #' # print the model details
