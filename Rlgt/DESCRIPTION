@@ -18,16 +18,16 @@ Encoding: UTF-8
 LazyData: true
 ByteCompile: true
 Depends:
-    R (>= 3.0.2),
-    Rcpp (>= 0.12.8),
+    R (>= 3.4.0),
+    Rcpp (>= 0.12.0),
     methods,
     rstantools,
     forecast
 Imports:
-    rstan (>= 2.13.2),
+    rstan (>= 2.18.1),
     sn
-LinkingTo: StanHeaders (>= 2.13.1), rstan (>= 2.13.2), BH (>= 1.62.0.1), Rcpp
-    (>= 0.12.8), RcppEigen (>= 0.3.2.9.0)
+LinkingTo: StanHeaders (>= 2.18.0), rstan (>= 2.18.1), BH (>= 1.66.0), Rcpp
+    (>= 0.12.0), RcppEigen (>= 0.3.3.3.0)
 SystemRequirements: GNU make
 NeedsCompilation: yes
 RoxygenNote: 6.1.0
