@@ -67,9 +67,9 @@ $$\widehat{\sigma}_{t+1}= \sigma \widehat{y}_{t+1}^{ \tau}+ \xi   \quad  (eq. 1.
  
 ### Parameters
 * $\nu$  :degrees of freedom of the t-distribution
-* $\gamma$  :coefficient of the global trend, between -1 and 1, usually between 0 and 1
-* $\rho$  :power coefficient of the global trend, between 0 and 1
-* $\lambda$  :damping coefficient of the local trend
+* $\gamma$  :coefficient of the global trend
+* $\rho$  :power coefficient of the global trend, b y default between -0.5 and 1
+* $\lambda$  :damping coefficient of the local trend, between 0 and 1
 * $\alpha$  :smoothing parameter for the level term, between 0 and 1
 * $\beta$  :smoothing parameter for the local trend term, between 0 and 1
 * $\sigma$  :coefficient of the size of error
@@ -88,7 +88,7 @@ $$\widehat{\sigma}_{t+1}= \sigma \widehat{y}_{t+1}^{ \tau}+ \xi   \quad  (eq. 1.
     
     Also, note that the simple function of global trend has some interesting properties: if $\rho$ becomes close to 0, the contribution of the global trend to the expected value of the next step becomes constant, and therefore the trend becomes close to linear; when $\rho$ becomes close to 1, the contribution of the global trend to the expected value of the next step becomes almost proportional to the level value, therefore together with the level providing the compound interest formula, and the trajectory of a multistep forecast becomes exponential. So, the global trend can model well a typical situation in fast growing businesses: the growth is faster than linear but slower than exponential.
     
-    The last term refers to the usual local trend in ETS model. However, there is an addition of dampening parameter $\lambda$, constrained such that  $-1<\lambda<1$, to reduce the strength of the local trend model. Although we allow $\lambda$ to be negative, and potentially have some counter-trending impact, in practice it is almost always >0.
+    The last term refers to the usual local trend in ETS model. However, there is an addition of dampening parameter $\lambda$, constrained such that  $0<\lambda<1$, to reduce the strength of the local trend model. 
  
 * **eq. 1.5. Heteroscedastic error**
 
@@ -168,7 +168,7 @@ $$\widehat{\sigma}_{t+1}= \sigma \widehat{y}_{t+1}^{ \tau}+ \xi \quad (eq. 3.6)$
 ## Model options
 So far we have described standard models, that are well tested and usually work well. The package provides also some additional variants that can be useful in some situations; they are described in the following sections
 
-### "Smoothed innovation" error size function
+### 1. "Smoothed innovation" error size function
 When the error size appears to have its own dynamics that isn't just reflection of the current expected value of the series, e.g. during periods of high-volatility on stock markets, a better function for error size may be one that is proportional to an average of absolute values of recent "innovations" or errors. The formula is:
 
 $$a_{t+1}= \eta \left| y_{t+1}-\widehat{y}_{t+1} \right| + \left( 1- \eta  \right) a_{t} \quad (eq. 4.1)$$
@@ -185,21 +185,22 @@ $$\widehat{\sigma}_{t+1}= \sigma a_{t+1}+ \xi \quad (eq. 4.2)$$
 This is an interesting option, but more demanding computationally and not advantegous for typical business series.
 
 
-### Generalized seasonality
+### 2. Generalized seasonality
 By default the models use multiplicative seasonality, as the additive seasonality is no good for series with strong trend. However the multiplicative seasonality may produce too strong seasonality effects in some cases. The generalized seasonality spans additive to additive seasonality and may be better choice in situations where the seasonality effect gets proportinally smaller with the series growth.
 
 #### Formulas for SGT with generalized seasonality
  
 $$y_{t+1} \sim Student \left( \nu,\widehat{y}_{t+1}, \sigma _{t+1} \right)  \quad (eq. 2.1) $$
-$$\widehat{y}_{t+1}= l_{t}+ \gamma l_{t}^{\rho} + s_{t+1}l_{t}^{\tau} \quad (eq. 5.2)$$
-$$l_{t+1}= \alpha \left( y_{t+1}-s_{t+1}l_{t}^{\tau} \right) + \left( 1- \alpha  \right) l_{t} \quad (eq. 5.3)$$ 
-$$s_{t+m+1}= \zeta  \frac{y_{t+1}-l_{t}-\gamma l_{t}^{\rho}}{l_{t}^{\tau}}+ \left( 1- \zeta  \right) s_{t+1}  \quad (eq. 5.4)$$
+$$\widehat{y}_{t+1}= l_{t}+ \gamma l_{t}^{\rho} + s_{t+1}l_{t}^{\theta} \quad (eq. 5.2)$$
+$$l_{t+1}= \alpha \left( y_{t+1}-s_{t+1}l_{t}^{\theta} \right) + \left( 1- \alpha  \right) l_{t} \quad (eq. 5.3)$$
+
+$$s_{t+m+1}= \zeta  \frac{y_{t+1}-l_{t+1}}{l_{t+1}^{\theta}}+ \left( 1- \zeta  \right) s_{t+1}  \quad (eq. 5.4)$$
 
 $$\widehat{\sigma}_{t+1}= \sigma \widehat{y}_{t+1}^{ \tau}+ \xi \quad (eq. 2.5)$$
 
 #### Additional parameters
  
-* $\tau$  : power coefficient of the generalized seasonality, between 0 and 1
+* $\theta$  : power coefficient of the generalized seasonality, between 0 and 1
 
 #### Notes on the model formulas
  
@@ -209,22 +210,33 @@ Three formulas are different as compared to the SGT model with multiplicative se
 
     Instead of multiplying by $s_{t+1}$ we are adding $s_{t+1}l_{t}^{\tau}$. It has interesting consequences: if ${\tau}$ is getting close to 0, $l_{t}^{\tau}$ gets close to 1 and then the whole term gets close to $s_{t+1}$ and we get the additive seasonality. However on the opposite end, when ${\tau}$ is getting close to 1, as in case of the nonlinear trend, we are getting the compound formula and the seasonality similar to the multiplicative one. Therefore the formula provides for the behavior that falls between additive and multiplicative seasonality.
     
-* **eq. 5.4. Seasonality update formula**
+Formulas for S2GT are modified along similar lines.
 
 
-## Prior Distributions for all Rlgt models
+### 3. "Seasonal average" method for calculating level
+This is an alternative method for calculating level in the seasonal models (SGT and S2GT). Instead of using Holt-Winters' style way, as in eq.2.3 and 3.3, the level is calculated as a moving average of last SEASONALITY points in case of SGT, and SEASONALITY2 points in case of S2GT. This apprach makes sense for series with stable or slowly changing level, and possible unimportant occasional flare-ups. The benefits ◄may include faster calculation and better accuracy.
 
-The default prior distributions of the parameters are given below:
 
-* $\sigma,\gamma,\varsigma$  : Cauchy distribution with 0 location value and the scale parameter equals to 1/200 of the maximum value of y
-* $b$    : Normal distribution with a mean of 0 and standard deviation of 1/200 of the maximum value of y.
-* $\phi$   : Uniform distribution between -1 and 1
-* $\alpha,\beta,\zeta, \delta$:  Uniform distribution between 0 and 1
-* $s_{t}, w_{t}$ : i.i.d Normal with a mean of 1 and standard deviation of 0.3 (before being normalised)
-* $\rho$   :  Uniform distribution between -0.5 and 1.0
+## Regression
+All model support additional regressors. The data needs to be passed as matrix (with number of columns equal to the number of regressors) to both rlgt (for training) and forecast functions. 
+
+
+## Prior Distributions 
+ 
+The prior distributions of parameters have their hyper parameters documented and available for tweaking, although most of the time it is not required. Perhaps the most likely hyperparameter to change would be POW_TREND_ALPHA which is the alpha parameter of Beta distribution of the global trend power coefficient. Occasionally it may be useful to increase it above 1, to say 3-6, to encourage higher curvature of the global trend. 
+
+The prior distributions of the parameters and their default limits (which can also be changed) are listed below:
+
+* $\gamma$ : Cauchy distribution with minimum value of 0 and the scale parameter equals to 1/200 of the maximum value of y
+* $\sigma$ :  Cauchy distribution with location value of 0 and the scale parameter equals to 1/200 of the maximum value of y
+* $\xi$ : Cauchy distribution with minimum value of MIN_SIGMA and the scale parameter equals to 1/200 of the maximum value of y
+* $\rho$  :  Scaled (to the default range of -0.5 and 1.0) Beta distribution
+* $\alpha, \beta, \eta, \lambda, \zeta, \delta, \tau, \theta$:  Uniform distribution between 0 and 1
 * $v$    : Uniform distribution between 2 and 20
-* $\tau$   : Beta distribution with shape parameters  $\alpha=1;\beta =1$
- 
-Note that some of these prior distributions can be adjusted by the users in the `rlgt` function.
- 
+Regression coefficients are drawn from (appropriately scaled) Cauchy distribution centered on 0. 
 
+## Additional notes
+
+### Non-integer seasonalities
+  The seasonal models support specifying non-integer seasonalities. Internally it is done through a partial allocation of newly calculated seasonality coefficients.
+  

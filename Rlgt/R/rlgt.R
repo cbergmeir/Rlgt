@@ -37,7 +37,7 @@ rlgt <- function(y,
 						seasonality=1, seasonality2=1, 
 						seasonality.type=c("multiplicative","generalized"),
 						error.size.method=c("std","innov"),
-						level.method=c("classical","seasAvg","seas2Avg"),
+						level.method=c("classical","seasAvg"),
             xreg = NULL,
             control=rlgt.control(), 
 						verbose=FALSE) {
@@ -53,9 +53,7 @@ rlgt <- function(y,
 	levelMethodId=0
 	if (level.method=="seasAvg") {
 		levelMethodId=1
-	} else if (level.method=="seas2Avg") {
-		levelMethodId=2
-	}	
+	} 
 	useGeneralizedSeasonality<-seasonality.type=="generalized"
 	useSmoothingMethodForError<-error.size.method=="innov"
 	nChains<-control$NUM_OF_CHAINS

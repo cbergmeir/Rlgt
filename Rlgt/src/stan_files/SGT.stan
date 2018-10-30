@@ -15,6 +15,7 @@ data {
 	int<lower=0,upper=1> USE_GENERALIZED_SEASONALITY;
 	int<lower=0,upper=1> USE_SMOOTHED_ERROR;
 	int<lower=0> NUM_OF_SEASON_INIT_CYCLES;
+	int<lower=0,upper=1> LEVEL_CALC_METHOD;  //0-classical, 1-avg over largest SEASONALITY 
 	int<lower=1> J;
 	matrix[N, J] xreg;  
 	vector<lower=0>[J] REG_CAUCHY_SD;
@@ -95,7 +96,7 @@ transformed parameters {
 			sumsu = sumsu+ initSu[i];
 		for (i in 1:SEASONALITY) 
 			s[i] = firstRatios[i]*initSu[i]*SEASONALITY/sumsu;	
-		l[1] = (y[1]-r[1])/s[1];
+		l[1] = (y[1]-r[1])/s[1];  //initialization for LEVEL_CALC_METHOD==0, it will get overwritten otherwise
 	}
 	s[N+SEASONALITY+1]=1;  //for integer seasonality the last value is not filled and Stan does not like it
 	s[SEASONALITY+1] = s[1];
@@ -108,14 +109,37 @@ transformed parameters {
 	
 	powTrend= (MAX_POW_TREND-MIN_POW_TREND)*powTrendBeta+MIN_POW_TREND;
 	expVal[1] = y[1];
+	
+	if (LEVEL_CALC_METHOD>0) {
+		movingSum=y[1]-r[1];
+		for (t in 2:SEASONALITY) 
+			movingSum=movingSum+y[t]-r[t];
+		newLevelP=movingSum/SEASONALITY;
+	
+		for (t in 1:SEASONALITY)
+			l[t] = newLevelP;
+	}
 
 	for (t in 2:N) {
+		if (LEVEL_CALC_METHOD>0 && t>SEASONALITY) 
+			movingSum=movingSum+(y[t]-r[t])-(y[t-SEASONALITY]-r[t-SEASONALITY]);
+		
 		if (USE_GENERALIZED_SEASONALITY) {
-		    l[t]  = levSm*(y[t] - s[t]*l[t-1]^powSeason -r[t]) + (1-levSm)*l[t-1] ;  //As usually, we skip global trend in the level update formula. Why? Becasue it works better :-)
-    		seasonalityP=sSm*(y[t] - l[t-1]- coefTrend*l[t-1]^powTrend -r[t])/l[t-1]^powSeason + (1-sSm)*s[t];
+			if (LEVEL_CALC_METHOD==0)
+				newLevelP=y[t] - s[t]*l[t-1]^powSeason -r[t];
+			else 
+				newLevelP=movingSum/SEASONALITY;
+			l[t]  = levSm*newLevelP + (1-levSm)*l[t-1];	
+		 
+    		seasonalityP=sSm*(y[t] - l[t] -r[t])/l[t]^powSeason + (1-sSm)*s[t];
     		expVal[t]=l[t-1]+ coefTrend*l[t-1]^powTrend + s[t]*l[t-1]^powSeason + r[t];
 		} else {	
-			l[t]  = levSm*(y[t]-r[t])/(s[t]) + (1-levSm)*l[t-1];
+			if (LEVEL_CALC_METHOD==0)
+				newLevelP=(y[t]-r[t])/s[t];
+			else 
+				newLevelP=movingSum/SEASONALITY;
+			l[t]  = levSm*newLevelP + (1-levSm)*l[t-1];			
+		
 			seasonalityP = sSm*(y[t]-r[t])/l[t]+(1-sSm)*s[t];
 			expVal[t]=(l[t-1]+ coefTrend*l[t-1]^powTrend)*s[t] + r[t];
 		}
