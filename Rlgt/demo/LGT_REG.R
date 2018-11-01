@@ -9,23 +9,22 @@ data("umcsent.example")
 # Data setup --------------------------------
 # predict initial unemployment claims of US based on google search data
 curr_series <- "consumer.sent"
-umcsent.example2 <- umcsent.example %>%
-  mutate_at(.vars = c("consumer.sent", "search.engine",
-                      "financial.planning", "bus.news",      
-                      "investing", "energy.utilities"),
-            .funs = log)
+# umcsent.example2 <- umcsent.example %>%
+#   mutate_at(.vars = c("consumer.sent", "search.engine",
+#                       "financial.planning", "bus.news",      
+#                       "investing", "energy.utilities"),
+#             .funs = log)
+
 sizeTestSet <- 24
-y  <- umcsent.example2$consumer.sent
+y  <- umcsent.example$consumer.sent
 y.train <- y[1:(length(y) - sizeTestSet)]
 
 # Regression Matrix
 x.mat <- as.matrix(
-  umcsent.example2[, c("search.engine",
+  umcsent.example[, c("search.engine",
                        "financial.planning", "bus.news",      
                        "investing", "energy.utilities")])
 					 
-x.mat=x.mat/10
-
 x.mat.train <- x.mat[1:(nrow(x.mat) - sizeTestSet),]
 x.mat.test <- x.mat[(nrow(x.mat) - sizeTestSet + 1):nrow(x.mat),]
 mod <- list()
