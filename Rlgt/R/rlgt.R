@@ -139,13 +139,16 @@ rlgt <- function(y,
 							 J=2, xreg=matrix(0,nrow=n, ncol=2), REG_CAUCHY_SD=rep(1,2)) #if this is a regression call, these three values will be overwritten in a moment below, I can't make it J==1, becasue then REG_CAUCHY_SD becomes number, not vector
   
   if (use.regression) {
-    data[['xreg']] <- xreg
-    data[['J']] <- ncol(xreg)
+    if (is.null(dim(xreg))) { # convert non-matrix to matrix
+      xreg <- as.matrix(xreg)
+    }
     if (nrow(xreg) != n) {
       stop("Error: Number of rows supplied in regression matrix does not match length of y!")
     }
-		regCauchySd=mean(y)/apply(xreg,2,mean)/control$CAUCHY_SD_DIV #vector
-		data[['REG_CAUCHY_SD']]=regCauchySd
+    data[['xreg']] <- xreg
+    data[['J']]    <- ncol(xreg)
+		regCauchySd <- mean(y)/apply(xreg,2,mean)/control$CAUCHY_SD_DIV #vector
+		data[['REG_CAUCHY_SD']] <- regCauchySd
   } 
 	
 	
@@ -166,7 +169,9 @@ rlgt <- function(y,
       )
 			if (use.regression) {
 				initializations[[irr]][['regCoef']] <- rnorm(ncol(xreg),mean=0, sd=regCauchySd)
+				dim(initializations[[irr]][['regCoef']]) <- ncol(xreg)
 				initializations[[irr]][['regOffset']] <- rnorm(1,mean=0, sd=mean(regCauchySd))
+				dim(initializations[[irr]][['regOffset']]) <- 1
 			}
 			if (useGeneralizedSeasonality) {
 				initializations[[irr]][['initSu']] <- rnorm(seasonality, mean=0, sd=min(y[1:seasonality])*0.003) 

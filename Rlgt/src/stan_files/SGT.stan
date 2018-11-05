@@ -16,7 +16,7 @@ data {
 	int<lower=0,upper=1> USE_SMOOTHED_ERROR;
 	int<lower=0> NUM_OF_SEASON_INIT_CYCLES;
 	int<lower=0,upper=1> LEVEL_CALC_METHOD;  //0-classical, 1-avg over largest SEASONALITY 
-	int<lower=1> J;
+	int<lower=0> J;
 	matrix[N, J] xreg;  
 	vector<lower=0>[J] REG_CAUCHY_SD;
 }
@@ -80,6 +80,8 @@ transformed parameters {
 	vector<lower=0>[N] smoothedInnovSize;
 	real seasonalityP;
 	real sumsu;
+	real newLevelP;
+	real movingSum=0;
 	
 	if (USE_REGRESSION)
 		r = xreg * regCoef + regOffset;

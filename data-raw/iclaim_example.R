@@ -2,7 +2,7 @@ library(Rlgt)
 library(gtrendsR)
 library(dplyr)
 library(lubridate)
-iclaim <- read.csv('./data-raw/ICNSA.csv', stringsAsFactors = FALSE)
+iclaim <- read.csv('../data-raw/ICNSA.csv', stringsAsFactors = FALSE)
 iclaim$DATE <- as.Date(iclaim$DATE)
 
 x <- gtrends(keyword = "unemployment", geo = "US")$interest_over_time
@@ -37,7 +37,7 @@ search.job.clean <- search.job %>%
   dplyr::select(date, hits) %>%
   rename(trend.job = hits)
 
-iclaims.example <- iclaim %>%
+iclaims.example.prestransform <- iclaim %>%
   rename(claims = ICNSA, week = DATE) %>%
   mutate(week = floor_date(week, unit = "weeks", week_start = 7) + 7,
          claims = claims / 1000) %>%
@@ -45,7 +45,10 @@ iclaims.example <- iclaim %>%
   inner_join(search.filling.clean, by = c('week' = 'date')) %>%
   inner_join(search.job.clean, by = c('week' = 'date')) 
 
-iclaims.example[,c('claims','trend.unemploy','trend.filling','trend.job')] <-
-  log(iclaims.example[,c('claims','trend.unemploy','trend.filling','trend.job')])
+iclaims.example <- iclaims.example.prestransform %>%
+  mutate_at(.vars = c("consumer.sent", "search.engine",
+                      "financial.planning", "bus.news",
+                      "investing", "energy.utilities"),
+            .funs = log)
 
-save(iclaims.example, file = './data/iclaims.example.RData')
+save(iclaims.example, file = './Rlgt/data/iclaims.example.rda')

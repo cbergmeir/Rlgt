@@ -1,7 +1,7 @@
 library(gtrendsR)
 library(dplyr)
 library(lubridate)
-umscent <- read.csv('./data-raw/UMCSENT.csv', stringsAsFactors = FALSE)
+umscent <- read.csv('../data-raw/UMCSENT.csv', stringsAsFactors = FALSE)
 umscent$DATE <- as.Date(umscent$DATE)
 
 # search engine
@@ -57,4 +57,4 @@ umcsent.example <- umcsent.example.prestransform %>%
                       "investing", "energy.utilities"),
             .funs = log)
 
-save(umcsent.example, file = './data/umcsent.example.RData')
+save(umcsent.example, file = './data/umcsent.example.rda')
