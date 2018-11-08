@@ -24,6 +24,17 @@ seasonality is also generalized between multiplicative and additive.
 
 2. In the vignette, we need one/some of the examples from the demo and go through them step by step (?) Which examples are suitable?
 
+We want 4 demo's in total:
+LGT
+SGT
+LGT_REG
+SGT_REG
+
+For LGT and SGT, we can use data from the forecast package, or M3, or R base (AirPassengers).
+
+We want one vignette with 4 sections. Do not use lynx in vignette, as seasonality is controversial. Or, if used, use it as 5th example.
+
+
 LGT_REG Runs LGT forecast with and without a regression component.
 lynx demo with the lynx dataset.
 SGT_REG Runs SGT forecast with and without a regression component.
@@ -58,5 +69,6 @@ S2GT_M4 demo gives me the same error, doesn't run.
 5. DESCRIPTION FILE: revise description with "main selling points"
 
 6. need to describe umcsent.example dataset in data.R
-
+See here how to document various datasets:
+https://github.com/robjhyndman/forecast/blob/master/R/data.R
 
