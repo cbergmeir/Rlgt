@@ -84,10 +84,10 @@ initModel <- function(model.type=NULL, use.regression=FALSE, useGeneralizedSeaso
 #' @description A constructor function for objects of class \code{rlgtfit}, the main class of the package. Objects of this class 
 #' are output from the \code{\link{rlgt}} function. This constructor will usually not be called by users directly.
 #' @param y time series data for training (provided as a vector or a ts object).
-#' @param model.type the type of rlgt model
+#' @param model.type the type of rlgt model, one of: "LGT", "SGT", "S2GT"
 #' @param use.regression whether the data has any additional variables to be used with forecasting, i.e. multivariate time-series.
 #' @param useGeneralizedSeasonality if generalized seasonality is to be used.
-#' @param levelMethodId used with dual seasonality models
+#' @param levelMethodId used with dual seasonality models, 0 is Holt-Winters, 1 is seasonalAvg.
 #' @param useSmoothingMethodForError if the non-standard function for error size should be used, one based on smoothed innovations or surprises 
 #' @param seasonality This specification of seasonality will be overridden by frequency of y, if y is of ts or msts class. 
 #' 1 by default, i.e. no seasonality.
