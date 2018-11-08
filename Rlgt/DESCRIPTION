@@ -2,7 +2,7 @@ Package: Rlgt
 Type: Package
 Title: Bayesian Exponential Smoothing Models with Trend Modifications
 Version: 0.1-0
-URL: TODO
+URL: https://github.com/cbergmeir/Rlgt
 Date: 
 Authors@R: c(
     person("Slawek", "Smyl", email = "slaweks@hotmail.co.uk", role = "aut"),

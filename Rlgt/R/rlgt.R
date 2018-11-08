@@ -10,7 +10,7 @@
 #' The latter seasonality generalizes additive and multiplicative seasonality types.
 #' @param error.size.method It chooses a function providing size of the error. Either "std" (monotonically, but slower than proportionally, growing with the series values) or 
 #' "innov" (proportional to a smoothed abs size of innovations, i.e. surprises)  
-#' @param level.method one of "classical", "seasAvg", or "seas2Avg"
+#' @param level.method one of "classical", "seasAvg", or "seas2Avg". Here, "classical" is normal Holt-Winters, with level divided by seasonality. "seasAvg" is with a window with the size of the seasonality, we take the median of the full seasonality, i.e., not y divided by the seasonality. "seas2Avg" is the same as seasAvg, taking as window the size of the larger of the two seasonalities.
 #' @param xreg Optionally, a vector or matrix of external regressors, which must have the same number of rows as y. Default is "std".
 #' @param control list of control parameters, e.g. hyperparameter values for the model's prior distributions, number of fitting interations etc.  
 #' @param verbose whether verbose information should be printed (Boolean value only), default \code{FALSE}.
