@@ -57,12 +57,6 @@ S2GT_M4 demo gives me the same error, doesn't run.
 
 5. DESCRIPTION FILE: revise description with "main selling points"
 
-6. need to describe seasonality, seasonality2 in rlgtfit (I just copied from rlgt)
-
-7. need to describe umcsent.example dataset in data.R
-
-8. rlgtfit: model.type, levelMethodId: What do these parameters do? Description is not good.
-
-rlgtfit is an internal function anyway.
+6. need to describe umcsent.example dataset in data.R
 
 
