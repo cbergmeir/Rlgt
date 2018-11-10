@@ -16,7 +16,7 @@ data {
 	int<lower=0,upper=1> USE_SMOOTHED_ERROR;
 	int<lower=0> NUM_OF_SEASON_INIT_CYCLES;
 	int<lower=0,upper=1> LEVEL_CALC_METHOD;  //0-classical, 1-avg over largest SEASONALITY 
-	int<lower=0> J;
+	int<lower=1> J;
 	matrix[N, J] xreg;  
 	vector<lower=0>[J] REG_CAUCHY_SD;
 }
@@ -38,7 +38,7 @@ transformed data {
 		  if (j==1) 
 		  	firstRatios[i] = y[i]*SEASONALITY/sumy;		//at this stage we do not have access to the regression
 		  else
-				firstRatios[i] = firstRatios[i]+y[(j-1)*SEASONALITY+i]*SEASONALITY/sumy;	   
+			firstRatios[i] = firstRatios[i]+y[(j-1)*SEASONALITY+i]*SEASONALITY/sumy;	   
 		j=j+1;
 	}
 	if (j>2) {
@@ -137,7 +137,7 @@ transformed parameters {
 				newLevelP=movingSum/SEASONALITY;
 			l[t]  = levSm*newLevelP + (1-levSm)*l[t-1];
 				
-    	seasonalityP=sSm*(y[t] - l[t] -r[t])/l[t]^powSeason + (1-sSm)*s[t];
+    		seasonalityP=sSm*(y[t] - l[t] -r[t])/l[t]^powSeason + (1-sSm)*s[t];
 		} else {
 			expVal[t]=(l[t-1]+ coefTrend*l[t-1]^powTrend)*s[t] + r[t];   //expVal[t] can't use y[t] or  anything derived from it
 			
