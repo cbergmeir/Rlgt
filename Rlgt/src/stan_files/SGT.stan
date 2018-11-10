@@ -29,19 +29,19 @@ transformed data {
 	for (i in 1:SEASONALITY) 
 		firstRatios[i]=1;	
 					
-	sumy = 0; j=1;
+	j=1;
  	while(j<=NUM_OF_SEASON_INIT_CYCLES && j*SEASONALITY<=N)  {
 		sumy=0; 
 		for (i in 1:SEASONALITY) 
 			sumy = sumy+ y[(j-1)*SEASONALITY+i];
 		for (i in 1:SEASONALITY) 
 		  if (j==1) 
-		  	firstRatios[i] = y[(j-1)*SEASONALITY+i]*SEASONALITY/sumy;		//at this stage we do not have access to the regression
+		  	firstRatios[i] = y[i]*SEASONALITY/sumy;		//at this stage we do not have access to the regression
 		  else
 				firstRatios[i] = firstRatios[i]+y[(j-1)*SEASONALITY+i]*SEASONALITY/sumy;	   
 		j=j+1;
 	}
-	if (j>1) {
+	if (j>2) {
 		j=j-1;
 		for (i in 1:SEASONALITY) {
 			firstRatios[i]=firstRatios[i]/j;
@@ -90,24 +90,26 @@ transformed parameters {
 		
 	if (USE_GENERALIZED_SEASONALITY) {
 		for (i in 1:SEASONALITY) 
-    		s[i] = initSu[i];
-    	l[1] = y[1] - r[1];
+			s[i] = initSu[i];
+		l[1] = y[1] - r[1];
 	} else {
 		sumsu = 0;
 		for (i in 1:SEASONALITY) 
-			sumsu = sumsu+ initSu[i];
-		for (i in 1:SEASONALITY) 
-			s[i] = firstRatios[i]*initSu[i]*SEASONALITY/sumsu;	
+			sumsu = sumsu+ fabs(initSu[i]);  //sampling statement for initSu[i] gives 0 probability for anything less than 0.01, but before it is rejected, a negative all sort of trouble, including triggering level<0 constraint   
+		for (i in 1:SEASONALITY) {
+			s[i] = firstRatios[i]*fabs(initSu[i])*SEASONALITY/sumsu;
+			//print(i," ",s[i]);
+		}	
 		l[1] = (y[1]-r[1])/s[1];  //initialization for LEVEL_CALC_METHOD==0, it will get overwritten otherwise
 	}
-	s[N+SEASONALITY+1]=1;  //for integer seasonality the last value is not filled and Stan does not like it
+	s[N+SEASONALITY+1]=1;  //in case of integer seasonality, the last value is not filled and Stan does not like it
 	s[SEASONALITY+1] = s[1];
 	s[SEASONALITY+2] = s[2]; //needed in case of non-integer seasonality, otherwise s[SEASONALITY+2] will get overwritten
 	
 	if (USE_SMOOTHED_ERROR)
 	  smoothedInnovSize[1]=innovSizeInit;
 	else
-	  smoothedInnovSize[1]=1;
+	  smoothedInnovSize[1]=1;  //has to have some value, not NA
 	
 	powTrend= (MAX_POW_TREND-MIN_POW_TREND)*powTrendBeta+MIN_POW_TREND;
 	expVal[1] = y[1];
@@ -127,15 +129,18 @@ transformed parameters {
 			movingSum=movingSum+(y[t]-r[t])-(y[t-SEASONALITY]-r[t-SEASONALITY]);
 		
 		if (USE_GENERALIZED_SEASONALITY) {
+			expVal[t]=l[t-1]+ coefTrend*l[t-1]^powTrend + s[t]*l[t-1]^powSeason + r[t];  //expVal[t] can't use y[t] or  anything derived from it 
+			
 			if (LEVEL_CALC_METHOD==0)
-				newLevelP=y[t] - s[t]*l[t-1]^powSeason -r[t];
+				newLevelP=y[t] - r[t] - s[t]*l[t-1]^powSeason ;
 			else 
 				newLevelP=movingSum/SEASONALITY;
-			l[t]  = levSm*newLevelP + (1-levSm)*l[t-1];	
-		 
-    		seasonalityP=sSm*(y[t] - l[t] -r[t])/l[t]^powSeason + (1-sSm)*s[t];
-    		expVal[t]=l[t-1]+ coefTrend*l[t-1]^powTrend + s[t]*l[t-1]^powSeason + r[t];
-		} else {	
+			l[t]  = levSm*newLevelP + (1-levSm)*l[t-1];
+				
+    	seasonalityP=sSm*(y[t] - l[t] -r[t])/l[t]^powSeason + (1-sSm)*s[t];
+		} else {
+			expVal[t]=(l[t-1]+ coefTrend*l[t-1]^powTrend)*s[t] + r[t];   //expVal[t] can't use y[t] or  anything derived from it
+			
 			if (LEVEL_CALC_METHOD==0)
 				newLevelP=(y[t]-r[t])/s[t];
 			else 
@@ -143,7 +148,6 @@ transformed parameters {
 			l[t]  = levSm*newLevelP + (1-levSm)*l[t-1];			
 		
 			seasonalityP = sSm*(y[t]-r[t])/l[t]+(1-sSm)*s[t];
-			expVal[t]=(l[t-1]+ coefTrend*l[t-1]^powTrend)*s[t] + r[t];
 		}
 		
 		if (fractSeasonality>0) {
@@ -155,7 +159,7 @@ transformed parameters {
 		if (USE_SMOOTHED_ERROR)
 			smoothedInnovSize[t]=innovSm*fabs(y[t]-expVal[t])+(1-innovSm)*smoothedInnovSize[t-1];
 		else	
-			smoothedInnovSize[t]=1;
+			smoothedInnovSize[t]=1;  //has to have some value, not NA 
 	}
 }
 model {
@@ -177,7 +181,7 @@ model {
 			initSu[t] ~ cauchy (0, y[t]*0.1);	
 	} else
 		for (t in 1:SEASONALITY) 
-    		initSu[t] ~ cauchy (1, 0.3) T[0.01,];
+    	initSu[t] ~ cauchy (1, 0.3) T[0.01,];
 	
 	for (t in 2:N) {
 	  if (USE_SMOOTHED_ERROR==0)
@@ -186,3 +190,4 @@ model {
 	  	y[t] ~ student_t(nu, expVal[t], sigma*smoothedInnovSize[t-1] + offsetSigma);
 	}
 }
+

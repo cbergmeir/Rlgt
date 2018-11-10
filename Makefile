@@ -25,10 +25,6 @@ roxy:
 	R CMD BATCH tmp_roxy.R
 	cd ./$(rPackageName) && sed -i 's/\(Date: \).*/Date: '"$(newDate)"'/' DESCRIPTION
 	cd ./$(rPackageName) && sed -i -e 's/\".registration=TRUE\"/.registration=TRUE/' NAMESPACE
-ifeq ($(OS),Windows_NT)
-	icacls $(rPackageName)/DESCRIPTION /reset
-	icacls $(rPackageName)/NAMESPACE /reset
-endif
 	
 clean:
 	rm -rf $(rPackageName)_$(rPackageVersion).tar.gz $(rPackageName).Rcheck
