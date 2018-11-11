@@ -34,7 +34,7 @@ transformed data {
 		firstRatios[i]=1;	
 					
 	j=1;
- 	while(j<=NUM_OF_SEASON_INIT_CYCLES && j*SEASONALITY<=N)  {
+ 	while(j<=NUM_OF_SEASON_INIT_CYCLES*SEASONALITY2/SEASONALITY && j*SEASONALITY<=N)  {
 		sumy=0; 
 		for (i in 1:SEASONALITY) 
 			sumy = sumy+ y[(j-1)*SEASONALITY+i];
@@ -49,7 +49,7 @@ transformed data {
 		j=j-1;
 		for (i in 1:SEASONALITY) {
 			firstRatios[i]=firstRatios[i]/j;
-			print(firstRatios[i]) ;	
+			//print(firstRatios[i]) ;	
 		}
 	}	
 	
@@ -80,7 +80,7 @@ transformed data {
 		j=j-1;
 		for (i in 1:SEASONALITY2) {
 			firstRatios2[i]=firstRatios2[i]/j;
-			print(i, " ",firstRatios2[i]);
+			//print(i, " ",firstRatios2[i]);
 		}
 	}
 		

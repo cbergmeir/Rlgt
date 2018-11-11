@@ -44,28 +44,30 @@ i<-1; forecasts=list()
 sumSMAPE=0; sumQ99Loss=0; sumQ95Loss=0; sumQ5Loss=0;
 numOfCases95pExceeded=0; numOfCases5pExceeded=0;
 
-#
+
+# ways to pass seasonal data
 for (i in 1:3) {
-	seriesName=hourly[[i]]$st
+	ii=sample(NUM_OF_CASES,1)
+	seriesName=hourly[[ii]]$st
 	print(paste("starting",seriesName))
 	
 	if (i==1) {  #just for demo and testing. In your code stick to one of the alternatives
-		trainData = as.numeric(hourly[[i]]$x) #"naked" vector, so both seasonalities need to be specified in control
-		actuals = as.numeric(hourly[[i]]$xx) # actuals have to be matching trainData; both are of numeric class
+		trainData = as.numeric(hourly[[ii]]$x) #"naked" vector, so both seasonalities need to be specified in control
+		actuals = as.numeric(hourly[[ii]]$xx) # actuals have to be matching trainData; both are of numeric class
 		rstanmodel <- rlgt(trainData, seasonality=SEASONALITY, seasonality2=SEASONALITY2,
 			control=rlgt.control(MAX_NUM_OF_REPEATS=3, NUM_OF_ITER=2000, #longer time series, say several hundred points-long, require smaller number of iterations
 			MAX_TREE_DEPTH = 12), 
 			verbose=TRUE)	
 	}	else if (i==2) {
-		trainData = hourly[[i]]$x # trainData is of ts class, so the SEASONALITY will be extracted from it. SEASONALITY2 has to be specified,  
-		actuals = hourly[[i]]$xx  # class of actuals has to be the same as one of trainData; both are of ts class
+		trainData = hourly[[ii]]$x # trainData is of ts class, so the SEASONALITY will be extracted from it. SEASONALITY2 has to be specified,  
+		actuals = hourly[[ii]]$xx  # class of actuals has to be the same as one of trainData; both are of ts class
 		rstanmodel <- rlgt(trainData, seasonality2=SEASONALITY2,
 			control=rlgt.control(MAX_NUM_OF_REPEATS=3, NUM_OF_ITER=2000), 
 			verbose=TRUE)			
 	}	else if (i==3){
 		#we convert input and actuals from ts to msts class
-		trainData=msts(hourly[[i]]$x, seasonal.periods=c(SEASONALITY,SEASONALITY2), ts.frequency =SEASONALITY, start=start(hourly[[i]]$x))
-		actuals=msts(hourly[[i]]$xx, seasonal.periods=c(SEASONALITY,SEASONALITY2), ts.frequency =SEASONALITY, start=start(hourly[[i]]$xx))
+		trainData=msts(hourly[[ii]]$x, seasonal.periods=c(SEASONALITY,SEASONALITY2), ts.frequency =SEASONALITY, start=start(hourly[[ii]]$x))
+		actuals=msts(hourly[[ii]]$xx, seasonal.periods=c(SEASONALITY,SEASONALITY2), ts.frequency =SEASONALITY, start=start(hourly[[ii]]$xx))
 		rstanmodel <- rlgt(trainData,  
 			control=rlgt.control(MAX_NUM_OF_REPEATS=3, NUM_OF_ITER=2000),
 			verbose=TRUE)
@@ -101,15 +103,17 @@ for (i in 1:3) {
 }	
 	
 
+#just exercising every possible combination of options
 i=4
 for (seasonality.type in c("multiplicative","generalized")){
-	for (level.method in c("classical","seasAvg","seas2Avg")) {
+	for (level.method in c("classical","seasAvg")) {
 		for (error.size.method in c("std","innov")) {
-			seriesName=hourly[[i]]$st
+			ii=sample(NUM_OF_CASES,1)
+			seriesName=hourly[[ii]]$st
 			print(paste("starting",seriesName))
-			
-			trainData = hourly[[i]]$x 
-			actuals = hourly[[i]]$xx  
+			ii=sample(NUM_OF_CASES,1)
+			trainData = hourly[[ii]]$x 
+			actuals = hourly[[ii]]$xx  
 			rstanmodel <- rlgt(trainData,seasonality2=SEASONALITY2, 
 					seasonality.type=seasonality.type, level.method=level.method, error.size.method=error.size.method, 
 					verbose=TRUE)					
@@ -142,7 +146,7 @@ for (seasonality.type in c("multiplicative","generalized")){
 			q5Loss=quantileLoss(forec$lower[,1], actuals, 0.05)
 			sumQ5Loss=sumQ5Loss+q5Loss
 			print(paste0(seriesName," sMAPE:",signif(sMAPE,3) ,' q5Loss:',signif(q5Loss,3),' q95Loss:',signif(q95Loss,3),' q99Loss:',signif(q99Loss,3) ))
-			i=i+1
+			i=i+1    #needed for summaries
 		}
 	}
 }
@@ -157,11 +161,3 @@ print(paste0("SUMMARY: Num of cases:", i, ", sMAPE:",signif(sMAPE,4),
   ', % of time 95p exceeded:',signif(exceed95,4), ', % of time 5p exceeded:',signif(exceed5,4), 
 	', q5Loss:',signif(q5Loss,4),', q95Loss:',signif(q95Loss,4),', q99Loss:',signif(q99Loss,4) ))
 
-
-# indx=223  this not 24 hour seasonality!!
-# indx=105
-# y=hourly[[indx]]$x
-# y=as.numeric(hourly[[indx]]$x)
-# plot(y[(length(y)-48+1):length(y)], main=indx, type='b')
-# plot(y[(length(y)-168+1):length(y)], main=indx, type='b')
-# a=acf(y)
