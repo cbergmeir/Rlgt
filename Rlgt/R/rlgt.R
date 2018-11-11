@@ -87,8 +87,8 @@ rlgt <- function(y,
 			model.type="LGT"
 	}
 		
-	if (seasonality2<=1 && levelMethodId!=0) {
-		print("Warning: nonstandard level methods implemented only for dual seasonality models. level.method will be ignored")
+	if (seasonality<=1 && seasonality2<=1 && levelMethodId!=0) {
+		print("Warning: nonstandard level methods implemented only for seasonality models")
 	}  
 	
   model <- initModel(model.type = model.type,   #here
@@ -148,6 +148,7 @@ rlgt <- function(y,
     data[['xreg']] <- xreg
     data[['J']]    <- ncol(xreg)
 		regCauchySd <- mean(y)/apply(xreg,2,mean)/control$CAUCHY_SD_DIV #vector
+		if (ncol(xreg)==1) dim(regCauchySd)=1
 		data[['REG_CAUCHY_SD']] <- regCauchySd
   } 
 	
@@ -169,9 +170,8 @@ rlgt <- function(y,
       )
 			if (use.regression) {
 				initializations[[irr]][['regCoef']] <- rnorm(ncol(xreg),mean=0, sd=regCauchySd)
-				dim(initializations[[irr]][['regCoef']]) <- ncol(xreg)
+				if (ncol(xreg)==1) dim(initializations[[irr]][['regCoef']])=1
 				initializations[[irr]][['regOffset']] <- rnorm(1,mean=0, sd=mean(regCauchySd))
-				dim(initializations[[irr]][['regOffset']]) <- 1
 			}
 			if (useGeneralizedSeasonality) {
 				initializations[[irr]][['initSu']] <- rnorm(seasonality, mean=0, sd=min(y[1:seasonality])*0.003) 

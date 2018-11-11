@@ -28,6 +28,8 @@
 #' @export
 
  
+#object=regModel; xreg=regTrain; level=c(80,95); NUM_OF_TRIALS=2000 
+#library(sn)
 forecast.rlgtfit <- function(object, 
                              xreg=NULL,
                              h=ifelse(frequency(object$x)>1, 
@@ -35,6 +37,9 @@ forecast.rlgtfit <- function(object,
                              level=c(80,95),
                              NUM_OF_TRIALS=2000, ...) {
   
+	if (!is.null(xreg) && is.null(dim(xreg))) { # convert non-matrix to matrix
+		 xreg <- as.matrix(xreg)
+	}												 
   # check if you have non-null and names matched xreg...
   has.regression <- !is.null(xreg)
   # this is different from object$use.regression.  

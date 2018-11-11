@@ -1,6 +1,6 @@
 #install.packages("dplyr")
 library(Rlgt)
-library(rstan)
+#library(rstan)
 library(dplyr)
 #set.seed(12)
 options(width=180)
@@ -32,7 +32,7 @@ forecasts <- list()
 #--------------------------------
 #Fit LGT model without Regression 
 mod[["LGT"]] <- rlgt(y.train, 
-                     control=rlgt.control(MAX_NUM_OF_REPEATS=2, NUM_OF_ITER=3000), 
+                     control=rlgt.control(MAX_NUM_OF_REPEATS=1, NUM_OF_ITER=3000), 
                      verbose=TRUE)
 # print the model details
 print(mod[["LGT"]])
@@ -43,13 +43,15 @@ forecasts[["LGT"]] <- forecast(mod[["LGT"]],
                                h = sizeTestSet,
                                level=c(80, 95, 98))
 plot(forecasts[["LGT"]], main=paste(curr_series,'by LGT'))
-lines(y, col = 'red')
+xs=seq(from=length(y.train)+1,to=length(y.train)+ sizeTestSet)
+lines((length(y) -sizeTestSet + 1):length(y),y[(length(y) -sizeTestSet + 1):length(y)], col=1, type='b',lwd=2)	
+
 
 #--------------------------------
 #Fit LGT model with Regression 
 mod[["LGT_REG"]] <- rlgt(y.train, 
                          xreg = x.mat.train,
-                         control=rlgt.control(MAX_NUM_OF_REPEATS=2, NUM_OF_ITER=3000), 
+                         control=rlgt.control(MAX_NUM_OF_REPEATS=1, NUM_OF_ITER=3000), 
                          verbose=TRUE)
 # print the model details
 print(mod[["LGT_REG"]])
@@ -61,4 +63,5 @@ forecasts[["LGT_REG"]] <- forecast(mod[["LGT_REG"]],
                                    x.mat.test,
                                    level=c(80, 95, 98))
 plot(forecasts[["LGT_REG"]], main=paste(curr_series,'by LGT with Regression'))
-lines(y, col = 'red')
+xs=seq(from=length(y.train)+1,to=length(y.train)+ sizeTestSet)
+lines((length(y) -sizeTestSet + 1):length(y),y[(length(y) -sizeTestSet + 1):length(y)], col=1, type='b',lwd=2)	

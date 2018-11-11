@@ -214,7 +214,7 @@ Formulas for S2GT are modified along similar lines.
 
 
 ### 3. "Seasonal average" method for calculating level
-This is an alternative method for calculating level in the seasonal models (SGT and S2GT). Instead of using Holt-Winters' style way, as in eq.2.3 and 3.3, the level is calculated as a moving average of last SEASONALITY points in case of SGT, and SEASONALITY2 points in case of S2GT. This apprach makes sense for series with stable or slowly changing level, and possible unimportant occasional flare-ups. The benefits ◄may include faster calculation and better accuracy.
+This is an alternative method for calculating level in the seasonal models (SGT and S2GT). Instead of using Holt-Winters' style way, as in eq.2.3 and 3.3, the level is calculated as a moving average of last SEASONALITY points in case of SGT, and SEASONALITY2 points in case of S2GT. This apprach makes sense for series with stable or steadily changing level, and possible unimportant occasional flare-ups. The benefits ◄may include faster calculation and better accuracy.
 
 
 ## Regression
