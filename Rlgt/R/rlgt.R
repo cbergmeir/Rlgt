@@ -4,14 +4,16 @@
 #' @param seasonality This specification of seasonality will be overridden by frequency of y, if y is of ts or msts class. 
 #' 1 by default, i.e. no seasonality.
 #' @param seasonality2 Second seasonality. If larger than 1, a dual seasonality model will be used. 
-#' This specification of seasonality will be overridden by the second seasonality of y, if y is of msts class. 
-#' 1 by default, i.e. no seasonality or simgle seasonality.
+#' However, this is experimental. If not specified and multiple seasonality time series (of msts class) is used,
+#' a single seasonality model will be applied, one with seasonality equal to the largest of seasonalities of the time series. 
+#' 1 by default, i.e. no seasonality or single seasonality.
 #' @param seasonality.type Either "multiplicative" (default) or "generalized". 
 #' The latter seasonality generalizes additive and multiplicative seasonality types.
-#' @param error.size.method It chooses a function providing size of the error. Either "std" (monotonically, but slower than proportionally, growing with the series values) or 
+#' @param error.size.method Function providing size of the error. Either "std" (monotonically, but slower than proportionally, growing with the series values) or 
 #' "innov" (proportional to a smoothed abs size of innovations, i.e. surprises)  
-#' @param level.method one of "classical", "seasAvg", or "seas2Avg". Here, "classical" is normal Holt-Winters, with level divided by seasonality. "seasAvg" is with a window with the size of the seasonality, we take the median of the full seasonality, i.e., not y divided by the seasonality. "seas2Avg" is the same as seasAvg, taking as window the size of the larger of the two seasonalities.
-#' @param xreg Optionally, a vector or matrix of external regressors, which must have the same number of rows as y. Default is "std".
+#' @param level.method "classical" or "seasAvg". Here, "classical" follows Holt-Winters approach. 
+#' "seasAvg" calculates level as a smoothed average of the last seasonality number of points (or seasonality2 of them for the dual seasonality model)
+#' @param xreg Optionally, a vector or matrix of external regressors, which must have the same number of rows as y. 
 #' @param control list of control parameters, e.g. hyperparameter values for the model's prior distributions, number of fitting interations etc.  
 #' @param verbose whether verbose information should be printed (Boolean value only), default \code{FALSE}.
 #' @return \code{\link{rlgtfit}} object
@@ -62,8 +64,11 @@ rlgt <- function(y,
 	use.regression <- !is.null(xreg)
 	
 	if (inherits(y,'msts')) {
-		seasonality=attributes(y)$msts[1]
-		seasonality2=attributes(y)$msts[2]
+		if (seasonality2<=1) {
+			seasonality=max(attributes(y)$msts)
+		} else {
+			seasonality=min(attributes(y)$msts)
+		}
 	} else if (inherits(y,'ts')) {
 		seasonality=frequency(y)
 	} 

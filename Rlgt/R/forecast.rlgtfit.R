@@ -29,6 +29,7 @@
 
  
 #object=regModel; xreg=regTrain; level=c(80,95); NUM_OF_TRIALS=2000 
+#object=rstanmodel; h = length(actuals); level=c(80,95); NUM_OF_TRIALS=2000
 #library(sn)
 forecast.rlgtfit <- function(object, 
                              xreg=NULL,
@@ -94,17 +95,18 @@ forecast.rlgtfit <- function(object,
   
   out <- list(model=object,x=object$x)
   #' @importFrom stats tsp
-  #' @importFrom stats tsp<-
-  tspx <- tsp(out$x)
   
   # start.f is the next(first) forecast period
-  if (!is.null(tspx)) {
-    start.f <- tspx[2] + 1/frequency(out$x)
-  } else if (seasonality>1){ #input data is numeric, but seasonality(ies) specified in control
-		start.f <- length(out$x)+1./seasonality
-	} else {
-    start.f <- length(out$x)+1
-  }
+	tspx <- tsp(out$x)
+	if (inherits(out$x,'msts') && !is.null(tspx)) {
+			start.f <- tspx[2] + 1/frequency(out$x)  
+	} else if (inherits(out$x,'ts') && !is.null(tspx)) {
+		#' @importFrom stats tsp
+		start.f <- tspx[2] + 1/frequency(out$x)
+	} else {#this can be seasonal, but numeric, with seasonality(ies) specified in control
+		start.f <- length(out$x)+1
+	}
+	
   
   # extracting all of the params
   nu <- object$params[["nu"]]
@@ -119,7 +121,6 @@ forecast.rlgtfit <- function(object,
       stop("Error: Number of regression coefficients does not match matrix supplied.")
     }
   }
-  
   
   #these initializations are important, do not remove. (at least some of them :-)
   nuS=Inf; bSmS=0; bS=0; locTrendFractS=0; #t=1; irun=1
@@ -336,14 +337,14 @@ forecast.rlgtfit <- function(object,
 		out$upper <- t(avgYfs[(indexOfMedian+1):(indexOfMedian+length(upperPercentiles)),])
 	}
 	
-	if (inherits(out$x,'msts')) {
+	if (inherits(out$x,'msts') && !is.null(tspx)) {
 		#' @importFrom forecast msts
-		out$mean <- msts(out$mean, seasonal.periods=c(seasonality,seasonality2), ts.frequency =seasonality, start=start.f)  
+		out$mean <- msts(out$mean, seasonal.periods=attributes(out$x)$msts, start=start.f)  
 		if (indexOfMedian > 1) {
-			out$lower <- msts(out$lower, seasonal.periods=c(seasonality,seasonality2), ts.frequency =seasonality, start=start.f)
-			out$upper <- msts(out$upper, seasonal.periods=c(seasonality,seasonality2), ts.frequency =seasonality, start=start.f)
+			out$lower <- msts(out$lower, seasonal.periods=attributes(out$x)$msts, start=start.f)
+			out$upper <- msts(out$upper, seasonal.periods=attributes(out$x)$msts, start=start.f)
 		}	 
-	} else if (inherits(out$x,'ts')) {
+	} else if (inherits(out$x,'ts') && !is.null(tspx)) {
 		#' @importFrom stats ts
 		out$mean <- ts(out$mean, frequency=seasonality, start=start.f) 
 		if (indexOfMedian > 1) {
