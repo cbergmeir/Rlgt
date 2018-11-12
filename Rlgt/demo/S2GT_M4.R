@@ -1,4 +1,4 @@
-# Testing dual seasonalty method S2GT on hourly subset of the M4 Forecasting Competition set
+# Testing dual seasonalty method S2GT and SGT on hourly subset of the M4 Forecasting Competition set
 # We are showing three ways of passing data: as a vector of numbers, ts, or msts object.
 #Then, we are tryin all possible combinations of seasonality types, error and level methods.
 #These are long series and dual seasonality models are more complicated to fit, 
@@ -54,18 +54,18 @@ for (i in 1:3) {
 	if (i==1) {  #just for demo and testing. In your code stick to one of the alternatives
 		trainData = as.numeric(hourly[[ii]]$x) #"naked" vector, so both seasonalities need to be specified in control
 		actuals = as.numeric(hourly[[ii]]$xx) # actuals have to be matching trainData; both are of numeric class
-		rstanmodel <- rlgt(trainData, seasonality=SEASONALITY, seasonality2=SEASONALITY2,
+		rstanmodel <- rlgt(trainData, seasonality=SEASONALITY, seasonality2=SEASONALITY2, #specifying seasonality2 means we are running S2GT 
 			control=rlgt.control(MAX_NUM_OF_REPEATS=3, NUM_OF_ITER=2000, #longer time series, say several hundred points-long, require smaller number of iterations
 			MAX_TREE_DEPTH = 12), 
 			verbose=TRUE)	
 	}	else if (i==2) {
 		trainData = hourly[[ii]]$x # trainData is of ts class, so the SEASONALITY will be extracted from it. SEASONALITY2 has to be specified,  
 		actuals = hourly[[ii]]$xx  # class of actuals has to be the same as one of trainData; both are of ts class
-		rstanmodel <- rlgt(trainData, seasonality2=SEASONALITY2,
+		rstanmodel <- rlgt(trainData, seasonality2=SEASONALITY2,  #specifying seasonality2 means we are running S2GT
 			control=rlgt.control(MAX_NUM_OF_REPEATS=3, NUM_OF_ITER=2000), 
 			verbose=TRUE)			
 	}	else if (i==3){
-		#we convert input and actuals from ts to msts class
+		#we convert input and actuals from ts to msts class. Alsthous msts has both seasonalities, but seasonality2 not specified -> we are running SGT
 		trainData=msts(hourly[[ii]]$x, seasonal.periods=c(SEASONALITY,SEASONALITY2), ts.frequency =SEASONALITY, start=start(hourly[[ii]]$x))
 		actuals=msts(hourly[[ii]]$xx, seasonal.periods=c(SEASONALITY,SEASONALITY2), ts.frequency =SEASONALITY, start=start(hourly[[ii]]$xx))
 		rstanmodel <- rlgt(trainData,  
@@ -114,7 +114,7 @@ for (seasonality.type in c("multiplicative","generalized")){
 			ii=sample(NUM_OF_CASES,1)
 			trainData = hourly[[ii]]$x 
 			actuals = hourly[[ii]]$xx  
-			rstanmodel <- rlgt(trainData,seasonality2=SEASONALITY2, 
+			rstanmodel <- rlgt(trainData,  #seasonality2=SEASONALITY2, seasonality2 not specified -> we are running SGT   
 					seasonality.type=seasonality.type, level.method=level.method, error.size.method=error.size.method, 
 					verbose=TRUE)					
 			forec= forecast(rstanmodel, h = H, level=c(90,98))

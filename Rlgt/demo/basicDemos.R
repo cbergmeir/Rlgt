@@ -12,7 +12,7 @@ if (.Platform$OS.type=="windows")  memory.limit(6000)
 ################ LGT
 theDataSet=BJsales 
 
-tsdisplay(theDataSet)
+#tsdisplay(theDataSet)
 frequency(theDataSet)
 
 horizon=10
@@ -29,7 +29,7 @@ xs=seq(from=length(train)+1,to=length(train)+ length(actuals))
 lines(xs,actuals, col=1, type='b',lwd=2)	
 
 sMAPE=mean(abs(forec$mean-actuals)/(forec$mean+actuals))*200
-print(paste("sMAPE:",signif(sMAPE,3)))
+print(paste("sMAPE:",signif(sMAPE,3),"%"))
 
 
 ################ LGT with regression
@@ -49,13 +49,13 @@ xs=seq(from=length(train)+1,to=length(train)+ length(actuals))
 lines(xs,actuals, col=1, type='b',lwd=2)	
 
 sMAPE=mean(abs(forec$mean-actuals)/(forec$mean+actuals))*200
-print(paste("sMAPE:",signif(sMAPE,3)))
+print(paste("sMAPE:",signif(sMAPE,3),"%"))
 
 
 ################### SGT, time series input and forecast
 theDataSet=AirPassengers
 
-tsdisplay(theDataSet)
+#tsdisplay(theDataSet)
 frequency(theDataSet)
 tspOrg <- tsp(theDataSet)
 
@@ -85,7 +85,7 @@ print(paste("sMAPE:",signif(sMAPE,3),"%"))
 ################### SGT, numeric input and forecast
 theDataSet=AirPassengers
 
-tsdisplay(theDataSet)
+#tsdisplay(theDataSet)
 frequency(theDataSet)
 
 horizon=2*frequency(theDataSet)
@@ -109,7 +109,7 @@ print(paste("sMAPE:",signif(sMAPE,3),"%"))
 #########################  SGT on dual-seasonality time series, msts input and forecast
 theDataSet=taylor
 
-tsdisplay(theDataSet)
+#tsdisplay(theDataSet)
 
 #taylor is a dual seasonality time series (48,336), but is treated as a single seasonality series of the larger frequency (336)
 seasonality=frequency(theDataSet)  #larger seasonality

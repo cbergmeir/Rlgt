@@ -1,10 +1,13 @@
-# Test S2GT - M4 hourly data
-# The dual seasonaloty models (S2GT) require substantially more computations than the single sesaonlity models (SGT),
-# so offer a good opportunity to showcase parallel execution. We will use all cores on the server - the more of them the faster the whole process will be.
+# Test SGT or S2GT on M4 hourly data
+# We will run in par alle, utilizinge all cores on the server - the more of them the faster the whole process will be.
 # We will  go through all of the over 400 series, but in around 5% cases, where the seasonality does not appear to be (24,168)
 # we switch to SGT. See at the bottom for a piece of code that helped to uncover these irregular cases.
 # You can see the progress by opening (and refreshing) M4Hourly.html in S2GT_M4 subdirectory of your working directory.
+# New: The code may run i mostly S2GT mode (as explained above)
+# or purely SGT, using as the seasonality 168, just change the logical variable below
 
+USE_S2GT_ONLY=TRUE
+level.method="classical"; #"seasAvg"
 
 library(Rlgt)
 # install.packages("devtools")
@@ -18,8 +21,13 @@ if (.Platform$OS.type=="windows")  memory.limit(10000)
 imageWidth=1000; imageHeight=400
 
 H=48
-SEASONALITY=24
-SEASONALITY2=168
+if (!USE_S2GT_ONLY) {
+	SEASONALITY=24
+	SEASONALITY2=168
+} else {
+	SEASONALITY=168
+	SEASONALITY2=1
+}
 
 #names(M4[[1]])
 hourly=Filter(function(l) l$period == "Hourly", M4)
@@ -103,12 +111,16 @@ ret_df=foreach(i=1:NUM_OF_CASES, .combine=rbind, .inorder=FALSE, .packages=c("Rl
 	actuals = hourly[[i]]$xx  
 	
 	if (is.null(unexpectedSeasonalityList[[as.character(i)]])) {
-		rstanmodel <- rlgt(trainData,seasonality2=SEASONALITY2,verbose=TRUE)
+		rstanmodel <- rlgt(trainData,seasonality2=SEASONALITY2, #but if SEASONALITY2==1, then we are usiing SGT
+				level.method=level.method,
+				verbose=TRUE)
 		startParToDisplay=4
 	} else {
 		trainData = as.numeric(trainData) #to remove incorrect frequency stamp
 		actuals = as.numeric(actuals)
-		rstanmodel <- rlgt(trainData, seasonality=unexpectedSeasonalityList[[as.character(i)]], verbose=TRUE) #use SGT
+		rstanmodel <- rlgt(trainData, seasonality=unexpectedSeasonalityList[[as.character(i)]], 
+				level.method=level.method,
+				verbose=TRUE) #use SGT
 		startParToDisplay=3
 	}
 					
