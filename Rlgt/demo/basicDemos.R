@@ -139,9 +139,9 @@ print(paste("sMAPE:",signif(sMAPE,3),"%"))
 #########################  SGT on dual-seasonality time series, numeric input and forecast
 theDataSet=taylor
 
-tsdisplay(theDataSet)
+#tsdisplay(theDataSet)
 
-#taylor is a dual seasonality time series (48,336), but is treated as a single seasonality series of the larger frequency (336)
+#taylor is a dual seasonality time series (48,336), but is treated here as a single seasonality series of the larger frequency (336)
 seasonality=frequency(theDataSet)  #larger seasonality
 horizon=seasonality
 train=theDataSet[(seasonality+1):(3*seasonality)]  #using weeks 2 and 3

@@ -142,6 +142,7 @@ The model is similar to the non-seasonal LGT model described above. There are co
 ## S2GT (Double Seasonal, Global Trend)
  
 S2GT model is an extension of SGT model to be used on time series with two seasonalities. A classic example of this type of data is hourly electricity consumption which is affected by the time of the day as well as the day of the week. Such series can be modelled with dual 24 and 168 (=7*24) seasonality. We follow here Taylor (2003).
+Work on this algorithm is still ongoing, it is usually better to use the SGT model with seasonality equal to the maximum of a multiple seasonalities of the series, e.g. 168 for hourly data with weekly cycle.   
  
 ### Model formulas
 $$y_{t+1} \sim Student \left( \nu,\widehat{y}_{t+1}, \sigma _{t+1} \right)  \quad (eq. 3.1) $$

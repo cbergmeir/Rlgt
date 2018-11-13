@@ -339,10 +339,10 @@ forecast.rlgtfit <- function(object,
 	
 	if (inherits(out$x,'msts') && !is.null(tspx)) {
 		#' @importFrom forecast msts
-		out$mean <- msts(out$mean, seasonal.periods=attributes(out$x)$msts, start=start.f)  
+		out$mean <- msts(out$mean, seasonal.periods=attributes(out$x)$msts, ts.frequency=tspx[3], start=start.f)  #it is better to get it from the input series and not rely on seasonality(2)  
 		if (indexOfMedian > 1) {
-			out$lower <- msts(out$lower, seasonal.periods=attributes(out$x)$msts, start=start.f)
-			out$upper <- msts(out$upper, seasonal.periods=attributes(out$x)$msts, start=start.f)
+			out$lower <- msts(out$lower, seasonal.periods=attributes(out$x)$msts, ts.frequency=tspx[3], start=start.f)
+			out$upper <- msts(out$upper, seasonal.periods=attributes(out$x)$msts, ts.frequency=tspx[3], start=start.f)
 		}	 
 	} else if (inherits(out$x,'ts') && !is.null(tspx)) {
 		#' @importFrom stats ts

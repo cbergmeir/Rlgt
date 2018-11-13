@@ -26,33 +26,9 @@ transformed data {
 	real <lower=0,upper=1> fractSeasonality;
 	real <lower=0,upper=1> fractSeasonality2;
 	real<lower=0> reg0CauchySd=mean(REG_CAUCHY_SD)*10;
-	vector[SEASONALITY] firstRatios;    
 	vector[SEASONALITY2] firstRatios2;
 	real sumy; int j;   
-	
-	for (i in 1:SEASONALITY)
-		firstRatios[i]=1;	
-					
-	j=1;
- 	while(j<=NUM_OF_SEASON_INIT_CYCLES*SEASONALITY2/SEASONALITY && j*SEASONALITY<=N)  {
-		sumy=0; 
-		for (i in 1:SEASONALITY) 
-			sumy = sumy+ y[(j-1)*SEASONALITY+i];
-		for (i in 1:SEASONALITY) 
-		  if (j==1) 
-		  	firstRatios[i] = y[i]*SEASONALITY/sumy;		//at this stage we do not have access to the regression
-		  else
-			firstRatios[i] = firstRatios[i]+y[(j-1)*SEASONALITY+i]*SEASONALITY/sumy;	   
-		j=j+1;
-	}
-	if (j>2) {
-		j=j-1;
-		for (i in 1:SEASONALITY) {
-			firstRatios[i]=firstRatios[i]/j;
-			//print(firstRatios[i]) ;	
-		}
-	}	
-	
+		
 	if (SEASONALITY_F>SEASONALITY) {
 		fractSeasonality=SEASONALITY_F-SEASONALITY;
 		//print("Non-integer seasonality used.");
@@ -71,9 +47,9 @@ transformed data {
 			sumy = sumy+ y[(j-1)*SEASONALITY2+i];
 		for (i in 1:SEASONALITY2) 
 		  if (j==1) 
-		  	firstRatios2[i] = y[i]*SEASONALITY2/sumy/firstRatios[(i-1)%SEASONALITY+1];		//at this stage we do not have access to the regression
+		  	firstRatios2[i] = y[i]*SEASONALITY2/sumy;		//at this stage we do not have access to the regression
 		  else
-			firstRatios2[i] = firstRatios2[i]+y[(j-1)*SEASONALITY2+i]*SEASONALITY2/sumy/firstRatios[(i-1)%SEASONALITY+1];
+			firstRatios2[i] = firstRatios2[i]+y[(j-1)*SEASONALITY2+i]*SEASONALITY2/sumy;
 		j=j+1;
 	}
 	if (j>2) {
@@ -139,7 +115,7 @@ transformed parameters {
 		for (i in 1:SEASONALITY) 
 			sumsu = sumsu+ fabs(initSu[i]);  //sampling statement for initSu[i] gives 0 probability for anything less than 0.01, but before it is rejected, a negative all sort of trouble, including triggering level<0 constraint   
 		for (i in 1:SEASONALITY) 
-			s[i] = firstRatios[i]*fabs(initSu[i])*SEASONALITY/sumsu;	
+			s[i] = fabs(initSu[i])*SEASONALITY/sumsu;	
 		
 		sumsu = 0;
 		for (i in 1:SEASONALITY2) 

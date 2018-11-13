@@ -54,24 +54,42 @@ for (i in 1:3) {
 	if (i==1) {  #just for demo and testing. In your code stick to one of the alternatives
 		trainData = as.numeric(hourly[[ii]]$x) #"naked" vector, so both seasonalities need to be specified in control
 		actuals = as.numeric(hourly[[ii]]$xx) # actuals have to be matching trainData; both are of numeric class
-		rstanmodel <- rlgt(trainData, seasonality=SEASONALITY, seasonality2=SEASONALITY2, #specifying seasonality2 means we are running S2GT 
-			control=rlgt.control(MAX_NUM_OF_REPEATS=3, NUM_OF_ITER=2000, #longer time series, say several hundred points-long, require smaller number of iterations
-			MAX_TREE_DEPTH = 12), 
+		rstanmodel <- rlgt(trainData, seasonality=SEASONALITY, seasonality2=SEASONALITY2, #specifying seasonality2>1 means we are running S2GT 
+			control=rlgt.control(MAX_TREE_DEPTH = 12), 
 			verbose=TRUE)	
 	}	else if (i==2) {
-		trainData = hourly[[ii]]$x # trainData is of ts class, so the SEASONALITY will be extracted from it. SEASONALITY2 has to be specified,  
+		trainData = hourly[[ii]]$x # trainData is of ts class, so the SEASONALITY will be extracted from it.   
 		actuals = hourly[[ii]]$xx  # class of actuals has to be the same as one of trainData; both are of ts class
-		rstanmodel <- rlgt(trainData, seasonality2=SEASONALITY2,  #specifying seasonality2 means we are running S2GT
-			control=rlgt.control(MAX_NUM_OF_REPEATS=3, NUM_OF_ITER=2000), 
+		rstanmodel <- rlgt(trainData, seasonality2=SEASONALITY2,  #specifying seasonality2>1 means we are running S2GT
+			control=rlgt.control(MAX_RHAT_ALLOWED=1.01), 
 			verbose=TRUE)			
 	}	else if (i==3){
-		#we convert input and actuals from ts to msts class. Alsthous msts has both seasonalities, but seasonality2 not specified -> we are running SGT
+		#we convert input and actuals from ts to msts class. Although msts has both seasonalities
 		trainData=msts(hourly[[ii]]$x, seasonal.periods=c(SEASONALITY,SEASONALITY2), ts.frequency =SEASONALITY, start=start(hourly[[ii]]$x))
 		actuals=msts(hourly[[ii]]$xx, seasonal.periods=c(SEASONALITY,SEASONALITY2), ts.frequency =SEASONALITY, start=start(hourly[[ii]]$xx))
-		rstanmodel <- rlgt(trainData,  
-			control=rlgt.control(MAX_NUM_OF_REPEATS=3, NUM_OF_ITER=2000),
+ 		rstanmodel <- rlgt(trainData, seasonality2=SEASONALITY2,  #specifying seasonality2>1 means we are running S2GT
+			control=rlgt.control(NUM_OF_ITER=5000),
 			verbose=TRUE)
+	} else if (i==4) {  #just for demo and testing. In your code stick to one of the alternatives
+		trainData = as.numeric(hourly[[ii]]$x) #"naked" vector, so both seasonalities need to be specified in control
+		actuals = as.numeric(hourly[[ii]]$xx) # actuals have to be matching trainData; both are of numeric class
+		rstanmodel <- rlgt(trainData, seasonality=SEASONALITY, #no seasonality2 specified -> we are running SGT  
+				verbose=TRUE)	
+	}	else if (i==5) {
+		trainData = hourly[[ii]]$x # trainData is of ts class, so the SEASONALITY will be extracted from it.   
+		actuals = hourly[[ii]]$xx  # class of actuals has to be the same as one of trainData; both are of ts class
+		rstanmodel <- rlgt(trainData, #no seasonality2 specified -> we are running SGT
+				control=rlgt.control(ADAPT_DELTA=0.95, MAX_TREE_DEPTH = 12),
+				verbose=TRUE)			
+	}	else if (i==6){
+		#we convert input and actuals from ts to msts class. Although msts has both seasonalities
+		trainData=msts(hourly[[ii]]$x, seasonal.periods=c(SEASONALITY,SEASONALITY2), ts.frequency =SEASONALITY, start=start(hourly[[ii]]$x))
+		actuals=msts(hourly[[ii]]$xx, seasonal.periods=c(SEASONALITY,SEASONALITY2), ts.frequency =SEASONALITY, start=start(hourly[[ii]]$xx))
+		rstanmodel <- rlgt(trainData, #no seasonality2 specified -> we are running SGT
+				control=rlgt.control(MAX_NUM_OF_REPEATS=1, NUM_OF_ITER=5000),
+				verbose=TRUE)
 	}
+	
 	forec= forecast(rstanmodel, h = H, level=c(90,98))
 	forecasts[[seriesName]]<-list(mean=forec$mean, lower=forec$lower, upper=forec$upper)
 	# str(forec, max.level=1)
@@ -104,7 +122,7 @@ for (i in 1:3) {
 	
 
 #just exercising every possible combination of options
-i=4
+i=7
 for (seasonality.type in c("multiplicative","generalized")){
 	for (level.method in c("classical","seasAvg")) {
 		for (error.size.method in c("std","innov")) {
