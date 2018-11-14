@@ -21,7 +21,7 @@ if (.Platform$OS.type=="windows")  memory.limit(10000)
 imageWidth=1000; imageHeight=400
 
 H=48
-if (!USE_S2GT) {
+if (USE_S2GT) {
 	SEASONALITY=24
 	SEASONALITY2=168
 } else {
@@ -113,6 +113,7 @@ ret_df=foreach(i=1:NUM_OF_CASES, .combine=rbind, .inorder=FALSE, .packages=c("Rl
 	if (is.null(unexpectedSeasonalityList[[as.character(i)]])) {
 		rstanmodel <- rlgt(trainData,seasonality2=SEASONALITY2, #but if SEASONALITY2==1, then we are using SGT
 				level.method=level.method,
+				control=rlgt.control(NUM_OF_ITER=5000),   
 				verbose=TRUE)
 		startParToDisplay=4
 	} else {
@@ -120,6 +121,7 @@ ret_df=foreach(i=1:NUM_OF_CASES, .combine=rbind, .inorder=FALSE, .packages=c("Rl
 		actuals = as.numeric(actuals)
 		rstanmodel <- rlgt(trainData, seasonality=unexpectedSeasonalityList[[as.character(i)]], 
 				level.method=level.method,
+				control=rlgt.control(NUM_OF_ITER=5000),
 				verbose=TRUE) #use SGT
 		startParToDisplay=3
 	}
