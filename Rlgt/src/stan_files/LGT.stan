@@ -43,25 +43,24 @@ transformed parameters {
 	if (USE_REGRESSION)
 		r = xreg * regCoef + regOffset;
 	else 
-		r=rep_vector(0, N);	
+		r = rep_vector(0, N);	
 	
 	if (USE_SMOOTHED_ERROR)
-	  smoothedInnovSize[1]=innovSizeInit;
+	  smoothedInnovSize[1] = innovSizeInit;
 	else
-	  smoothedInnovSize[1]=1;
+	  smoothedInnovSize[1] = 1;
 	  
 	l[1] = y[1] - r[1]; 
 	b[1] = bInit;
-	powTrend= (MAX_POW_TREND-MIN_POW_TREND)*powTrendBeta+MIN_POW_TREND;
+	powTrend = (MAX_POW_TREND-MIN_POW_TREND)*powTrendBeta+MIN_POW_TREND;
 	expVal[1] = y[1];
 				
-
 	for (t in 2:N) {
-		expVal[t]=l[t-1]+coefTrend*l[t-1]^powTrend+locTrendFract*b[t-1]+r[t];
+		expVal[t] = l[t-1]+coefTrend*l[t-1] ^ powTrend+locTrendFract * b[t-1] + r[t];
 		l[t] = levSm*(y[t]-r[t]) + (1-levSm)*l[t-1] ;  
 		b[t] = bSm*(l[t]-l[t-1]) + (1-bSm)*b[t-1] ;
 		if (USE_SMOOTHED_ERROR)
-			smoothedInnovSize[t]=innovSm*fabs(y[t]-expVal[t])+(1-innovSm)*smoothedInnovSize[t-1];
+			smoothedInnovSize[t] = innovSm * fabs(y[t] - expVal[t]) + (1-innovSm) * smoothedInnovSize[t-1];
 		else	
 			smoothedInnovSize[t]=1;
 	}
@@ -83,8 +82,8 @@ model {
 	
 	for (t in 2:N) {
 	  if (USE_SMOOTHED_ERROR==0)
-	  	y[t] ~ student_t(nu, expVal[t], sigma*expVal[t]^powx+ offsetSigma);
+	  	y[t] ~ student_t(nu, expVal[t], sigma * expVal[t] ^ powx + offsetSigma);
 	  else
-	  	y[t] ~ student_t(nu, expVal[t], sigma*smoothedInnovSize[t-1] + offsetSigma);
+	  	y[t] ~ student_t(nu, expVal[t], sigma * smoothedInnovSize[t-1] + offsetSigma);
 	}
 }
