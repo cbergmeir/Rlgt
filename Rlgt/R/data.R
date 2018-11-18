@@ -56,7 +56,7 @@ NULL
 #' @keywords datasets
 #' @references 
 #' University of Michigan, University of Michigan: Consumer Sentiment [UMCSENT], retrieved from FRED, Federal Reserve Bank of St. Louis; 
-#' \urlhttps://fred.stlouisfed.org/series/UMCSENT, November 17, 2018.
+#' \url{https://fred.stlouisfed.org/series/UMCSENT}, November 17, 2018.
 #' @references
 #' Trends queries from google search engine. 
 #' \url{https://trends.google.com/trends/?geo=US}
