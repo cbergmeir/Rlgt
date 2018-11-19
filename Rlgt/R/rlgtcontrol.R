@@ -14,7 +14,7 @@
 #' @param CAUCHY_SD_DIV Cauchy distribution is used for some parameters with non-obvious range. The error size hyperparameter 
 #' of this distribution is calculated by dividing the max value of the time series by this constant. 
 #' Suggested range is between (100,300). Default 150.
-#' @param NUM_OF_ITER Starting number of iterations for each chain. Suggested range is between (2000,10000). Default is 4000.
+#' @param NUM_OF_ITER Starting number of iterations for each chain. Suggested range is between (2000,10000). Default is 5000.
 #' Generally, the longer the series, the smaller is the value to reach convergence. 
 #' Some models e.g. those with "innov" error size method are more difficult to fit and require more iterations. 
 #' @param MAX_NUM_OF_REPEATS Maximum number of the sampling procedure repeats if the fit is unsatisfactorily, i.e. avgRHat>MAX_RHAT_ALLOWED.
@@ -51,7 +51,7 @@ rlgt.control <- function(
 	NUM_OF_CORES=4,
 	ADD_JITTER=TRUE,
 	CAUCHY_SD_DIV=150,
-	NUM_OF_ITER=4000,
+	NUM_OF_ITER=5000,
 	MAX_NUM_OF_REPEATS=2,
 	MAX_RHAT_ALLOWED=1.006,
 	NUM_OF_SEASON_INIT_CYCLES=3,

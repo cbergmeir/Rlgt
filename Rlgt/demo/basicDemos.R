@@ -11,16 +11,13 @@ if (.Platform$OS.type=="windows")  memory.limit(6000)
 
 ################ LGT
 theDataSet=BJsales 
-
-#tsdisplay(theDataSet)
 frequency(theDataSet)
 
 horizon=10
 train=theDataSet[1:(length(theDataSet)-horizon)]
 actuals=theDataSet[(length(theDataSet)+1-horizon):length(theDataSet)]
 
-model <- rlgt(train, 
-		control=rlgt.control(NUM_OF_ITER=5000,MAX_NUM_OF_REPEATS=1)) #normally you would like to have more than 1 MAX_NUM_OF_REPEATS, e.g. default 2 or even 3   
+model <- rlgt(train) 
 
 forec= forecast(model, h = horizon)
 
@@ -33,14 +30,32 @@ print(paste("sMAPE:",signif(sMAPE,3),"%"))
 
 
 ################ LGT with regression
+theDataSet=BJsales 
 regDataSet=BJsales.lead 
+horizon=10
 
-regTrain=regDataSet[1:(length(theDataSet)-horizon)]
-regTest=regDataSet[(length(theDataSet)+1-horizon):length(theDataSet)]
+#following https://cran.r-project.org/web/packages/greybox/vignettes/greybox.html 
+regMatrix=matrix(0,nrow=length(regDataSet),ncol=2)
+lag=3; regMatrix[(lag+1):length(regDataSet),1]=regDataSet[1:(length(regDataSet)-lag)]
+lag=4; regMatrix[(lag+1):length(regDataSet),2]=regDataSet[1:(length(regDataSet)-lag)]
+
+train=theDataSet[1:(length(theDataSet)-horizon)]
+actuals=theDataSet[(length(theDataSet)+1-horizon):length(theDataSet)]
+
+regTrain=regMatrix[1:(length(theDataSet)-horizon),]
+regTest=regMatrix[(length(theDataSet)+1-horizon):length(theDataSet),]
 
 regModel <- rlgt(train, xreg = regTrain, 
-		control=rlgt.control(NUM_OF_ITER=5000), 
+		control=rlgt.control(NUM_OF_ITER=10000, MAX_NUM_OF_REPEATS=1),
 		verbose=TRUE)
+
+#str(regModel, max.level = 1)
+#?pairs.stanfit
+#pairs(regModel$sample, pars=c("coefTrend","powTrend","locTrendFract","sigma","offsetSigma","levSm","bSm","nu","powx","regCoef[1]","regCoef[2]","regOffset"))
+
+#regModel <- rlgt(train, xreg = regTrain, 
+#		control=rlgt.control(NUM_OF_ITER=10000, ADAPT_DELTA=0.99),
+#		verbose=TRUE)
 
 forec= forecast(regModel, regTest, h = horizon)
 
@@ -50,7 +65,6 @@ lines(xs,actuals, col=1, type='b',lwd=2)
 
 sMAPE=mean(abs(forec$mean-actuals)/(forec$mean+actuals))*200
 print(paste("sMAPE:",signif(sMAPE,3),"%"))
-
 
 ################### SGT, time series input and forecast
 theDataSet=AirPassengers
@@ -70,7 +84,8 @@ tspt=tsp(train)
 actuals=ts(actuals, start=tspt[2]+1/tspt[3], frequency=tspt[3])
 
 rstanmodel <- rlgt(train,  
-		seasonality.type="generalized", level.method="seasAvg",
+		level.method="seasAvg",
+		control=rlgt.control(NUM_OF_ITER=10000, MAX_NUM_OF_REPEATS=1))  
 
 forec= forecast(rstanmodel, h = length(actuals))
 
