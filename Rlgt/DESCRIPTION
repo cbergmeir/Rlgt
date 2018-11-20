@@ -9,15 +9,13 @@ Authors@R: c(
     person("Christoph", "Bergmeir", email = "christoph.bergmeir@monash.edu", role = c("aut", "cre")),
     person("Erwin", "Wibowo", email = "rwinwibowo@gmail.com", role = "aut"),
     person("To Wang", "Ng", email = "edwinnglabs@gmail.com", role = "aut"))
-Description: This package provides implementation of a number of Global Trend models 
-		that are Bayesian generalizations and extensions of some Exponential Smoothing models. 
-		The main differences/additions include:
-		- nonlinear global trend 
-		- Student-t error distribution
-		- function for the error size, so heteroscedasticity
-		The are particularly useful for short time series. When tested on M3 dataset 
-		they outperform all classical time series algorithms.
-    The models are fitted with MCMC using rstan package.
+Description: An implementation of a number of Global Trend models for time series forecasting 
+    that are Bayesian generalizations and extensions of some Exponential Smoothing models. 
+    The main differences/additions include 1) nonlinear global trend, 2) Student-t error 
+    distribution, and 3) a function for the error size, so heteroscedasticity. The methods 
+    are particularly useful for short time series. When tested on the well-known M3 dataset,
+    they are able to outperform all classical time series algorithms. The models are fitted 
+    with MCMC using the rstan package.
 License: GPL-3
 Encoding: UTF-8
 LazyData: true

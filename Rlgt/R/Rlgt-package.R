@@ -20,8 +20,11 @@
 #' 
 #' @section Getting started:
 #' 
-#' The best way to get started with the package is to have a look at the various demos that ship with the package. 
-#' To get a list of all the available demos, type:
+#' The best way to get started with the package is to have a look at the vignettes and the various demos that ship with the package. 
+#' There is a vignette with examples of how to use the various methods included in the package, and a vignette that discusses some of the
+#' theoretical background.
+#'
+#' As to the demos, to get a list of all the available demos, type:
 #' 
 #' \code{library(Rlgt)}
 #' 
@@ -31,7 +34,8 @@
 #'  
 #' \code{demo(LGT_REG)}
 #' 
-#' The package contains models for seasonal and non-seasonal data, allows for external regressors, and different error distributions.
+#' The package contains models for seasonal and non-seasonal data, allows for external regressors, and different 
+#' error distributions. In the following, we briefly also present some of the theoretical background of the methods.
 #'   
 #' @section LGT (Local and Global Trend):
 #' The LGT model is constructed based on Holt’s linear trend method. 

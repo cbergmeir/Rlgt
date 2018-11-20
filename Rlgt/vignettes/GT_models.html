@@ -11,7 +11,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 
-<meta name="date" content="2018-11-17" />
+<meta name="date" content="2018-11-21" />
 
 <title>Global Trend Models - LGT, SGT, and S2GT</title>
 
@@ -20,7 +20,189 @@
 
 
 
-<link href="data:text/css;charset=utf-8,body%20%7B%0Abackground%2Dcolor%3A%20%23fff%3B%0Amargin%3A%201em%20auto%3B%0Amax%2Dwidth%3A%20700px%3B%0Aoverflow%3A%20visible%3B%0Apadding%2Dleft%3A%202em%3B%0Apadding%2Dright%3A%202em%3B%0Afont%2Dfamily%3A%20%22Open%20Sans%22%2C%20%22Helvetica%20Neue%22%2C%20Helvetica%2C%20Arial%2C%20sans%2Dserif%3B%0Afont%2Dsize%3A%2014px%3B%0Aline%2Dheight%3A%201%2E35%3B%0A%7D%0A%23header%20%7B%0Atext%2Dalign%3A%20center%3B%0A%7D%0A%23TOC%20%7B%0Aclear%3A%20both%3B%0Amargin%3A%200%200%2010px%2010px%3B%0Apadding%3A%204px%3B%0Awidth%3A%20400px%3B%0Aborder%3A%201px%20solid%20%23CCCCCC%3B%0Aborder%2Dradius%3A%205px%3B%0Abackground%2Dcolor%3A%20%23f6f6f6%3B%0Afont%2Dsize%3A%2013px%3B%0Aline%2Dheight%3A%201%2E3%3B%0A%7D%0A%23TOC%20%2Etoctitle%20%7B%0Afont%2Dweight%3A%20bold%3B%0Afont%2Dsize%3A%2015px%3B%0Amargin%2Dleft%3A%205px%3B%0A%7D%0A%23TOC%20ul%20%7B%0Apadding%2Dleft%3A%2040px%3B%0Amargin%2Dleft%3A%20%2D1%2E5em%3B%0Amargin%2Dtop%3A%205px%3B%0Amargin%2Dbottom%3A%205px%3B%0A%7D%0A%23TOC%20ul%20ul%20%7B%0Amargin%2Dleft%3A%20%2D2em%3B%0A%7D%0A%23TOC%20li%20%7B%0Aline%2Dheight%3A%2016px%3B%0A%7D%0Atable%20%7B%0Amargin%3A%201em%20auto%3B%0Aborder%2Dwidth%3A%201px%3B%0Aborder%2Dcolor%3A%20%23DDDDDD%3B%0Aborder%2Dstyle%3A%20outset%3B%0Aborder%2Dcollapse%3A%20collapse%3B%0A%7D%0Atable%20th%20%7B%0Aborder%2Dwidth%3A%202px%3B%0Apadding%3A%205px%3B%0Aborder%2Dstyle%3A%20inset%3B%0A%7D%0Atable%20td%20%7B%0Aborder%2Dwidth%3A%201px%3B%0Aborder%2Dstyle%3A%20inset%3B%0Aline%2Dheight%3A%2018px%3B%0Apadding%3A%205px%205px%3B%0A%7D%0Atable%2C%20table%20th%2C%20table%20td%20%7B%0Aborder%2Dleft%2Dstyle%3A%20none%3B%0Aborder%2Dright%2Dstyle%3A%20none%3B%0A%7D%0Atable%20thead%2C%20table%20tr%2Eeven%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0Ap%20%7B%0Amargin%3A%200%2E5em%200%3B%0A%7D%0Ablockquote%20%7B%0Abackground%2Dcolor%3A%20%23f6f6f6%3B%0Apadding%3A%200%2E25em%200%2E75em%3B%0A%7D%0Ahr%20%7B%0Aborder%2Dstyle%3A%20solid%3B%0Aborder%3A%20none%3B%0Aborder%2Dtop%3A%201px%20solid%20%23777%3B%0Amargin%3A%2028px%200%3B%0A%7D%0Adl%20%7B%0Amargin%2Dleft%3A%200%3B%0A%7D%0Adl%20dd%20%7B%0Amargin%2Dbottom%3A%2013px%3B%0Amargin%2Dleft%3A%2013px%3B%0A%7D%0Adl%20dt%20%7B%0Afont%2Dweight%3A%20bold%3B%0A%7D%0Aul%20%7B%0Amargin%2Dtop%3A%200%3B%0A%7D%0Aul%20li%20%7B%0Alist%2Dstyle%3A%20circle%20outside%3B%0A%7D%0Aul%20ul%20%7B%0Amargin%2Dbottom%3A%200%3B%0A%7D%0Apre%2C%20code%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0Aborder%2Dradius%3A%203px%3B%0Acolor%3A%20%23333%3B%0Awhite%2Dspace%3A%20pre%2Dwrap%3B%20%0A%7D%0Apre%20%7B%0Aborder%2Dradius%3A%203px%3B%0Amargin%3A%205px%200px%2010px%200px%3B%0Apadding%3A%2010px%3B%0A%7D%0Apre%3Anot%28%5Bclass%5D%29%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0Acode%20%7B%0Afont%2Dfamily%3A%20Consolas%2C%20Monaco%2C%20%27Courier%20New%27%2C%20monospace%3B%0Afont%2Dsize%3A%2085%25%3B%0A%7D%0Ap%20%3E%20code%2C%20li%20%3E%20code%20%7B%0Apadding%3A%202px%200px%3B%0A%7D%0Adiv%2Efigure%20%7B%0Atext%2Dalign%3A%20center%3B%0A%7D%0Aimg%20%7B%0Abackground%2Dcolor%3A%20%23FFFFFF%3B%0Apadding%3A%202px%3B%0Aborder%3A%201px%20solid%20%23DDDDDD%3B%0Aborder%2Dradius%3A%203px%3B%0Aborder%3A%201px%20solid%20%23CCCCCC%3B%0Amargin%3A%200%205px%3B%0A%7D%0Ah1%20%7B%0Amargin%2Dtop%3A%200%3B%0Afont%2Dsize%3A%2035px%3B%0Aline%2Dheight%3A%2040px%3B%0A%7D%0Ah2%20%7B%0Aborder%2Dbottom%3A%204px%20solid%20%23f7f7f7%3B%0Apadding%2Dtop%3A%2010px%3B%0Apadding%2Dbottom%3A%202px%3B%0Afont%2Dsize%3A%20145%25%3B%0A%7D%0Ah3%20%7B%0Aborder%2Dbottom%3A%202px%20solid%20%23f7f7f7%3B%0Apadding%2Dtop%3A%2010px%3B%0Afont%2Dsize%3A%20120%25%3B%0A%7D%0Ah4%20%7B%0Aborder%2Dbottom%3A%201px%20solid%20%23f7f7f7%3B%0Amargin%2Dleft%3A%208px%3B%0Afont%2Dsize%3A%20105%25%3B%0A%7D%0Ah5%2C%20h6%20%7B%0Aborder%2Dbottom%3A%201px%20solid%20%23ccc%3B%0Afont%2Dsize%3A%20105%25%3B%0A%7D%0Aa%20%7B%0Acolor%3A%20%230033dd%3B%0Atext%2Ddecoration%3A%20none%3B%0A%7D%0Aa%3Ahover%20%7B%0Acolor%3A%20%236666ff%3B%20%7D%0Aa%3Avisited%20%7B%0Acolor%3A%20%23800080%3B%20%7D%0Aa%3Avisited%3Ahover%20%7B%0Acolor%3A%20%23BB00BB%3B%20%7D%0Aa%5Bhref%5E%3D%22http%3A%22%5D%20%7B%0Atext%2Ddecoration%3A%20underline%3B%20%7D%0Aa%5Bhref%5E%3D%22https%3A%22%5D%20%7B%0Atext%2Ddecoration%3A%20underline%3B%20%7D%0A%0Acode%20%3E%20span%2Ekw%20%7B%20color%3A%20%23555%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Edt%20%7B%20color%3A%20%23902000%3B%20%7D%20%0Acode%20%3E%20span%2Edv%20%7B%20color%3A%20%2340a070%3B%20%7D%20%0Acode%20%3E%20span%2Ebn%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Efl%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Ech%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Est%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Eco%20%7B%20color%3A%20%23888888%3B%20font%2Dstyle%3A%20italic%3B%20%7D%20%0Acode%20%3E%20span%2Eot%20%7B%20color%3A%20%23007020%3B%20%7D%20%0Acode%20%3E%20span%2Eal%20%7B%20color%3A%20%23ff0000%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Efu%20%7B%20color%3A%20%23900%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%20code%20%3E%20span%2Eer%20%7B%20color%3A%20%23a61717%3B%20background%2Dcolor%3A%20%23e3d2d2%3B%20%7D%20%0A" rel="stylesheet" type="text/css" />
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#header {
+text-align: center;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
 
 </head>
 
@@ -30,13 +212,13 @@
 
 
 <h1 class="title toc-ignore">Global Trend Models - LGT, SGT, and S2GT</h1>
-<h4 class="date"><em>2018-11-17</em></h4>
+<h4 class="date"><em>2018-11-21</em></h4>
 
 
 
 <div id="introduction" class="section level2">
 <h2>Introduction</h2>
-<p>This vignette provides an overview of the global trend time series forecasting models. The “LGT” model stands for Local and Global Trend and is devised to forecast non-seasonal time series. Meanwhile, the “SGT” model stands for Seasonal Global Trend model and is devised to complement the former on seasonal time series. The combination of these models were tested on the 3003 time-series M3-competition dataset, and they have been shown to outperform all of the models originally participating in the competition by a significant margin. It is quite likely that L/SGT is still the most accuarate algorithm on the M3 data sets.</p>
+<p>This vignette provides an overview of the global trend time series forecasting models. The “LGT” model stands for Local and Global Trend and is devised to forecast non-seasonal time series. Meanwhile, the “SGT” model stands for Seasonal Global Trend model and is devised to complement the former on seasonal time series. The combination of these models were tested on the 3003 time-series M3-competition dataset, and they have been shown to outperform all of the models originally participating in the competition by a significant margin. It is quite likely that L/SGT is still the most accurate algorithm on the M3 data sets.</p>
 <table>
 <thead>
 <tr class="header">
@@ -63,16 +245,16 @@
 </tr>
 </tbody>
 </table>
-<p>Additionally, the package provides S2GT model that extends SGT to deal with two seasonalities, following Taylor (2003).</p>
-<p>The models can be seen as extensions of following Exponential Smoothing models: Holt Linear Method (LGT), Holt-Winters model (SGT), and Taylor dual seasonalit model (S2GT). The main differences are as follows:</p>
+<p>Additionally, the package provides the S2GT model that extends SGT to deal with two seasonalities, following Taylor (2003).</p>
+<p>The models can be seen as extensions of following Exponential Smoothing models: Holt Linear Method (LGT), Holt-Winters model (SGT), and Taylor dual seasonality model (S2GT). The main differences are as follows:</p>
 <ul>
 <li>nonlinear global trend, that spans linear to exponential trends.</li>
 <li>Student-t distribution of error</li>
 <li>function for error size, so the model is heteroscedastic</li>
 <li>possibility to add regression components.</li>
 </ul>
-<p>The package also provies some variants of the base algorithms, they are described in later sections.</p>
-<p>The models are Bayesian and are fitted using Markov Chain Monte Carlo with RStan package. The user can “nudge” the models using many hyperparamters of the parameters’ prior distributions, altough is is usually not necessary. While Hamiltonian Monte Carlo engine of Stan system is relatively fast, computation time required for a single time series is typically between a few to 20 minutes. A substantially longer computation time is likely a sign of not a good match of the chosen model to the time series. The current version of the models only supports time series data with entirely positive data values. Many time series data fall into this category, while for others, a simple transformation can be performed to obtain the required positive time-series data. Therefore, the constraint should not be too restrictive for most general applications.</p>
+<p>The package also provides some variants of the base algorithms, they are described in later sections.</p>
+<p>The models are Bayesian and are fitted using Markov Chain Monte Carlo with the RStan package. The user can “nudge” the models using many hyperparamters of the parameters’ prior distributions, altough this is usually not necessary. While the Hamiltonian Monte Carlo engine of the Stan system is relatively fast, computation time required for a single time series is typically between a few up to 20 minutes. A substantially longer computation time is likely a sign of not a good match of the chosen model to the time series. The current version of the models only supports time series data with entirely positive data values. Many time series data fall into this category, while for others, a simple transformation can be performed to obtain the required positive time-series data. Therefore, the constraint seems not too restrictive for most general applications.</p>
 <p>The following sections present the models’ formulas:</p>
 </div>
 <div id="lgtlocal-and-global-trend" class="section level2">
@@ -115,15 +297,15 @@
 <li><p><strong>eq. 1.1. Student’s-t error distribution</strong></p>
 <p>We assume that the time series values follow Student’s t-distribution around the expected value with a time-varying size of error. The behavior of Student-t distribution changes smoothly from being similar to Normal distribution (for larger, i.e. above 20, values of degrees of freedom) to being close to Cauchy distribution (for smaller, close to 1 degrees of freedom), therefore accomodating a possible need for a fat-tailed distribution of error. The parameter <span class="math inline">\(\nu\)</span>, degrees of freedom, like all other parameters, is fitted automatically, not user specified.</p></li>
 <li><p><strong>eq. 1.2: Expected value for next step</strong></p>
-<p>The expected value for the next step is modeled as a sum of level <span class="math inline">\(l_{t}\)</span>, global nonlinear trend <span class="math inline">\(\gamma l_{t}^{ \rho }\)</span>, and damped local linear trend <span class="math inline">\(\lambda b_{t}\)</span>. We use term “global” in the nonlinear trend description to stress the fact that both <span class="math inline">\(\gamma\)</span> and <span class="math inline">\(\rho\)</span> are fitted on whole of the time series and do not change in time. Typically the global trend will dominate over the short-term behavior caused by the local linear trend.</p>
+<p>The expected value for the next step is modeled as a sum of level <span class="math inline">\(l_{t}\)</span>, global nonlinear trend <span class="math inline">\(\gamma l_{t}^{ \rho }\)</span>, and damped local linear trend <span class="math inline">\(\lambda b_{t}\)</span>. We use the term “global” in the nonlinear trend description to stress the fact that both <span class="math inline">\(\gamma\)</span> and <span class="math inline">\(\rho\)</span> are fitted on the entire time series and do not change over time. Typically the global trend will dominate over the short-term behavior caused by the local linear trend.</p>
 <p>Also, note that the simple function of global trend has some interesting properties: if <span class="math inline">\(\rho\)</span> becomes close to 0, the contribution of the global trend to the expected value of the next step becomes constant, and therefore the trend becomes close to linear; when <span class="math inline">\(\rho\)</span> becomes close to 1, the contribution of the global trend to the expected value of the next step becomes almost proportional to the level value, therefore together with the level providing the compound interest formula, and the trajectory of a multistep forecast becomes exponential. So, the global trend can model well a typical situation in fast growing businesses: the growth is faster than linear but slower than exponential.</p>
-<p>The last term refers to the usual local trend in ETS model. However, there is an addition of dampening parameter <span class="math inline">\(\lambda\)</span>, constrained such that <span class="math inline">\(0&lt;\lambda&lt;1\)</span>, to reduce the strength of the local trend model.</p></li>
+<p>The last term refers to the usual local trend in ETS model. However, there is an addition of the dampening parameter <span class="math inline">\(\lambda\)</span>, constrained such that <span class="math inline">\(0&lt;\lambda&lt;1\)</span>, to reduce the strength of the local trend model.</p></li>
 <li><p><strong>eq. 1.5. Heteroscedastic error</strong></p>
-<p>Size of the error is modelled with a monotonically growing function of the expected value. Typically, the size of the error grows in absolute terms as the level and expected value grow, but due to averaging effects, it gets proportionally smaller - this formula models well such behavior. Please note that in extreme cases: when <span class="math inline">\(\tau\)</span> is close to 0, the error size is constant, and when <span class="math inline">\(\tau\)</span> gets cose to 1, the error size is proportional to the expected value, and thus approaches behavior of the multiplicative error.</p></li>
+<p>The size of the error is modelled with a monotonically growing function of the expected value. Typically, the size of the error grows in absolute terms as the level and expected value grow, but due to averaging effects, it gets proportionally smaller - this formula models well such behavior. Please note that in extreme cases: when <span class="math inline">\(\tau\)</span> is close to 0, the error size is constant, and when <span class="math inline">\(\tau\)</span> gets cose to 1, the error size is proportional to the expected value, and thus approaches behavior of the multiplicative error.</p></li>
 <li><p><strong>eq. 1.3: Level adjustment formula</strong></p>
-<p>This formular is very similar to that of Halt Liner Method, except that it does not include local nor global trends.</p></li>
+<p>This formular is very similar to that of the Holt Linear Method, except that it does not include local nor global trends.</p></li>
 <li><p><strong>eq. 1.4: Local trend adjustment formula</strong></p>
-<p>The same as in Halt Linear Method.</p></li>
+<p>The same as in the Holt Linear Method.</p></li>
 </ul>
 <hr />
 </div>
@@ -152,21 +334,21 @@
 </div>
 <div id="notes-on-the-model-formulas-1" class="section level3">
 <h3>Notes on the model formulas</h3>
-<p>The model is similar to the non-seasonal LGT model described above. There are couple of modifications:</p>
+<p>The model is similar to the non-seasonal LGT model described above. There are a couple of modifications as follows:</p>
 <ol style="list-style-type: decimal">
 <li>Removal of local trend</li>
-<li>Addition of multiplicative seasonality term</li>
+<li>Addition of a multiplicative seasonality term</li>
 </ol>
 <ul>
 <li><p><strong>eq. 2.3.Level adjustment formula</strong></p>
-<p>It is similar to the relevant Halt-Winters formula, but as in LGT case, the trend is not included.</p></li>
+<p>It is similar to the relevant Holt-Winters formula, but as in the LGT case, the trend is not included.</p></li>
 </ul>
 <hr />
 </div>
 </div>
 <div id="s2gt-double-seasonal-global-trend" class="section level2">
 <h2>S2GT (Double Seasonal, Global Trend)</h2>
-<p>S2GT model is an extension of SGT model to be used on time series with two seasonalities. A classic example of this type of data is hourly electricity consumption which is affected by the time of the day as well as the day of the week. Such series can be modelled with dual 24 and 168 (=7*24) seasonality. We follow here Taylor (2003). Work on this algorithm is still ongoing, it is usually better to use the SGT model with seasonality equal to the maximum of a multiple seasonalities of the series, e.g. 168 for hourly data with weekly cycle.</p>
+<p>The S2GT model is an extension of the SGT model to be used on time series with two seasonalities. A classic example of this type of data is hourly electricity consumption which is affected by the time of the day as well as the day of the week. Such series can be modelled with dual 24 and 168 (=7*24) seasonality. We follow here Taylor (2003). Work on this algorithm is still ongoing, it is usually better to use the SGT model with seasonality equal to the maximum of a multiple seasonalities of the series, e.g. 168 for hourly data with weekly cycle.</p>
 <div id="model-formulas-2" class="section level3">
 <h3>Model formulas</h3>
 <p><span class="math display">\[y_{t+1} \sim Student \left( \nu,\widehat{y}_{t+1}, \sigma _{t+1} \right)  \quad (eq. 3.1) \]</span></p>
@@ -195,7 +377,7 @@
 <p>So far we have described standard models, that are well tested and usually work well. The package provides also some additional variants that can be useful in some situations; they are described in the following sections</p>
 <div id="smoothed-innovation-error-size-function" class="section level3">
 <h3>1. “Smoothed innovation” error size function</h3>
-<p>When the error size appears to have its own dynamics that isn’t just reflection of the current expected value of the series, e.g. during periods of high-volatility on stock markets, a better function for error size may be one that is proportional to an average of absolute values of recent “innovations” or errors. The formula is:</p>
+<p>When the error size appears to have its own dynamics that isn’t just a reflection of the current expected value of the series, e.g. during periods of high volatility on stock markets, a better function for the error size may be one that is proportional to an average of absolute values of recent “innovations” or errors. The formula is:</p>
 <p><span class="math display">\[a_{t+1}= \eta \left| y_{t+1}-\widehat{y}_{t+1} \right| + \left( 1- \eta  \right) a_{t} \quad (eq. 4.1)\]</span></p>
 <p><span class="math display">\[\widehat{\sigma}_{t+1}= \sigma a_{t+1}+ \xi \quad (eq. 4.2)\]</span></p>
 <div id="additional-notations-2" class="section level4">
@@ -217,7 +399,7 @@
 </div>
 <div id="generalized-seasonality" class="section level3">
 <h3>2. Generalized seasonality</h3>
-<p>By default the models use multiplicative seasonality, as the additive seasonality is no good for series with strong trend. However the multiplicative seasonality may produce too strong seasonality effects in some cases. The generalized seasonality spans additive to additive seasonality and may be better choice in situations where the seasonality effect gets proportinally smaller with the series growth.</p>
+<p>By default the models use multiplicative seasonality, as the additive seasonality is no good for series with strong trend. However, the multiplicative seasonality may produce too strong seasonality effects in some cases. The generalized seasonality spans additive to multiplicative seasonality and may be a better choice in situations where the seasonality effect gets proportinally smaller with the series growth.</p>
 <div id="formulas-for-sgt-with-generalized-seasonality" class="section level4">
 <h4>Formulas for SGT with generalized seasonality</h4>
 <p><span class="math display">\[y_{t+1} \sim Student \left( \nu,\widehat{y}_{t+1}, \sigma _{t+1} \right)  \quad (eq. 2.1) \]</span> <span class="math display">\[\widehat{y}_{t+1}= l_{t}+ \gamma l_{t}^{\rho} + s_{t+1}l_{t}^{\theta} \quad (eq. 5.2)\]</span> <span class="math display">\[l_{t+1}= \alpha \left( y_{t+1}-s_{t+1}l_{t}^{\theta} \right) + \left( 1- \alpha  \right) l_{t} \quad (eq. 5.3)\]</span></p>
@@ -235,23 +417,23 @@
 <p>Three formulas are different as compared to the SGT model with multiplicative seasonality.</p>
 <ul>
 <li><p><strong>eq. 5.2. Expected value formula</strong></p>
-<p>Instead of multiplying by <span class="math inline">\(s_{t+1}\)</span> we are adding <span class="math inline">\(s_{t+1}l_{t}^{\tau}\)</span>. It has interesting consequences: if <span class="math inline">\({\tau}\)</span> is getting close to 0, <span class="math inline">\(l_{t}^{\tau}\)</span> gets close to 1 and then the whole term gets close to <span class="math inline">\(s_{t+1}\)</span> and we get the additive seasonality. However on the opposite end, when <span class="math inline">\({\tau}\)</span> is getting close to 1, as in case of the nonlinear trend, we are getting the compound formula and the seasonality similar to the multiplicative one. Therefore the formula provides for the behavior that falls between additive and multiplicative seasonality.</p></li>
+<p>Instead of multiplying by <span class="math inline">\(s_{t+1}\)</span> we are adding <span class="math inline">\(s_{t+1}l_{t}^{\tau}\)</span>. It has interesting consequences: if <span class="math inline">\({\tau}\)</span> is getting close to 0, <span class="math inline">\(l_{t}^{\tau}\)</span> gets close to 1 and then the whole term gets close to <span class="math inline">\(s_{t+1}\)</span> and we get the additive seasonality. However on the opposite end, when <span class="math inline">\({\tau}\)</span> is getting close to 1, as in the case of the nonlinear trend, we are getting the compound formula and the seasonality similar to the multiplicative one. Therefore the formula provides for the behavior that falls between additive and multiplicative seasonality.</p></li>
 </ul>
 <p>Formulas for S2GT are modified along similar lines.</p>
 </div>
 </div>
 <div id="seasonal-average-method-for-calculating-level" class="section level3">
 <h3>3. “Seasonal average” method for calculating level</h3>
-<p>This is an alternative method for calculating level in the seasonal models (SGT and S2GT). Instead of using Holt-Winters’ style way, as in eq.2.3 and 3.3, the level is calculated as a moving average of last SEASONALITY points in case of SGT, and SEASONALITY2 points in case of S2GT. This apprach makes sense for series with stable or steadily changing level, and possible unimportant occasional flare-ups. The benefits âmay include faster calculation and better accuracy.</p>
+<p>This is an alternative method for calculating level in the seasonal models (SGT and S2GT). Instead of using the Holt-Winters’ style way, as in eq.2.3 and 3.3, the level is calculated as a moving average of the last SEASONALITY points in case of SGT, and SEASONALITY2 points in case of S2GT. This approach makes sense for series with a stable or steadily changing level, and possible unimportant occasional flare-ups. The benefits may include faster calculation and better accuracy.</p>
 </div>
 </div>
 <div id="regression" class="section level2">
 <h2>Regression</h2>
-<p>All model support additional regressors. The data needs to be passed as matrix (with number of columns equal to the number of regressors) to both rlgt (for training) and forecast functions.</p>
+<p>All models support additional regressors. The data needs to be passed as a matrix (with number of columns equal to the number of regressors) to both rlgt (for training) and forecast functions.</p>
 </div>
 <div id="prior-distributions" class="section level2">
 <h2>Prior Distributions</h2>
-<p>The prior distributions of parameters have their hyper parameters documented and available for tweaking, although most of the time it is not required. Perhaps the most likely hyperparameter to change would be POW_TREND_ALPHA which is the alpha parameter of Beta distribution of the global trend power coefficient. Occasionally it may be useful to increase it above 1, to say 3-6, to encourage higher curvature of the global trend.</p>
+<p>The prior distributions of parameters have their hyper-parameters documented and available for tweaking, although most of the time it is not required. Perhaps the most likely hyperparameter to change would be POW_TREND_ALPHA which is the alpha parameter of the Beta distribution of the global trend power coefficient. Occasionally it may be useful to increase it above 1, to say 3-6, to encourage higher curvature of the global trend.</p>
 <p>The prior distributions of the parameters and their default limits (which can also be changed) are listed below:</p>
 <ul>
 <li><span class="math inline">\(\gamma\)</span> : Cauchy distribution with minimum value of 0 and the scale parameter equals to 1/200 of the maximum value of y</li>
@@ -266,7 +448,7 @@
 <h2>Additional notes</h2>
 <div id="non-integer-seasonalities" class="section level3">
 <h3>Non-integer seasonalities</h3>
-<p>The seasonal models support specifying non-integer seasonalities. Internally it is done through a partial allocation of newly calculated seasonality coefficients.</p>
+<p>The seasonal models support specifying non-integer seasonalities. Internally this is done through a partial allocation of newly calculated seasonality coefficients.</p>
 </div>
 </div>
 
