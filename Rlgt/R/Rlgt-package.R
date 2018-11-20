@@ -30,9 +30,9 @@
 #' 
 #' \code{demo()}
 #'  
-#'  Then, e.g. to run the demo for LGT with external regressors, type:
+#'  Then, e.g. to run the demo for LGT and SGT with external regressors, type:
 #'  
-#' \code{demo(LGT_REG)}
+#' \code{demo("LGT&SGT_REG")}
 #' 
 #' The package contains models for seasonal and non-seasonal data, allows for external regressors, and different 
 #' error distributions. In the following, we briefly also present some of the theoretical background of the methods.
