@@ -1,5 +1,5 @@
 rPackageName=Rlgt
-newDate=$(date +%Y-%m-%d)
+newDate=$(shell date +%Y-%m-%d)
 rPackageVersion=0.1-0
 
 fixPermissions:
