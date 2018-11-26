@@ -85,7 +85,7 @@ actuals=ts(actuals, start=tspt[2]+1/tspt[3], frequency=tspt[3])
 
 rstanmodel <- rlgt(train,  
 		level.method="seasAvg",
-		control=rlgt.control(NUM_OF_ITER=10000, MAX_NUM_OF_REPEATS=1))  
+		control=rlgt.control(NUM_OF_ITER=10000))  
 
 forec= forecast(rstanmodel, h = length(actuals))
 
@@ -108,7 +108,7 @@ actuals=theDataSet[(length(theDataSet)+1-2*horizon):(length(theDataSet)-horizon)
 
 rstanmodel <- rlgt(train, seasonality=frequency(theDataSet), 
 		seasonality.type="generalized", level.method="seasAvg",
-		control=rlgt.control(NUM_OF_ITER=10000, MAX_NUM_OF_REPEATS=1))   
+		control=rlgt.control(NUM_OF_ITER=10000))   
 
 forec= forecast(rstanmodel, h = length(actuals))
 
@@ -139,7 +139,7 @@ actuals=msts(actuals, seasonal.periods=attributes(taylor)$msts, start=tspx[2] + 
 
 rstanmodel <- rlgt(train,  #because seaonality2 is not specified, a single seasonality model (of seasonality equal to the largest seasonality, 336)  will be used 
 		level.method="seasAvg",
-		control=rlgt.control(NUM_OF_ITER=10000, MAX_NUM_OF_REPEATS=1),
+		control=rlgt.control(NUM_OF_ITER=10000),
 		verbose=TRUE)   
 
 forec= forecast(rstanmodel, h = length(actuals))

@@ -113,15 +113,15 @@ transformed parameters {
 	} else {
 		sumsu = 0;
 		for (i in 1:SEASONALITY) 
-			sumsu = sumsu+ fabs(initSu[i]);  //sampling statement for initSu[i] gives 0 probability for anything less than 0.01, but before it is rejected, a negative all sort of trouble, including triggering level<0 constraint   
+			sumsu = sumsu+ exp(initSu[i]);  //sampling statement for initSu[i] gives 0 probability for anything less than 0.01, but before it is rejected, a negative all sort of trouble, including triggering level<0 constraint   
 		for (i in 1:SEASONALITY) 
-			s[i] = fabs(initSu[i])*SEASONALITY/sumsu;	
+			s[i] = exp(initSu[i])*SEASONALITY/sumsu;	
 		
 		sumsu = 0;
 		for (i in 1:SEASONALITY2) 
-			sumsu = sumsu+ fabs(initSu2[i]);
+			sumsu = sumsu+ exp(initSu2[i]);
 		for (i in 1:SEASONALITY2) 
-			s2[i] = firstRatios2[i]*fabs(initSu2[i])*SEASONALITY2/sumsu;
+			s2[i] = firstRatios2[i]*exp(initSu2[i])*SEASONALITY2/sumsu;
 			
 		l[1] = (y[1]-r[1])/(s[1]*s2[1]);  //initialization for LEVEL_CALC_METHOD==0, it will get overwritten otherwise
 	}
@@ -221,9 +221,9 @@ model {
 			initSu2[t] ~ cauchy (0, y[t]*0.1);		
 	} else {
 		for (t in 1:SEASONALITY) 
-    		initSu[t] ~ cauchy (1, 0.3) T[0.01,];
+    	initSu[t] ~ cauchy (0, 3);
 		for (t in 1:SEASONALITY2)
-			initSu2[t] ~ cauchy (1, 0.3) T[0.01,];
+			initSu2[t] ~ cauchy (0, 3);
 	}
 	
 	for (t in 2:N) {

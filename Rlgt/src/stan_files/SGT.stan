@@ -95,9 +95,9 @@ transformed parameters {
 	} else {
 		sumsu = 0;
 		for (i in 1:SEASONALITY) 
-			sumsu = sumsu+ fabs(initSu[i]);  //sampling statement for initSu[i] gives 0 probability for anything less than 0.01, but before it is rejected, a negative all sort of trouble, including triggering level<0 constraint   
+			sumsu = sumsu+ exp(initSu[i]);  //sampling statement for initSu[i] gives 0 probability for anything less than 0.01, but before it is rejected, a negative all sort of trouble, including triggering level<0 constraint   
 		for (i in 1:SEASONALITY) {
-			s[i] = firstRatios[i]*fabs(initSu[i])*SEASONALITY/sumsu;
+			s[i] = firstRatios[i]*exp(initSu[i])*SEASONALITY/sumsu;
 			//print(i," ",s[i]);
 		}	
 		l[1] = (y[1]-r[1])/s[1];  //initialization for LEVEL_CALC_METHOD==0, it will get overwritten otherwise
@@ -178,10 +178,10 @@ model {
 	if (USE_GENERALIZED_SEASONALITY)  {
 		powSeason ~ beta(POW_SEASON_ALPHA, POW_SEASON_BETA);
 		for (t in 1:SEASONALITY)
-			initSu[t] ~ cauchy (0, y[t]*0.1);	
+			initSu[t] ~ cauchy (0, y[t]*0.2);	
 	} else
 		for (t in 1:SEASONALITY) 
-    	initSu[t] ~ cauchy (1, 0.3) T[0.01,];
+    	initSu[t] ~ cauchy (0, 3);
 	
 	for (t in 2:N) {
 	  if (USE_SMOOTHED_ERROR==0)

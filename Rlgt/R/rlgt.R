@@ -183,8 +183,8 @@ rlgt <- function(y,
         initializations[[irr]][['initSu']] <- rnorm(seasonality, mean=0, sd=min(y[1:seasonality])*0.003) 
         initializations[[irr]][['initSu2']] <- rnorm(seasonality2, mean=0, sd=min(y[1:seasonality2])*0.003)
       } else {  #multiplicative
-        initializations[[irr]][['initSu']] <- rnorm(seasonality, 1, 0.05) 
-        initializations[[irr]][['initSu2']] <- rnorm(seasonality2, 1, 0.05)
+        initializations[[irr]][['initSu']] <- rnorm(seasonality, 0, 0.05) 
+        initializations[[irr]][['initSu2']] <- rnorm(seasonality2, 0, 0.05)
       }
     }
     
