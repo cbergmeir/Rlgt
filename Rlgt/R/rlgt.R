@@ -11,8 +11,9 @@
 #' The latter seasonality generalizes additive and multiplicative seasonality types.
 #' @param error.size.method Function providing size of the error. Either "std" (monotonically, but slower than proportionally, growing with the series values) or 
 #' "innov" (proportional to a smoothed abs size of innovations, i.e. surprises)  
-#' @param level.method "classical" or "seasAvg". Here, "classical" follows Holt-Winters approach. 
-#' "seasAvg" calculates level as a smoothed average of the last seasonality number of points (or seasonality2 of them for the dual seasonality model)
+#' @param level.method "HW",  "seasAvg", "HW_sAvg". Here, "HW" follows Holt-Winters approach. 
+#' "seasAvg" calculates level as a smoothed average of the last seasonality number of points (or seasonality2 of them for the dual seasonality model),
+#' and HW_sAvg is an weighted average of HW and seasAvg methods. 
 #' @param xreg Optionally, a vector or matrix of external regressors, which must have the same number of rows as y. 
 #' @param control list of control parameters, e.g. hyperparameter values for the model's prior distributions, number of fitting interations etc.  
 #' @param verbose whether verbose information should be printed (Boolean value only), default \code{FALSE}.
@@ -35,28 +36,37 @@
 #' @importMethodsFrom rstan summary
 #' @importFrom sn rst
 #' @export
-rlgt <- function(y,  
-                 seasonality=1, seasonality2=1, 
-                 seasonality.type=c("multiplicative","generalized"),
-                 error.size.method=c("std","innov"),
-                 level.method=c("classical","seasAvg"),
-                 xreg = NULL,
-                 control=rlgt.control(), 
-                 verbose=FALSE) {
-  
+rlgt <- function(   #y=trainData; seasonality=12; seasonality2=1; seasonality.type="multiplicative"; error.size.method="std"; level.method="seasAvg";xreg = NULL; control=rlgt.control(NUM_OF_ITER=5000); verbose=TRUE; library(rstan)
+	y,  
+ 	seasonality=1, seasonality2=1, 
+ 	seasonality.type=c("multiplicative","generalized"),
+ 	error.size.method=c("std","innov"),
+ 	level.method=c("HW", "seasAvg","HW_sAvg"),
+ 	xreg = NULL,
+ 	control=rlgt.control(), 
+ 	verbose=FALSE) {
+
   oldWidth=options("width")
   options(width=180)
   
   # for safety
   #model.type <- model.type[1]
   error.size.method <- error.size.method[1]
+  
+  seasonalityMethodId=0
   seasonality.type <- seasonality.type[1]
-  level.method<-level.method[1]
+  if (seasonality.type=="generalized") {
+	  seasonalityMethodId=1
+  }
+	
   levelMethodId=0
+  level.method<-level.method[1]
+	#yes, no levelMethodId==1, just history :-)
   if (level.method=="seasAvg") {
-    levelMethodId=1
-  } 
-  useGeneralizedSeasonality<-seasonality.type=="generalized"
+    levelMethodId=2
+  } else if (level.method=="HW_sAvg") {
+		levelMethodId=3
+	}
   useSmoothingMethodForError<-error.size.method=="innov"
   nChains<-control$NUM_OF_CHAINS
   nCores<-control$NUM_OF_CORES
@@ -92,13 +102,14 @@ rlgt <- function(y,
     model.type <- "LGT"
   }
   
-  if (seasonality <= 1 && seasonality2 <= 1 && levelMethodId != 0) {
+  if (seasonality <= 1 && levelMethodId != 0) {
     print("Warning: nonstandard level methods implemented only for seasonality models")
   }  
   
   model <- initModel(model.type = model.type,   #here
                      use.regression = use.regression, 
-                     useGeneralizedSeasonality=useGeneralizedSeasonality,
+										 seasonalityMethodId=seasonalityMethodId,
+										 levelMethodId=levelMethodId,  
                      useSmoothingMethodForError=useSmoothingMethodForError)
   
   MAX_RHAT_ALLOWED <- control$MAX_RHAT_ALLOWED
@@ -136,7 +147,7 @@ rlgt <- function(y,
                POW_TREND_BETA=control$POW_TREND_BETA,
                y=y, N=n, 
                USE_SMOOTHED_ERROR=as.integer(useSmoothingMethodForError),
-               USE_GENERALIZED_SEASONALITY=as.integer(useGeneralizedSeasonality),
+							 SEASONALITY_TYPE=seasonalityMethodId,
                USE_REGRESSION=as.integer(use.regression), 
                LEVEL_CALC_METHOD=levelMethodId,
                #if this is a regression call, these three values will be overwritten in a moment below, 
@@ -159,6 +170,9 @@ rlgt <- function(y,
     data[['REG_CAUCHY_SD']] <- regCauchySd
   } 
   
+	avgDiff=mean(abs(diff(y)))
+	
+	
   ### Repeat until Rhat is in an acceptable range (i.e. convergence is reached)
   avgRHat <- 1e200
   irep <- 1
@@ -166,32 +180,29 @@ rlgt <- function(y,
     initializations <- list()
     for (irr in 1:nChains) {
       initializations[[irr]] <- list( 
-        # These initializations are strictly not necessary, 
-        # but they improve performance (accuracy and calculation speed)
         innovSizeInit = abs(rnorm(1, 0, CauchySd)),#used only for *GTe models 
-        bInit=rnorm(1,mean=0, sd=y[1]/control$CAUCHY_SD_DIV),
-        coefTrend=rnorm(1,mean=0, sd=0.01),
-        sigma=runif(1,min=control$MIN_SIGMA, max=0.01),
-        offsetSigma=runif(1,min=control$MIN_SIGMA, max=0.01)
+        bInit=rnorm(1,mean=0, sd=y[1]/control$CAUCHY_SD_DIV), 
+        coefTrend=rnorm(1,mean=0, sd=y[1]/control$CAUCHY_SD_DIV),
+        sigma=runif(1,min=avgDiff/100, max=avgDiff/10),
+        offsetSigma=runif(1,min=avgDiff/100, max=avgDiff/10)
       )
       if (use.regression) {
         initializations[[irr]][['regCoef']] <- rnorm(ncol(xreg),mean=0, sd=regCauchySd)
         if (ncol(xreg)==1) dim(initializations[[irr]][['regCoef']])=1
         initializations[[irr]][['regOffset']] <- rnorm(1,mean=0, sd=mean(regCauchySd))
       }
-      if (useGeneralizedSeasonality) {
-        initializations[[irr]][['initSu']] <- rnorm(seasonality, mean=0, sd=min(y[1:seasonality])*0.003) 
-        initializations[[irr]][['initSu2']] <- rnorm(seasonality2, mean=0, sd=min(y[1:seasonality2])*0.003)
-      } else {  #multiplicative
-        initializations[[irr]][['initSu']] <- rnorm(seasonality, 0, 0.05) 
-        initializations[[irr]][['initSu2']] <- rnorm(seasonality2, 0, 0.05)
+      if (seasonalityMethodId==0 || seasonalityMethodId==2) {
+				initializations[[irr]][['initS']] <- rnorm(seasonality, 0, 0.05) #exp()
+				initializations[[irr]][['initS2']] <- rnorm(seasonality2, 0, 0.05)
+      } else {  #generalized
+				initializations[[irr]][['initS']] <- rnorm(seasonality, mean=0, sd=min(y[1:seasonality])*0.003) 
+				initializations[[irr]][['initS2']] <- rnorm(seasonality2, mean=0, sd=min(y[1:seasonality2])*0.003)
       }
     }
     
     #Double the number of iterations for the next cycle
     numOfIters <- NUM_OF_ITER * 2 ^ (irep - 1)
-    samples1 <-
-      rstan::sampling(
+    samples = rstan::sampling(
         control = list(adapt_delta = control$ADAPT_DELTA, 
                        max_treedepth = control$MAX_TREE_DEPTH),
         object = model$model,   
@@ -205,19 +216,17 @@ rlgt <- function(y,
         refresh = if(verbose) numOfIters / 5 else - 1)
     
     ### Get the Rhat values
-    ainfo <- summary(samples1)
+    ainfo <- summary(samples)
     RHats <- ainfo$summary[,10]
     RHats <- as.numeric(RHats[is.finite(RHats)])
     currRHat <- mean(RHats, na.rm = T)
     if (currRHat <= MAX_RHAT_ALLOWED) {
-      samples <- samples1
       avgRHat <- currRHat
       if(verbose) print(samples)
       print(paste("avgRHat",avgRHat))
       break
     } else {
       if (currRHat<avgRHat) {#in the worst case this is at least once executed, because avgRHat is initialized high
-        samples <- samples1
         avgRHat <- currRHat
         print(samples)
         print(paste("avgRHat",avgRHat))
@@ -231,10 +240,7 @@ rlgt <- function(y,
   }#repeat if needed
   
   if(verbose) {
-    print(summary(do.call(rbind, 
-                          args = get_sampler_params(samples1, 
-                                                    inc_warmup = F)), 
-                  digits = 2)) #diagnostics including step sizes and tree depths
+    print(summary(do.call(rbind, args = get_sampler_params(samples, inc_warmup = F)), digits = 2)) #diagnostics including step sizes and tree depths
   }
   
   params <- list()
@@ -248,12 +254,15 @@ rlgt <- function(y,
   #special processing for vector params, where only the last value counts
   # This includes level, trend, and innov size
   params[["lastLevel"]] <- params[["l"]][,ncol(params[["l"]])]
-  #paramMeans[["lastLevel"]] <- mean(params[["lastLevel"]])
-  
+	if (levelMethodId==3) {
+		params[["lastLevel0"]] <- params[["l0"]][,ncol(params[["l0"]])]
+	}
+	
   if ("b" %in% model$parameters) {
     params[["lastB"]] <- params[["b"]][,ncol(params[["b"]])]
     #paramMeans[["lastB"]] <- mean(params[["lastB"]])
   }
+	
   if ("smoothedInnovSize" %in% model$parameters) {
     params[["lastSmoothedInnovSize"]] <- params[["smoothedInnovSize"]][,ncol(params[["smoothedInnovSize"]])]
     #paramMeans[["lastSmoothedInnovSize"]] <- mean(params[["lastSmoothedInnovSize"]])
@@ -262,9 +271,9 @@ rlgt <- function(y,
   options(width=oldWidth[[1]])
   #correct: y_org. Fitting has already been done. y_org is either numeric, or ts, or msts 
   out <- rlgtfit(y_org, model.type, use.regression = use.regression, 
-                 useGeneralizedSeasonality=useGeneralizedSeasonality, levelMethodId=levelMethodId,  
-                 useSmoothingMethodForError=useSmoothingMethodForError,
-                 seasonality=seasonality, seasonality2=seasonality2,   
-                 model, params, control, samples)
+			seasonalityMethodId=seasonalityMethodId, levelMethodId=levelMethodId,  
+      useSmoothingMethodForError=useSmoothingMethodForError,
+      seasonality=seasonality, seasonality2=seasonality2,   
+      model, params, control, samples)
   out
 }

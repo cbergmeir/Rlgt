@@ -5,13 +5,16 @@
 #' 
 #' @param model.type type of the forecasting model selected, a character object
 #' @param use.regression binary parameter indicating whether additional regressors will be used for forecasting in multivariate settings.
-#' @param useGeneralizedSeasonality if generalized seasonality is to be used. Default is \code{FALSE}.
+#' @param seasonalityMethodId Seasonality method Id (0- HW, 1- generalized).
+#' @param levelMethodId Level method Id.
 #' @param useSmoothingMethodForError if the non-standard function for error size should be used, one based on smoothed innovations or surprises 
 #' @return an Rlgt skeleton model
 #' 
 #' @importFrom rstan stan_model
 #' @export
-initModel <- function(model.type=NULL, use.regression=FALSE, useGeneralizedSeasonality=FALSE, useSmoothingMethodForError=FALSE) {
+initModel <- function(model.type=NULL, use.regression=FALSE, 
+		seasonalityMethodId=0, levelMethodId=0,   
+		useSmoothingMethodForError=FALSE) {
   
   if(is.null(model.type)) {
     print("No model type was provided, generating an LGT model.")
@@ -59,7 +62,7 @@ initModel <- function(model.type=NULL, use.regression=FALSE, useGeneralizedSeaso
 					"coefTrend", "powTrend", "sigma", "offsetSigma",
 					"levSm", "sSm", "s2Sm", "nu", "powx")
 		}
-		if (useGeneralizedSeasonality) { #powSeason added later
+		if (seasonalityMethodId==1) { #powSeason added later
 			model[["parameters"]] <- c(model[["parameters"]], "powSeason2")
 		}
 		
@@ -70,8 +73,11 @@ initModel <- function(model.type=NULL, use.regression=FALSE, useGeneralizedSeaso
   if (use.regression) {
 		model[["parameters"]] <- c(model[["parameters"]], "regCoef", "regOffset", "r")     
   }
-	if (useGeneralizedSeasonality) {
+	if (seasonalityMethodId==1) {
 		model[["parameters"]] <- c(model[["parameters"]],"powSeason")
+	}  
+	if (levelMethodId==3) {
+		model[["parameters"]] <- c("l0", model[["parameters"]],"llevSm")
 	}
   
   class(model) <- c("RlgtStanModel", class(model))
@@ -86,8 +92,8 @@ initModel <- function(model.type=NULL, use.regression=FALSE, useGeneralizedSeaso
 #' @param y time series data for training (provided as a vector or a ts object).
 #' @param model.type the type of rlgt model, one of: "LGT", "SGT", "S2GT"
 #' @param use.regression whether the data has any additional variables to be used with forecasting, i.e. multivariate time-series.
-#' @param useGeneralizedSeasonality if generalized seasonality is to be used.
-#' @param levelMethodId used with dual seasonality models, 0 is Holt-Winters, 1 is seasonalAvg.
+#' @param seasonalityMethodId Seasonality method Id (0- HW, 1- generalized).
+#' @param levelMethodId Level method Id.
 #' @param useSmoothingMethodForError if the non-standard function for error size should be used, one based on smoothed innovations or surprises 
 #' @param seasonality This specification of seasonality will be overridden by frequency of y, if y is of ts or msts class. 
 #' 1 by default, i.e. no seasonality.
@@ -102,14 +108,14 @@ initModel <- function(model.type=NULL, use.regression=FALSE, useGeneralizedSeaso
 #' @return an rlgtfit instance
 
 rlgtfit <- function(y, model.type, use.regression,
-		useGeneralizedSeasonality,  levelMethodId=0, useSmoothingMethodForError=FALSE,
+		seasonalityMethodId, levelMethodId,  
+		useSmoothingMethodForError=FALSE,
 		seasonality, seasonality2,
     rlgtmodel, params, control, samples) {
 	# we can add our own integrity checks
 	value <- list(x = y, model.type = model.type,
 	              use.regression = use.regression,
-								useGeneralizedSeasonality=useGeneralizedSeasonality,
-								levelMethodId=levelMethodId,  
+								seasonalityMethodId=seasonalityMethodId, levelMethodId=levelMethodId,
 								useSmoothingMethodForError=useSmoothingMethodForError,
 								seasonality=seasonality, seasonality2=seasonality2,
 	              model = rlgtmodel, params = params, 

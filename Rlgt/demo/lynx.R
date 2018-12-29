@@ -13,11 +13,13 @@ SEASONALITY=38  #by looking at the graph and running acf()
 
 rstanmodel <- rlgt(train, seasonality=SEASONALITY,
 		control=rlgt.control(NUM_OF_ITER=10000),   
+		#seasonality.type="generalized",
+		#level.method="HW",  #c("HW", "seasAvg","HW_sAvg"),
 		verbose=TRUE)   
 
 forec= forecast(rstanmodel, h = length(actuals))
 
-plot(forec)
+plot(forec, main='Lynx by SGT')
 xs=seq(from=length(train)+1,to=length(train)+ length(actuals))
 lines(xs,actuals, col=1, type='b',lwd=2)	
 
@@ -28,7 +30,7 @@ print(paste("sMAPE:",signif(sMAPE,3), "mse", signif(msqrt)))
 
 
 #S2GT
-SEASONALITY=9.5  #by looking at the graph and running acf()
+SEASONALITY=9.5
 SEASONALITY2=38
 
 rstanmodel <- rlgt(train, seasonality=SEASONALITY, seasonality2=SEASONALITY2,
@@ -37,7 +39,7 @@ rstanmodel <- rlgt(train, seasonality=SEASONALITY, seasonality2=SEASONALITY2,
 
 forec= forecast(rstanmodel, h = length(actuals))
 
-plot(forec)
+plot(forec, main='Lynx by S2GT')
 xs=seq(from=length(train)+1,to=length(train)+ length(actuals))
 lines(xs,actuals, col=1, type='b',lwd=2)	
 

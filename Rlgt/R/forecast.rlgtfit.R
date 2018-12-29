@@ -29,7 +29,7 @@
 
 
 #object=regModel; xreg=regTrain; level=c(80,95); NUM_OF_TRIALS=2000 
-#object=rstanmodel; h = length(actuals); level=c(80,95); NUM_OF_TRIALS=2000
+#object=rstanmodel; h = length(actuals); level=c(80,95); NUM_OF_TRIALS=2000;xreg=NULL
 #library(sn)
 forecast.rlgtfit <- function(object, 
                              xreg=NULL,
@@ -89,7 +89,6 @@ forecast.rlgtfit <- function(object,
   seasonality2_int=as.integer(seasonality2)
   fractSeasonality2=seasonality2-seasonality2_int
   
-  #useGeneralizedSeasonality <- object$useGeneralizedSeasonality  this actually not needed, we check if is.null(powSeasonS)
   MAX_VAL=object$control$MAX_VAL
   MIN_VAL=object$control$MIN_VAL
   
@@ -98,19 +97,16 @@ forecast.rlgtfit <- function(object,
   
   # start.f is the next(first) forecast period
   tspx <- tsp(out$x)
-  if (inherits(out$x,'msts') && !is.null(tspx)) {
+  if ( (inherits(out$x,'msts') || inherits(out$x,'ts')) && !is.null(tspx)) {
     start.f <- tspx[2] + 1/frequency(out$x)  
-  } else if (inherits(out$x,'ts') && !is.null(tspx)) {
-    #' @importFrom stats tsp
-    start.f <- tspx[2] + 1/frequency(out$x)
-  } else {#this can be seasonal, but numeric, with seasonality(ies) specified in control
+	} else {#this can be seasonal, but numeric, with seasonality(ies) specified in control
     start.f <- length(out$x)+1
   }
-  
   
   # extracting all of the params
   nu <- object$params[["nu"]]
   lastB <- object$params[["lastB"]]
+	lastLevel0<- object$params[["lastLevel0"]]
   lastSmoothedInnovSize <- object$params[["lastSmoothedInnovSize"]]
   powx <- object$params[["powx"]]
   
@@ -128,34 +124,36 @@ forecast.rlgtfit <- function(object,
   if (seasonality>1) {
     s  <- object$params[["s"]]
     sS <- rep(1,seasonality_int+h+1)
+		if (object$levelMethodId>0) movingSum0=sum(object$x[(length(object$x)-seasonality_int+1):length(object$x)])	
   }
   if (seasonality2>1) {
     if (seasonality>seasonality2) {
       stop("seasonality has to be smaller than seasonality2")
-      return (NULL)  #for god measure
+      return (NULL)  #for good measure
     }
     s2  <- object$params[["s2"]]
     sS2 <-rep(1,seasonality2_int+h+1)
-    
-    if (object$levelMethodId==1) {
-      recentVals=rep(0,seasonality_int+h)
-      recentVals[1:seasonality_int]=object$x[(length(object$x)-seasonality_int+1):length(object$x)]	
-    } else if (object$levelMethodId==2) {
-      recentVals=rep(0,seasonality2_int+h)
-      recentVals[1:seasonality2_int]=object$x[(length(object$x)-seasonality2_int+1):length(object$x)]	
-    }
+		if (object$levelMethodId>0) movingSum0=sum(object$x[(length(object$x)-seasonality2_int+1):length(object$x)])	
   }
   
   # Initialise a matrix which contains the last level value
   yf <- matrix(0,nrow=NUM_OF_TRIALS, ncol=h)
   
   # For each forecasting trial
+	irun=1
   for (irun in 1:NUM_OF_TRIALS) {
     # Obtain the relevant parameters & use bootstrap sampling
     indx <- sample(nrow(object$params[["l"]]),1)
-    prevLevel <- object$params[["lastLevel"]][indx]
+    
+		prevLevel <- object$params[["lastLevel"]][indx]
+		if (!is.null(lastLevel0)) {
+			prevLevel0 <- object$params[["lastLevel0"]][indx]
+			llevSmS <- object$params[["llevSm"]][indx]
+		}
+		
     levSmS <- object$params[["levSm"]][indx]
-    if (use.regression) {
+    
+		if (use.regression) {
       regCoefS <- regCoef[indx,]
       regOffsetS <- regOffset[indx]
     }
@@ -177,7 +175,6 @@ forecast.rlgtfit <- function(object,
     offsetsigmaS <- object$params[["offsetSigma"]][indx]
     if (!is.null(lastSmoothedInnovSize)) {
       innovSize <- lastSmoothedInnovSize[indx] # we are not updating innovSize in simulation 
-      #innovSmS <- object$params[["innovSm"]][indx]
     } else if (!is.null(powx)) {
       powxS <- powx[indx]      
     }
@@ -188,13 +185,17 @@ forecast.rlgtfit <- function(object,
     } else {
       r=rep(0,h)
     }
+		
     if (seasonality > 1) { #seasonal
+			#common
+			if (object$levelMethodId>0) movingSum=movingSum0
       powSeasonS <- object$params[["powSeason"]][indx]
       if (fractSeasonality>0) {
         sS[1:(seasonality_int+1)]=s[indx,(ncol(s)-seasonality_int):ncol(s)]
       } else {
         sS[1:seasonality_int]=s[indx,(ncol(s)-seasonality_int):(ncol(s)-1)]  #last element is empty	
       }
+			
       if (seasonality2>1) {
         if (fractSeasonality2>0) {
           sS2[1:(seasonality2_int+1)]=s2[indx,(ncol(s2)-seasonality2_int):ncol(s2)]
@@ -202,36 +203,37 @@ forecast.rlgtfit <- function(object,
           sS2[1:seasonality2_int]=s2[indx,(ncol(s2)-seasonality2_int+1):ncol(s2)]	
         }
         powSeasonS2 <- object$params[["powSeason2"]][indx]
-        if(use.regression && object$levelMethodId>0){
+        if(use.regression){
           regFittedS<-object$params[["r"]][indx]
-          if (object$levelMethodId==1) {
-            recentVals[1:seasonality_int]=recentVals[1:seasonality_int]-regFittedS[(length(regFittedS)-seasonality_int+1):length(regFittedS)]
-          } else {
-            recentVals[1:seasonality2_int]=recentVals[1:seasonality2_int]-regFittedS[(length(regFittedS)-seasonality2_int+1):length(regFittedS)]
-          }
+					if (object$levelMethodId>0) movingSum= movingSum0-sum(regFittedS[(length(regFittedS)-seasonality2_int+1):length(regFittedS)])
         }
-      }
-      
+      } else {#SGT
+				if(use.regression) {
+					regFittedS<-object$params[["r"]][indx]
+					if (object$levelMethodId>0) movingSum= movingSum0-sum(regFittedS[(length(regFittedS)-seasonality_int+1):length(regFittedS)])	
+				}
+			}
+			
+      #t=1
       for (t in 1:h) {
         if (seasonality2>1) {
-          if (is.null(powSeasonS)) {
-            seasonA <- sS[t]*sS2[t]
+          if (is.null(powSeasonS)) {#multiplicative
+            season <- sS[t]*sS2[t]
           } else {
-            seasonA <- sS[t]*abs(prevLevel)^powSeasonS + sS2[t]*abs(prevLevel)^powSeasonS2
+            season <- sS[t]*abs(prevLevel)^powSeasonS + sS2[t]*abs(prevLevel)^powSeasonS2
           }
-        } else if (seasonality > 1) {
-          if (is.null(powSeasonS)) {
-            seasonA <- sS[t]
-          } else {
-            seasonA <- sS[t]*abs(prevLevel)^powSeasonS 
+        } else { #if (seasonality > 1) 
+          if (is.null(powSeasonS)) {#multiplicative
+            season <- sS[t]
+          } else {#generalized
+            season <- sS[t]*abs(prevLevel)^powSeasonS 
           }	
         }
         
-        ## From eq.6.a
         if (is.null(powSeasonS)) {
-          expVal <-(prevLevel + coefTrendS*abs(prevLevel)^powTrendS)* seasonA + r[t];	
-        } else {
-          expVal <- prevLevel + coefTrendS*abs(prevLevel)^powTrendS + seasonA + r[t];
+					expVal <-(prevLevel + coefTrendS*abs(prevLevel)^powTrendS)* season + r[t];	
+        } else {#generalized
+          expVal <- prevLevel + coefTrendS*abs(prevLevel)^powTrendS + season + r[t];
         }
         
         if (!is.null(powx)) {
@@ -247,45 +249,69 @@ forecast.rlgtfit <- function(object,
         
         # Fill in the matrix of predicted value
         yf[irun,t] <- min(MAX_VAL,max(MIN_VAL,expVal+error))
-        
+
         # find the currLevel
+				if (is.null(powSeasonS)){
+					newLevelP=(yf[irun,t]-r[t])/season
+				} else {#generalized
+					newLevelP=yf[irun,t]-r[t]-season
+				}
+				
         if (seasonality2>1) {
-          if (is.null(powSeasonS)) {
-            if (object$levelMethodId==0) {
-              newLevelP=(yf[irun,t]-r[t])/seasonA
-            } else if (object$levelMethodId==1) {
-              recentVals[seasonality_int+t]=yf[irun,t]-r[t]
-              newLevelP=mean(recentVals[(t+1):(t+seasonality_int)])/sS2[t]
-            } else if (object$levelMethodId==2) {
-              recentVals[seasonality2_int+t]=yf[irun,t]-r[t]
-              newLevelP=mean(recentVals[(t+1):(t+seasonality2_int)])
-            }	
-          } else { #generalized seasonality
-            if (object$levelMethodId==0) {
-              newLevelP=yf[irun,t]-r[t]-seasonA
-            } else if (object$levelMethodId==1) {
-              recentVals[seasonality_int+t]=yf[irun,t]-r[t]
-              newLevelP=mean(recentVals[(t+1):(t+seasonality_int)]) - sS2[t]*abs(prevLevel)^powSeasonS2
-            } else if (object$levelMethodId==2) {
-              recentVals[seasonality2_int+t]=yf[irun,t]-r[t]
-              newLevelP=mean(recentVals[(t+1):(t+seasonality2_int)])
-            }							
-          }
-          currLevel=max(MIN_VAL,levSmS*newLevelP + (1-levSmS)*prevLevel) ;
-        } else if (is.null(powSeasonS)){
-          currLevel <- max(MIN_VAL,levSmS*(yf[irun,t]-r[t])/seasonA + (1-levSmS)*prevLevel) ;
-        } else {
-          currLevel <- max(MIN_VAL,levSmS*(yf[irun,t]-r[t]-seasonA) + (1-levSmS)*prevLevel) ;
-        }
-        
+					if (object$levelMethodId>0) {
+						if (t>seasonality2) {
+							movingSum=movingSum+(yf[irun,t]-r[t])-(yf[irun,t-seasonality2]-r[t-seasonality2]);	
+						} else {
+							if(use.regression){
+								movingSum=movingSum+(yf[irun,t]-r[t])-(object$x[length(object$x)+(t-seasonality2)]-regFittedS[length(regFittedS)+(t-seasonality2)]);    #
+							} else {
+								movingSum=movingSum+yf[irun,t]-object$x[length(object$x)+(t-seasonality2)];    #
+							}
+						}				
+					}
+					if (object$levelMethodId==0) {
+						currLevel=max(MIN_VAL, levSmS*newLevelP + (1-levSmS)*prevLevel) ;
+					} else if (object$levelMethodId==2) {
+						currLevel=max(MIN_VAL, levSmS*movingSum/seasonality2+(1-levSmS)*prevLevel) ;
+					} else {	# levelMethodId==3
+						currLevel0=max(MIN_VAL, levSmS*newLevelP + (1-levSmS)*prevLevel0) ;
+						currLevel=max(MIN_VAL, llevSmS*currLevel0 + (1-llevSmS)*movingSum/seasonality2) ;
+					}  
+        } else { #SGT
+					if (object$levelMethodId>0) {
+						if (t>seasonality) {
+							movingSum=movingSum+(yf[irun,t]-r[t])-(yf[irun,t-seasonality]-r[t-seasonality]);	
+						} else {
+							if(use.regression){
+								movingSum=movingSum+(yf[irun,t]-r[t])-(object$x[length(object$x)+(t-seasonality)]-regFittedS[length(regFittedS)+(t-seasonality)]);    #
+							} else {
+								movingSum=movingSum+yf[irun,t]-object$x[length(object$x)+(t-seasonality)];    #
+							}
+						}
+					}
+					if (object$levelMethodId==0) {
+						currLevel=max(MIN_VAL, levSmS*newLevelP + (1-levSmS)*prevLevel) ;
+					} else if (object$levelMethodId==2) {
+						currLevel=max(MIN_VAL, levSmS*movingSum/seasonality+(1-levSmS)*prevLevel) ;
+					} else {	# levelMethodId==3
+						currLevel0=max(MIN_VAL, levSmS*newLevelP + (1-levSmS)*prevLevel0) ;
+						currLevel=max(MIN_VAL, llevSmS*currLevel0 + (1-llevSmS)*movingSum/seasonality) ;
+					}  
+				}
+				
         if (currLevel>MIN_VAL) {
           prevLevel <- currLevel
+					if (object$levelMethodId==3 && currLevel0>MIN_VAL) {
+						prevLevel0=currLevel0
+					}
         } 
+				
+				#we are just repeating, not updating seasonality
         if (fractSeasonality>0) {
           sS[t+seasonality_int+1] <- sS[t]
           sS[t+seasonality_int]=fractSeasonality*sS[t+seasonality_int]+(1-fractSeasonality)*sS[t]
         } else {
-          sS[t+seasonality_int] <- sS[t];	
+          sS[t+seasonality_int] <- sS[t];
         }
         
         if (seasonality2>1) {

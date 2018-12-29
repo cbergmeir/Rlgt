@@ -214,9 +214,20 @@ Three formulas are different as compared to the SGT model with multiplicative se
 Formulas for S2GT are modified along similar lines.
 
 
-### 3. "Seasonal average" method for calculating level
-This is an alternative method for calculating level in the seasonal models (SGT and S2GT). Instead of using the Holt-Winters' style way, as in eq.2.3 and 3.3, the level is calculated as a moving average of the last SEASONALITY points in case of SGT, and SEASONALITY2 points in case of S2GT. This approach makes sense for series with a stable or steadily changing level, and possible unimportant occasional flare-ups. The benefits may include faster calculation and better accuracy.
+### 3. Additonal level calculation methods
+We provide two alternative method for calculating level in the seasonal models (SGT and S2GT), instead of using the Holt-Winters' style way, as in eq.2.3 and 3.3.
 
+#### "seasAvg" - Seasonal average method
+Here the level is calculated as a smoothed moving average of the last SEASONALITY points in case of SGT, and SEASONALITY2 points in case of S2GT. This approach makes sense for series with a stable or steadily changing level, and unimportant occasional flare-ups. The benefits may include faster calculation and better accuracy. Eq. 2.3 becomes:
+$$l_{t+1}= \alpha *movingAvg[t-SEASONALITY+1,t]+ \left( 1- \alpha  \right) l_{t}$$
+
+#### "HW_sAvg" method
+It is an weighted average of the standard (HW) and seasAvg methods. Eq. 2.3 becomes:
+$$k_{t+1}= \alpha  \frac{y_{t+1}}{s_{t+1}}+ \left( 1- \alpha  \right) k_{t}$$
+where k is calculated as the standard level, and the final level
+
+$$l_{t+1}= \alpha *movingAvg[t-SEASONALITY+1,t]+ \left( 1- \alpha  \right) k_{t}$$
+This is an interesting, although a bit slower method, often most accurate one.
 
 ## Regression
 All models support additional regressors. The data needs to be passed as a matrix (with number of columns equal to the number of regressors) to both rlgt (for training) and forecast functions. 

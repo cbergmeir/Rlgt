@@ -46,7 +46,7 @@ numOfCases95pExceeded=0; numOfCases5pExceeded=0;
 
 
 # ways to pass seasonal data
-for (i in 1:3) {
+for (i in 1:6) {
 	ii=sample(NUM_OF_CASES,1)
 	seriesName=hourly[[ii]]$st
 	print(paste("starting",seriesName))
@@ -124,7 +124,7 @@ for (i in 1:3) {
 #just exercising every possible combination of options
 i=7
 for (seasonality.type in c("multiplicative","generalized")){
-	for (level.method in c("classical","seasAvg")) {
+	for (level.method in c("HW", "seasAvg","HW_sAvg")) {
 		for (error.size.method in c("std","innov")) {
 			ii=sample(NUM_OF_CASES,1)
 			seriesName=hourly[[ii]]$st

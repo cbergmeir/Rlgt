@@ -7,7 +7,6 @@
 # or purely SGT, using as the seasonality 168, just change the logical variable below
 
 USE_S2GT=FALSE
-level.method="classical"; #"seasAvg"
 
 library(Rlgt)
 # install.packages("devtools")
@@ -112,16 +111,16 @@ ret_df=foreach(i=1:NUM_OF_CASES, .combine=rbind, .inorder=FALSE, .packages=c("Rl
 	
 	if (is.null(unexpectedSeasonalityList[[as.character(i)]])) {
 		rstanmodel <- rlgt(trainData,seasonality2=SEASONALITY2, #but if SEASONALITY2==1, then we are using SGT
-				level.method=level.method,
-				control=rlgt.control(NUM_OF_ITER=5000),   
+				control=rlgt.control(NUM_OF_ITER=10000),   
+				#seasonality.type="generalized",
+				level.method="HW_sAvg",  #c("HW", "seasAvg","HW_sAvg"),
 				verbose=TRUE)
 		startParToDisplay=4
 	} else {
 		trainData = as.numeric(trainData) #to remove incorrect frequency stamp
 		actuals = as.numeric(actuals)
 		rstanmodel <- rlgt(trainData, seasonality=unexpectedSeasonalityList[[as.character(i)]], 
-				level.method=level.method,
-				control=rlgt.control(NUM_OF_ITER=5000),
+				control=rlgt.control(NUM_OF_ITER=10000),
 				verbose=TRUE) #use SGT
 		startParToDisplay=3
 	}
@@ -177,9 +176,6 @@ print(paste0("SUMMARY: Num of cases:", NUM_OF_CASES, ", sMAPE:",signif(sMAPE,4),
   ', % of time 95p exceeded:',signif(exceed95,4), ', % of time 5p exceeded:',signif(exceed5,4), 
 	', q5Loss:',signif(q5Loss,4),', q95Loss:',signif(q95Loss,4),', q99Loss:',signif(q99Loss,4) ))
 
-	
-	
-	
 	
 	
 	
