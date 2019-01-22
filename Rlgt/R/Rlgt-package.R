@@ -25,7 +25,7 @@
 #' theoretical background.
 #'
 #' As to the demos, you can find their source code in the "demo" subfolder in the package sources (available on CRAN). 
-#' There are some basic demos and others more advanced ones that run on subsets of the M3 dataset and run potentially for hours.
+#' There are some basic demos and other more advanced ones that run on subsets of the M3 dataset and run potentially for hours.
 #'
 #' The package contains models for seasonal and non-seasonal data, allows for external regressors, and different 
 #' error distributions. In the following, we briefly also present some of the theoretical background of the methods.

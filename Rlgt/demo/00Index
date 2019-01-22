@@ -9,4 +9,5 @@ SGT_M3parallel Parallel implementation of SGT model on monthly time-series data 
 SGT_M4Weekly_parallel Parallel implementation of SGT model with non-integer seasonality on weekly time-series data from M4-competition dataset.
 basicDemos Runs some basic examples, that are also used in the vignette.
 lynx demo with the lynx dataset.
+GT_M3parallelDB Runs SGT on the M3 data, in parallel.
 

@@ -19,13 +19,13 @@
 #' @param verbose whether verbose information should be printed (Boolean value only), default \code{FALSE}.
 #' @return \code{\link{rlgtfit}} object
 #' @examples
-#' \dontrun{
+# \dontrun{
 #' rlgt_model <- rlgt(lynx, control=rlgt.control(MAX_NUM_OF_REPEATS=1, NUM_OF_ITER=2000), 
 #'      verbose=TRUE)
 #'
 #' # print the model details
 #' print(rlgt_model)
-#'}
+#}
 #'
 #'\dontrun{demo(exampleScript)}
 #'
