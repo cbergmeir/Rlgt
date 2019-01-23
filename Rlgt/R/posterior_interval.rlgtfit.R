@@ -10,13 +10,13 @@
 #' @method posterior_interval rlgtfit
 #' @importFrom rstantools posterior_interval 
 #' @examples 
-#\dontrun{
+#'\dontrun{
 #' rlgt_model <- rlgt(lynx,
-#'      control=rlgt.control(MAX_NUM_OF_REPEATS=1, NUM_OF_ITER=2000, NUM_OF_CORES=1), verbose=TRUE)
+#'      control=rlgt.control(MAX_NUM_OF_REPEATS=1, NUM_OF_ITER=2000), verbose=TRUE)
 #'
 #' # print the model details
 #' posterior_interval(rlgt_model)
-#}
+#'}
 #' @export
 
 posterior_interval.rlgtfit <- function(object,
