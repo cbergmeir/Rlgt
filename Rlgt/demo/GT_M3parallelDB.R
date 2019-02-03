@@ -25,7 +25,7 @@ variable='MONTHLY' #or "YEARLY", "QUARTERLY", "MONTHLY" or "OTHER".
 LBack=0
 
 OUTPUT_DIR="GT_M3_"
-fullOutputDir=file.path(getwd(),  paste0(OUTPUT_DIR,variable))
+fullOutputDir=file.path(tempdir(),  paste0(OUTPUT_DIR,variable))
 print(paste("The output will go to",fullOutputDir))
 if (!file.exists(fullOutputDir)){
 	dir.create(fullOutputDir)

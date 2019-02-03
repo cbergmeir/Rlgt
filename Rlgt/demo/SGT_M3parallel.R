@@ -14,7 +14,7 @@ imageWidth=1000; imageHeight=400
 
 
 OUTPUT_DIR="SGT_M3"
-fullOutputDir=file.path(getwd(),OUTPUT_DIR)
+fullOutputDir=file.path(tempdir(),OUTPUT_DIR)
 print(paste("The output will go to",fullOutputDir))
 if (!file.exists(fullOutputDir)){
 	dir.create(fullOutputDir)
