@@ -57,7 +57,7 @@ unexpectedSeasonalityList[["325"]]=23
 
 
 OUTPUT_DIR="S2GT_M4"
-fullOutputDir=file.path(getwd(),OUTPUT_DIR)
+fullOutputDir=file.path(tempdir(),OUTPUT_DIR)
 print(paste("The output will go to",fullOutputDir))
 if (!file.exists(fullOutputDir)){
 	dir.create(fullOutputDir)

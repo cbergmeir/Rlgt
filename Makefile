@@ -1,6 +1,6 @@
 rPackageName=Rlgt
 newDate=$(shell date +%Y-%m-%d)
-rPackageVersion=0.1-0
+rPackageVersion=0.1-2
 
 fixPermissions:
 #sed running on Windows screws up permissions

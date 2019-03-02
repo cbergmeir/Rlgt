@@ -12,9 +12,15 @@
 #' @method forecast rlgtfit
 #' @importFrom forecast forecast 
 #' @examples 
-#' \dontrun{
+# \dontrun{
+#' # The following is a toy example that runs within a few seconds. To get good 
+#' # fitting results the number of iterations should be set to at least 2000, and 
+#' # 4 chains should be used (the default). To speed up computation the number of 
+#' # cores should also be adjusted (default is 4).
+#' 
 #' rlgt_model <- rlgt(lynx, 
-#'        control=rlgt.control(MAX_NUM_OF_REPEATS=1, NUM_OF_ITER=2000), verbose=TRUE)
+#'        control=rlgt.control(MAX_NUM_OF_REPEATS=1, NUM_OF_ITER=50, NUM_OF_CHAINS = 1, 
+#'                             NUM_OF_CORES = 1), verbose=TRUE)
 #'
 #' # print the model details
 #' print(rlgt_model)
@@ -23,7 +29,7 @@
 #' forecast_result <- forecast(rlgt_model, h = 10, level=c(80, 95, 98))
 #' 
 #' plot(forecast_result,main="Forecasting lynx dataset with LGT model")
-#' }
+# }
 #'
 #' @export
 

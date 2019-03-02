@@ -31,7 +31,7 @@ NUM_OF_CASES=length(weekly) #running over 400 cases would take quite a few days 
 #str(a)
 
 OUTPUT_DIR="SGT_M4"
-fullOutputDir=file.path(getwd(),OUTPUT_DIR)
+fullOutputDir=file.path(tempdir(),OUTPUT_DIR)
 print(paste("The output will go to",fullOutputDir))
 if (!file.exists(fullOutputDir)){
 	dir.create(fullOutputDir)

@@ -3,7 +3,7 @@ title: "Getting Started with Global Trend Models"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Overview of LGT&SGT Model}
+  %\VignetteIndexEntry{Getting Started with Global Trend Models}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---

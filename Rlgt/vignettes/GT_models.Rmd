@@ -3,7 +3,7 @@ title: "Global Trend Models - LGT, SGT, and S2GT"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Overview of LGT&SGT Model}
+  %\VignetteIndexEntry{Global Trend Models - LGT, SGT, and S2GT}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
