@@ -6,7 +6,7 @@
 library(Rlgt)
 
 options(width=180)
-if (.Platform$OS.type=="windows")  memory.limit(6000)
+if (.Platform$OS.type=="windows")  memory.limit(10000)
 
 
 ################ LGT
@@ -86,6 +86,7 @@ lines(actuals, lwd=2)
 
 sMAPE=mean(abs(forec$mean-actuals)/(forec$mean+actuals))*200
 print(paste("sMAPE:",signif(sMAPE,3),"%"))
+#8.11
 
 ################### SGT, numeric input and forecast, generalized seasonality
 theDataSet=AirPassengers
@@ -99,7 +100,7 @@ actuals=theDataSet[(length(theDataSet)+1-2*horizon):(length(theDataSet)-horizon)
 
 rstanmodel <- rlgt(train, seasonality=frequency(theDataSet), 
 		seasonality.type="generalized", 
-		level.method="HW_sAvg",  #c("HW", "smSeasAvg", "seasAvg","HW_sAvg")
+		level.method="HW_sAvg",  #c("HW",  "seasAvg","HW_sAvg")
 		control=rlgt.control(NUM_OF_ITER=10000))   
 print(rstanmodel$samples)
 
@@ -111,6 +112,7 @@ lines(xs,actuals, col=1, type='b',lwd=2)
 
 sMAPE=mean(abs(forec$mean-actuals)/(forec$mean+actuals))*200
 print(paste("sMAPE:",signif(sMAPE,3),"%"))
+#4.93
 
 
 #########################  SGT on dual-seasonality time series, msts input and forecast
@@ -130,7 +132,8 @@ train=msts(train, seasonal.periods=attributes(taylor)$msts)
 tspx <- tsp(train)
 actuals=msts(actuals, seasonal.periods=attributes(taylor)$msts, start=tspx[2] + 1/seasonality)
 
-rstanmodel <- rlgt(train,  #because seaonality2 is not specified, a single seasonality model (of seasonality equal to the largest seasonality, 336)  will be used 
+rstanmodel <- rlgt(train,  #because seaonality2 is not specified, a single seasonality model (of seasonality equal to the largest seasonality, 336)  will be used
+		level.method="HW_sAvg",  #c("HW", "seasAvg","HW_sAvg")
 		control=rlgt.control(NUM_OF_ITER=10000),
 		verbose=TRUE)   
 
@@ -141,6 +144,7 @@ lines(actuals, lwd=2)
 
 sMAPE=mean(abs(forec$mean-actuals)/(forec$mean+actuals))*200
 print(paste("sMAPE:",signif(sMAPE,3),"%"))
+#4%
 
 
 #########################  S2GT on dual-seasonality time series, numeric input and forecast
@@ -151,12 +155,9 @@ seasonality2=frequency(theDataSet)  #larger seasonality
 horizon=seasonality2
 train=theDataSet[(seasonality2+1):(3*seasonality2)]  #using weeks 2 and 3
 actuals=theDataSet[(3*seasonality2+1):(3*seasonality2+horizon)] #to forecast the fourth one
-#class(taylor) ->  "msts" "ts"  
-#class(train) -> "msts"    "integer"
 
-#for multi-seasonality series specifying seasonality2 causes fitting the S2GT - the dual seasonality model
-#The first seaonality (48) is extracted the series here, because the series has both types: msts and numeric
 rstanmodel <- rlgt(train,  seasonality2=seasonality2,   
+		level.method="HW_sAvg",  #c("HW", "seasAvg","HW_sAvg")
 		control=rlgt.control(NUM_OF_ITER=10000),
 		verbose=TRUE)   
 
@@ -168,3 +169,4 @@ lines(xs,actuals, col=1, type='b',lwd=2)
 
 sMAPE=mean(abs(forec$mean-actuals)/(forec$mean+actuals))*200
 print(paste("sMAPE:",signif(sMAPE,3),"%"))
+# "sMAPE: 4.76 %"
