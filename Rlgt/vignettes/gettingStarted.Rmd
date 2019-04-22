@@ -17,21 +17,21 @@ knitr::opts_chunk$set(
 
 
 ## Introduction  
-This vignette provides a practical introduction to Global Trend (GT) time series forecasting models. For deeper understanding of the models please consult the GT_models vignette.
+This vignette provides a practical introduction to Global Trend (GT) time series forecasting models. For a deeper understanding of the models please consult the GT_models vignette.
 
 The models can be seen as extensions of following Exponential Smoothing models: Holt Linear Method (LGT), Holt-Winters model (SGT), and Taylor dual seasonality model (S2GT). The main differences are as follows:
 
-* nonlinear global trend, that spans linear to exponential trends.
+* nonlinear global trend, that spans damped, linear, to exponential trends.
 * Student-t distribution of error
-* function for error size, so the model is heteroscedastic
+* function for the error size, so the model is heteroscedastic
 * possibility to add regression components.
 
-The nonlinear global trend allows to model well a frequent situation in business where series grow faster than linearly, but slower than exponentially. The global trend can also fit well a damped trend.
-The models are Bayesian and do well on short time series, e.g. providing decent 18 months ahead forecasts based just on 13 months of data (seasonality+1 of data (12+1) is needed).
+The nonlinear global trend allows to model well a frequent situation in business where series grow faster than linearly, but slower than exponentially. The global trend can also fit a damped trend.
+The models are Bayesian and perform well on short time series, e.g. providing decent 18 months ahead forecasts based just on 13 months of data (seasonality+1 of data point are needed).
 
-The models are fitted using Markov Chain Monte Carlo with the RStan package. One of the consequences is that their computational requirements are 2-3 orders of magnitude higher in comparison to e.g. ETS from the "forecast"" package. So, while these models are often more precise than the classical time series algorithms, they are not suitable for quick forecasting on a large number of time series.
+The models are fitted using Markov Chain Monte Carlo with the RStan package. One of the consequences is that their computational requirements are 2-3 orders of magnitude higher in comparison to e.g. ETS from the Forecast package. So, while these models are often more precise than the classical time series algorithms, they are not suitable for quick forecasting on a large number of time series.
 
-The current version of the models supports time series data with positive data values only. Many time series data fall into this category, while for others, a simple transformation can be performed to obtain the required positive time-series data. Therefore, the constraint seems not too restrictive for most general applications.
+The current version of the models supports time series data with positive data values only. Many time series data fall into this category, while for others, a simple transformation can be performed to obtain the required positive time-series data.
 
  
  
@@ -47,11 +47,12 @@ For example, let's forecast the last 10 points from the "BJsales" dataset:
 library(Rlgt)
 options(width=140)
 
+theDataSet=BJsales
 horizon=10
 train=theDataSet[1:(length(theDataSet)-horizon)]
 actuals=theDataSet[(length(theDataSet)+1-horizon):length(theDataSet)]
 
-model <- rlgt(train) 
+model = rlgt(train) 
 ```
 All models of the package are fitted using the rlgt() function. As a minimum, like in this example, we need to pass the time series. 
 NUM_OF_ITER of steps (by default `r Rlgt::rlgt.control()$NUM_OF_ITER`) are executed, half warmup and half sampling, and then a simple check of the fit quality is done: average Rhat (over all parameters) is compared to MAX_RHAT_ALLOWED (by default `r Rlgt::rlgt.control()$MAX_RHAT_ALLOWED`). If this average is larger than MAX_RHAT_ALLOWED and MAX_NUM_OF_REPEATS is larger than 1 (by default it is `r Rlgt::rlgt.control()$MAX_NUM_OF_REPEATS`), then the number of iterations is doubled and the fitting repeated. When this happens you will see a message like below:
@@ -61,18 +62,19 @@ NUM_OF_ITER of steps (by default `r Rlgt::rlgt.control()$NUM_OF_ITER`) are execu
 
 A model with average Rhat a bit larger than the default MAX_RHAT_ALLOWED is still likely to provide a good forecast - the default MAX_RHAT_ALLOWED is quite conservative. So when the execution time is limited, you can set MAX_NUM_OF_REPEATS to 1, or increase MAX_RHAT_ALLOWED, or even reduce NUM_OF_ITER, for example:
 ```
-model <- rlgt(train, 
+model = rlgt(train, 
   control=rlgt.control(NUM_OF_ITER=4000, MAX_NUM_OF_REPEATS=1),
   verbose=TRUE) 
 ```
 On the other hand, if Rhat is often large, increase NUM_OF_ITER.
 For more information on Rhat and the quality of fit, please consult Stan online information.
 
-After several minutes, sometimes more :-), we can proceed with the forecasting.
+After several minutes, we can proceed with the forecasting.
 
 ### Forecasting
 ```
 forec = forecast(model, h = horizon)
+print(forec)
 ```
 The object returned by the "forecast" function is compatible with the "forecast"" package, and when printed looks like this:
 ```
@@ -88,7 +90,7 @@ The object returned by the "forecast" function is compatible with the "forecast"
 9        259.8896 251.5104 268.2541 246.6443 273.1136
 10       260.2187 251.0649 269.2757 245.7634 274.8557
 ```
-So, it has point forecasts and a number of prediction intervals. Those you see, were produced with the default values of the *level* parameter of the forecast function: c(80,95). To see all the parameters, execute 
+So, it has point forecasts and a number of prediction intervals. Ones you see were produced with the default values of the *level* parameter of the forecast function: c(80,95). To see all the parameters, execute 
 ```
 ?forecast.rlgtfit
 ```
@@ -120,7 +122,7 @@ print(paste("sMAPE:",signif(sMAPE,3),"%"))
 ```
 
 ## LGT with regression
-Here we implemented an additive regression, but this feature is currently *experimental*. The regression works for all models, not just LGT. You need to provide a matrix [N,d] of regressors for fitting, where N is the length of the series, and d the dimensionality of the regressors. And you need to provide a matrix [h,d] of regressors for forecasting, where h is the forecasting horizon. 
+The package implements an additive regression, although this feature is currently *experimental*. The regression works for all models, not just LGT. You need to provide a matrix [N,d] of regressors for fitting, where N is the length of the series, and d the dimensionality of the regressors. And you need to provide a matrix [h,d] of regressors for forecasting, where h is the forecasting horizon. 
 In the example below we create the regression matrix with two columns that are lagged (by 3 and 4) values of the BJsales.lead series. 
 ```
 theDataSet=BJsales 
@@ -140,16 +142,18 @@ regTest=regMatrix[(length(theDataSet)+1-horizon):length(theDataSet),]
 ```
 Executing
 ```
-regModel <- rlgt(train, xreg = regTrain, 
+regModel = rlgt(train, xreg = regTrain, 
 		control=rlgt.control(NUM_OF_ITER=10000, MAX_NUM_OF_REPEATS=1),
 		verbose=TRUE)
 ```		
 we get something like this:   
+```
 Warning messages:
 		1: There were 18293 divergent transitions after warmup. Increasing adapt_delta above 0.9 may help. See
 http://mc-stan.org/misc/warnings.html#divergent-transitions-after-warmup 
+```
 
-We are running on `r Rlgt::rlgt.control()$NUM_OF_CHAINS` concurrent chains, here each executing 5000 warmup and 5000 sampling iterations, so together 20K sampling iterations, therefore 18K of divergent transitions are certainly too many. But checking the main parameters   
+We are running on `r Rlgt::rlgt.control()$NUM_OF_CHAINS` concurrent chains, here each executing 5000 warmup and 5000 sampling iterations, so together 20K sampling iterations, therefore 18K of divergent transitions are certainly too many. But checking the main parameters (Stan's dignostic printout is enabled when verbose=TRUE)
 ```
                 mean se_mean   sd   2.5%    25%    50%    75%  97.5% n_eff Rhat
                 .........................................................
@@ -170,7 +174,7 @@ we can see that n_eff (effective sample size) and Rhat (1 except for LevSm) look
 
 As suggested, we can try to run with a higher adapt_delta, e.g. very high 0.99
 ```
-regModel <- rlgt(train, xreg = regTrain, 
+regModel = rlgt(train, xreg = regTrain, 
 		control=rlgt.control(NUM_OF_ITER=10000, ADAPT_DELTA=0.99),
 		verbose=TRUE)
 ```
@@ -191,46 +195,52 @@ sMAPE: 0.373 %
 
 ## SGT (Seasonal model with Global Trend)
 It generalizes the Holt-Winters method, so it is meant to be used on seasonal series, like monthly series for example. The local linear trend of LGT is removed and replaced with multiplicative (by default) or generalized seasonality. The generalized seasonality has an adaptive behavior, spanning additive and multiplicative seasonalities, but it takes longer to fit.   
-Let's forecast the last 24 observations of the monthly Airline Passenger Numbers in the AirPassengers time series:
+Let's forecast the last 24 observations of the monthly Airline Passenger Numbers in the AirPassengers time series. First, prepare the data:
 ```
 theDataSet=AirPassengers
 frequency(theDataSet)
 
-tspOrg <- tsp(theDataSet)
 horizon=2*frequency(theDataSet)
 train=theDataSet[1:(length(theDataSet)-horizon)]  #forecast the last horizon of the series
 actuals=theDataSet[(length(theDataSet)+1-horizon):length(theDataSet)]
+```
+Now, run fitting, forecasting, and ploting:
+```
+rstanmodel = rlgt(train, seasonality=frequency(theDataSet), 
+    level.method="seasAvg",
+		control=rlgt.control(NUM_OF_ITER=10000))  
+forec = forecast(rstanmodel, h = length(actuals))
+plot(forec, main="AirPassengers by SGT, numeric input")
+xs=seq(from=length(train)+1,to=length(train)+ length(actuals))
+lines(xs,actuals, col=1, type='b')    
+```
+<img src="airPassengersNumeric.png" style="width:450px;"/>  
 
+Note that we needed to supply the *seasonality* bacause although AirPassengers is an object of class ts(), with frequency 12, any subsetting, as done above to get train and actuals, converts the data into pure numeric vectors. Let's make them time series again and run the whole cycle:
 ```
-AirPassengers is a time series of frequency 12 and an object of class ts(). However, any subsetting as done here to get train and actuals, converts the data into a pure numeric vector. Therefore, mostly to get nice time series-style plots, we convert them back to time series:
-```
+tspOrg = tsp(theDataSet)
 train=ts(train, start=tspOrg[1], frequency=tspOrg[3])
 tspt=tsp(train)
 actuals=ts(actuals, start=tspt[2]+1/tspt[3], frequency=tspt[3])
-```
-We fit the model using the "seasAvg" method for calculating the level. It replaces the default Holt-Winters-style formula for the level update with a moving average of the last *seasonality* points. It can speed up calculations without reducing accuracy in situations where the trend is stable or changing in a stable manner.
-```
-rstanmodel <- rlgt(train,  
-		level.method="seasAvg",
+
+rstanmodel = rlgt(train,  
+		level.method="seasAvg", seasonality.type="generalized",
 		control=rlgt.control(NUM_OF_ITER=10000, MAX_NUM_OF_REPEATS=1))  
-```
-Please note that *seasonality* is not directly specified - it can be extracted from the time series input. Then we forecast and plot:
-```
+
 forec = forecast(rstanmodel, h = length(actuals))
 
 plot(forec, main="AirPassengers by SGT")
 lines(actuals, lwd=2)
 ```
+Now we do not need to specify *seasonality* - it can be extracted from the input time series. Also, plots are easier to produce and look nicer:
+
 <img src="airPassengers.png" style="width:450px;"/>     
-However, if the train object was just a numeric vector, we would have to let rlgt() know the seasonality, as in:
-```
-rstanmodel <- rlgt(train, seasonality=frequency(theDataSet), 
-		seasonality.type="generalized", level.method="seasAvg",
-		control=rlgt.control(NUM_OF_ITER=10000))  
-```
+In both cases we used "seasAvg" method for calculating the level. It is a good alternative to the default Holt-Winters-style formula for the level update in situations, where the trend is stable or changing in a stable manner. It can speed up calculations without reducing accuracy. In the second run we also used the generalized seasonality, for description see the GT_models vignette. Generalized seasonality is likely to provide a bit more accurate results, but it is slower, so here, we set MAX_NUM_OF_REPEATS=1 (although generally it is not a good idea).
+
 ## SGT applied to dual-seasonality time series
 Multi-seasonal time series, for example half-hourly data of electricity usage that has both daily (48) and weekly seasonalities (48\*7), can be modelled with SGT using *seasonality* equal to the largest frequency of the series, here 336. We will demonstrate the method by using the Taylor data set and forecasting one week ahead:
 ```
+if (.Platform$OS.type=="windows")  memory.limit(10000)
 theDataSet=taylor
 seasonality=frequency(theDataSet)  #larger seasonality, 336
 
@@ -241,48 +251,21 @@ actuals=theDataSet[(2*seasonality+1):(2*seasonality+horizon)] #to forecast the t
 The class(taylor) is "msts" "ts", but class(train) is	"msts" "integer". We want to convert train and actuals to "full" msts objects, with both seasonalities:
 ```
 train=msts(train, seasonal.periods=attributes(taylor)$msts)
-tspx <- tsp(train)
+tspx = tsp(train)
 actuals=msts(actuals, seasonal.periods=attributes(taylor)$msts, start=tspx[2] + 1/seasonality)
 ```
-Now fitting. Because *seasonality2* is not specified, a single seasonality model (of seasonality equal to the largest seasonality, 336)  will be used 
+Now fitting. Because *seasonality2* is not specified, a single seasonality model (of seasonality equal to the largest seasonality, 336)  will be used. 
 ```
-rstanmodel <- rlgt(train,  
+rstanmodel = rlgt(train,  
 		level.method="seasAvg",
 		control=rlgt.control(NUM_OF_ITER=10000, MAX_NUM_OF_REPEATS=1),
 		verbose=TRUE)   
-
-```
-And then as usual forecasting and plotting:
-```
+		
 forec= forecast(rstanmodel, h = length(actuals))
 
 plot(forec, main="Taylor by SGT")
 lines(actuals, lwd=2)
 ```
+Now you can go and relax for a while, this will take some time :-) Once you are back, recharged, you should see a graph similar to the one below:
+
 <img src="taylor_sgt.png" style="width:450px;"/>    
-
-## S2GT (Dual Seasonality model with Global Trend)
-S2GT is an experimental model that is an extension of SGT following Taylor (2003). 
-In order to use it, one has to specify *seasonality2* while calling rlgt().
-For example:
-```
-theDataSet=taylor
-seasonality2=frequency(theDataSet)  #larger seasonality
-horizon=seasonality2
-train=theDataSet[(seasonality2+1):(3*seasonality2)]  #using weeks 2 and 3
-actuals=theDataSet[(3*seasonality2+1):(3*seasonality2+horizon)] #to forecast the fourth one
-
-#The first seaonality (48) is extracted from the series, because the series has both types: msts and numeric
-rstanmodel <- rlgt(train,  seasonality2=seasonality2,   
-		control=rlgt.control(NUM_OF_ITER=10000, MAX_NUM_OF_REPEATS=1),
-		verbose=TRUE)  
-```		
-A general rule of rlgt() is that a seasonality that is an attribute of a series object has priority over one specified as part  of the rlgt() call. So, specify the seasonality only if the time series object does not have one, or when you want to force the use of S2GT. If things get confusing, just use a numeric vector as input, and specify the seasonality or seasonalities.
-```
-forec = forecast(rstanmodel, h = length(actuals))
-
-plot(forec, main="Taylor by S2GT")
-xs=seq(from=length(train)+1,to=length(train)+ length(actuals))
-lines(xs,actuals, col=1, type='b',lwd=2)	
-```
-<img src="taylor_s2gt.png" style="width:450px;"/> 
