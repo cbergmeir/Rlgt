@@ -11,7 +11,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 
-<meta name="date" content="2018-12-28" />
+<meta name="date" content="2019-04-23" />
 
 <title>Global Trend Models - LGT, SGT, and S2GT</title>
 
@@ -30,13 +30,13 @@
 
 
 <h1 class="title toc-ignore">Global Trend Models - LGT, SGT, and S2GT</h1>
-<h4 class="date"><em>2018-12-28</em></h4>
+<h4 class="date"><em>2019-04-23</em></h4>
 
 
 
 <div id="introduction" class="section level2">
 <h2>Introduction</h2>
-<p>This vignette provides an overview of the global trend time series forecasting models. The “LGT” model stands for Local and Global Trend and is devised to forecast non-seasonal time series. Meanwhile, the “SGT” model stands for Seasonal Global Trend model and is devised to complement the former on seasonal time series. The combination of these models were tested on the 3003 time-series M3-competition dataset, and they have been shown to outperform all of the models originally participating in the competition by a significant margin. It is quite likely that L/SGT is still the most accurate algorithm on the M3 data sets.</p>
+<p>This vignette provides an overview of Global Trend time series forecasting models. The LGT stands for Local and Global Trend model and is devised to forecast non-seasonal time series. Meanwhile, SGT stands for Seasonal model with Global Trend and is devised to complement the former on seasonal time series. The combination of these models were tested on the 3003 time-series M3-competition dataset, and they have been shown to outperform all of the models originally participating in the competition by a significant margin. It is quite likely that L/SGT is still the most accurate algorithm on the M3 data sets.</p>
 <table>
 <thead>
 <tr class="header">
@@ -66,13 +66,13 @@
 <p>Additionally, the package provides the S2GT model that extends SGT to deal with two seasonalities, following Taylor (2003).</p>
 <p>The models can be seen as extensions of following Exponential Smoothing models: Holt Linear Method (LGT), Holt-Winters model (SGT), and Taylor dual seasonality model (S2GT). The main differences are as follows:</p>
 <ul>
-<li>nonlinear global trend, that spans linear to exponential trends.</li>
+<li>nonlinear global trend, that spans damped, linear, to exponential trends.</li>
 <li>Student-t distribution of error</li>
 <li>function for error size, so the model is heteroscedastic</li>
 <li>possibility to add regression components.</li>
 </ul>
-<p>The package also provides some variants of the base algorithms, they are described in later sections.</p>
-<p>The models are Bayesian and are fitted using Markov Chain Monte Carlo with the RStan package. The user can “nudge” the models using many hyperparamters of the parameters’ prior distributions, altough this is usually not necessary. While the Hamiltonian Monte Carlo engine of the Stan system is relatively fast, computation time required for a single time series is typically between a few up to 20 minutes. A substantially longer computation time is likely a sign of not a good match of the chosen model to the time series. The current version of the models only supports time series data with entirely positive data values. Many time series data fall into this category, while for others, a simple transformation can be performed to obtain the required positive time-series data. Therefore, the constraint seems not too restrictive for most general applications.</p>
+<p>The package also provides some variants of these base algorithms, they are described in later sections.</p>
+<p>The models are Bayesian and are fitted using Markov Chain Monte Carlo with the RStan package. The user can “nudge” the models using many hyperparamters of the parameters’ prior distributions, altough this is usually not necessary. While the Hamiltonian Monte Carlo engine of the Stan system is relatively fast, the computation time required for a single time series is typically between a couple to up to 20 minutes. A substantially longer computation time is likely a sign of not a good match of the chosen model to the time series. The current version of the models only supports time series data with entirely positive data values. Many time series data fall into this category, while for others, a simple transformation can be performed to obtain the required positive time-series data.</p>
 <p>The following sections present the models’ formulas:</p>
 </div>
 <div id="lgtlocal-and-global-trend" class="section level2">
@@ -90,7 +90,7 @@
 <ul>
 <li><span class="math inline">\(y_{t}\)</span> :value of the dependent variable of interest at time t</li>
 <li><span class="math inline">\(\widehat{y}_{t+1}\)</span> :expected value of y at time t+1 given information up to time t</li>
-<li><span class="math inline">\(\widehat{\sigma}_{t+1}\)</span> :size of error at time t+1</li>
+<li><span class="math inline">\(\widehat{\sigma}_{t+1}\)</span> :expected size of error at time t+1</li>
 <li><span class="math inline">\(l_{t}\)</span> :level at time t</li>
 <li><span class="math inline">\(b_{t}\)</span> :local trend at time t</li>
 </ul>
@@ -261,15 +261,6 @@
 <div id="prior-distributions" class="section level2">
 <h2>Prior Distributions</h2>
 <p>The prior distributions of parameters have their hyper-parameters documented and available for tweaking, although most of the time it is not required. Perhaps the most likely hyperparameter to change would be POW_TREND_ALPHA which is the alpha parameter of the Beta distribution of the global trend power coefficient. Occasionally it may be useful to increase it above 1, to say 3-6, to encourage higher curvature of the global trend.</p>
-<p>The prior distributions of the parameters and their default limits (which can also be changed) are listed below:</p>
-<ul>
-<li><span class="math inline">\(\gamma\)</span> : Cauchy distribution with minimum value of 0 and the scale parameter equals to 1/200 of the maximum value of y</li>
-<li><span class="math inline">\(\sigma\)</span> : Cauchy distribution with location value of 0 and the scale parameter equals to 1/200 of the maximum value of y</li>
-<li><span class="math inline">\(\xi\)</span> : Cauchy distribution with minimum value of MIN_SIGMA and the scale parameter equals to 1/200 of the maximum value of y</li>
-<li><span class="math inline">\(\rho\)</span> : Scaled (to the default range of -0.5 and 1.0) Beta distribution</li>
-<li><span class="math inline">\(\alpha, \beta, \eta, \lambda, \zeta, \delta, \tau, \theta\)</span>: Uniform distribution between 0 and 1</li>
-<li><span class="math inline">\(v\)</span> : Uniform distribution between 2 and 20 Regression coefficients are drawn from (appropriately scaled) Cauchy distribution centered on 0.</li>
-</ul>
 </div>
 <div id="additional-notes" class="section level2">
 <h2>Additional notes</h2>

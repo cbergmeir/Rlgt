@@ -17,7 +17,7 @@ knitr::opts_chunk$set(
 
 
 ## Introduction  
-This vignette provides an overview of the global trend time series forecasting models. The "LGT" model stands for Local and Global Trend and is devised to forecast non-seasonal time series. Meanwhile, the "SGT" model stands for Seasonal Global Trend model and is devised to complement the former on seasonal time series. The combination of these models were tested on the 3003 time-series M3-competition dataset, and they have been shown to outperform all of the models originally participating in the competition by a significant margin. It is quite likely that L/SGT is still the most accurate algorithm on the M3 data sets. 
+This vignette provides an overview of Global Trend time series forecasting models. The LGT stands for Local and Global Trend model and is devised to forecast non-seasonal time series. Meanwhile, SGT stands for Seasonal model with Global Trend and is devised to complement the former on seasonal time series. The combination of these models were tested on the 3003 time-series M3-competition dataset, and they have been shown to outperform all of the models originally participating in the competition by a significant margin. It is quite likely that L/SGT is still the most accurate algorithm on the M3 data sets. 
  
 | Model               |sMAPE  |MASE  |
 |---------------------|-------|------|
@@ -29,15 +29,15 @@ Additionally, the package provides the S2GT model that extends SGT to deal with 
 
 The models can be seen as extensions of following Exponential Smoothing models: Holt Linear Method (LGT), Holt-Winters model (SGT), and Taylor dual seasonality model (S2GT). The main differences are as follows:
 
-* nonlinear global trend, that spans linear to exponential trends.
+* nonlinear global trend, that spans damped, linear, to exponential trends.
 * Student-t distribution of error
 * function for error size, so the model is heteroscedastic
 * possibility to add regression components.
 
-The package also provides some variants of the base algorithms, they are described in later sections.
+The package also provides some variants of these base algorithms, they are described in later sections.
 
-The models are Bayesian and are fitted using Markov Chain Monte Carlo with the RStan package. The user can "nudge" the models using many hyperparamters of the parameters' prior distributions, altough this is usually not necessary. While the Hamiltonian Monte Carlo engine of the Stan system is relatively fast, computation time required for a single time series is typically between a few up to 20 minutes. A substantially longer computation time is likely a sign of not a good match of the chosen model to the time series.
-The current version of the models only supports time series data with entirely positive data values. Many time series data fall into this category, while for others, a simple transformation can be performed to obtain the required positive time-series data. Therefore, the constraint seems not too restrictive for most general applications.
+The models are Bayesian and are fitted using Markov Chain Monte Carlo with the RStan package. The user can "nudge" the models using many hyperparamters of the parameters' prior distributions, altough this is usually not necessary. While the Hamiltonian Monte Carlo engine of the Stan system is relatively fast, the computation time required for a single time series is typically between a couple to up to 20 minutes. A substantially longer computation time is likely a sign of not a good match of the chosen model to the time series.
+The current version of the models only supports time series data with entirely positive data values. Many time series data fall into this category, while for others, a simple transformation can be performed to obtain the required positive time-series data. 
 
  
 The following sections present the models' formulas:
@@ -59,7 +59,7 @@ $$\widehat{\sigma}_{t+1}= \sigma \widehat{y}_{t+1}^{ \tau}+ \xi   \quad  (eq. 1.
 ### Notations
 * $y_{t}$  :value of the dependent variable of interest at time t
 * $\widehat{y}_{t+1}$  :expected value of y at time t+1 given information up to time t
-* $\widehat{\sigma}_{t+1}$  :size of error at time t+1
+* $\widehat{\sigma}_{t+1}$  :expected size of error at time t+1
 * $l_{t}$  :level at time t
 * $b_{t}$  :local trend at time t
 
@@ -236,16 +236,6 @@ All models support additional regressors. The data needs to be passed as a matri
 ## Prior Distributions 
  
 The prior distributions of parameters have their hyper-parameters documented and available for tweaking, although most of the time it is not required. Perhaps the most likely hyperparameter to change would be POW_TREND_ALPHA which is the alpha parameter of the Beta distribution of the global trend power coefficient. Occasionally it may be useful to increase it above 1, to say 3-6, to encourage higher curvature of the global trend. 
-
-The prior distributions of the parameters and their default limits (which can also be changed) are listed below:
-
-* $\gamma$ : Cauchy distribution with minimum value of 0 and the scale parameter equals to 1/200 of the maximum value of y
-* $\sigma$ :  Cauchy distribution with location value of 0 and the scale parameter equals to 1/200 of the maximum value of y
-* $\xi$ : Cauchy distribution with minimum value of MIN_SIGMA and the scale parameter equals to 1/200 of the maximum value of y
-* $\rho$  :  Scaled (to the default range of -0.5 and 1.0) Beta distribution
-* $\alpha, \beta, \eta, \lambda, \zeta, \delta, \tau, \theta$:  Uniform distribution between 0 and 1
-* $v$    : Uniform distribution between 2 and 20
-Regression coefficients are drawn from (appropriately scaled) Cauchy distribution centered on 0. 
 
 ## Additional notes
 
