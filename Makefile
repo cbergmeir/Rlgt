@@ -21,6 +21,7 @@ roxy:
 	rm -f ./$(rPackageName)/man/*.Rd
 	echo "library(roxygen2)"> tmp_roxy.R
 	echo "path <- \"./$(rPackageName)\"" >> tmp_roxy.R
+	echo "pkgbuild::compile_dll(path=path)" >> tmp_roxy.R
 	echo "roxygenize(package.dir=path)" >> tmp_roxy.R
 	R CMD BATCH tmp_roxy.R
 	cd ./$(rPackageName) && sed -i 's/\(Date: \).*/Date: '"$(newDate)"'/' DESCRIPTION

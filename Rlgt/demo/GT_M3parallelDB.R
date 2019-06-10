@@ -80,7 +80,8 @@ unlink(stanOutputPath)
 
 now=Sys.time()
 if (USE_DB) { #check in meta table if this is the continuation run
-	fchannel<- odbcConnect(ODBC_SOURCE_NAME)
+	#fchannel<- odbcConnect(ODBC_SOURCE_NAME)
+  fchannel= odbcConnect(ODBC_SOURCE_NAME, uid='SA',pwd='bumbarA88*')
 	odbcGetInfo(fchannel)
 	doneAlready_query=paste0("select dateTimeOfPrediction from M4StanModels",
  			" where run='",runName,  
@@ -92,14 +93,15 @@ if (USE_DB) { #check in meta table if this is the continuation run
 		now=doneAlready_df$dateTimeOfPrediction
 	} else {
 		save_df=data.frame(run=runName, LBack=LBack, variable=variable, dateTimeOfPrediction=now, comments='')
-		sqlSave(fchannel, save_df, tablename='M4StanModels', append=T, rownames=F,verbose=F)
+		sqlSave(fchannel, save_df, tablename='MStanModels', append=T, rownames=F,verbose=F)
 	}
 }
 
 firstTime=TRUE; i=1
 ret_df=foreach(i=1:NUM_OF_CASES, .combine=rbind, .inorder=FALSE, .packages=c("Rlgt","RODBC")) %dopar% { # the long loop :-)	
 	if (firstTime==TRUE) { #needs to be done inside every new slave process
-		fchannel<- odbcConnect(ODBC_SOURCE_NAME)
+		#fchannel<- odbcConnect(ODBC_SOURCE_NAME)
+	  fchannel= odbcConnect(ODBC_SOURCE_NAME, uid='SA',pwd='bumbarA88*')
 		odbcGetInfo(fchannel)
 		sink(file=stanOutputPath, append=TRUE, split=TRUE)
 		firstTime=FALSE
@@ -129,7 +131,10 @@ ret_df=foreach(i=1:NUM_OF_CASES, .combine=rbind, .inorder=FALSE, .packages=c("Rl
 				#level.method="seasAvg",  #c("HW", "seasAvg","HW_sAvg"),
 			control=rlgt.control(NUM_OF_ITER=5000), #we do not need to specify seasonality, as it is extracted from M3.data[[i]]$x
 			verbose=TRUE)
-		forec= forecast(rstanmodel, h = H, level=c(95,98))
+		forec= forecast(rstanmodel, h = H, level=c(90,95,98))
+		#str(forec, max.level=1)
+		#forec$lower  #5%  2.5%   1%
+		#forec$upper #95% 97.5%   99%
 		#str(forec$model$params, max.level=1)
 		
 		imageFileName=paste(series,'.png',sep='')
@@ -153,9 +158,12 @@ ret_df=foreach(i=1:NUM_OF_CASES, .combine=rbind, .inorder=FALSE, .packages=c("Rl
 		cat(paste0('<img src="',relPath,'" alt="',series,'" height="',imageHeight,'" width="',imageWidth,'">'), file = htmlFilePath, append = TRUE)
 	
 		sMAPE=mean(abs(forec$mean-actuals)/(forec$mean+actuals))*200
-		q975Loss=quantileLoss(forec$upper[,1], actuals, 0.975)	
-		q99Loss=quantileLoss(forec$upper[,2], actuals, 0.99)
-		q025Loss=quantileLoss(forec$lower[,1], actuals, 0.025)
+		q05Loss=quantileLoss(forec$lower[,1], actuals, 0.05)
+		q95Loss=quantileLoss(forec$upper[,1], actuals, 0.95)	
+		q025Loss=quantileLoss(forec$lower[,2], actuals, 0.025)
+		q975Loss=quantileLoss(forec$upper[,2], actuals, 0.975)
+		q01Loss=quantileLoss(forec$lower[,3], actuals, 0.01)
+		q99Loss=quantileLoss(forec$upper[,3], actuals, 0.99)
 		cat(paste0("<p> ",Sys.time(), " ",series,  " sMAPE=",signif(sMAPE,3),"% </p>"), file = htmlFilePath, append = TRUE)
 		params_txt=NULL;ipar=3
 		for (ipar in startParamToDisplay:length(forec$model$params)) {
@@ -167,53 +175,88 @@ ret_df=foreach(i=1:NUM_OF_CASES, .combine=rbind, .inorder=FALSE, .packages=c("Rl
 		
 		if (USE_DB) {
 			save_df=data.frame(dateTimeOfPrediction=now, series=series, horizon=1:H,
-					actual=actuals, predQ50=forec$mean, predQ2_5=forec$lower[,1], predQ97_5=forec$upper[,1], predQ99=forec$upper[,2])
+					actual=actuals, predQ50=forec$mean, 
+					predQ5=forec$lower[,1], predQ95=forec$upper[,1],
+					predQ2_5=forec$lower[,2], predQ97_5=forec$upper[,2], 
+					predQ1=forec$lower[,3], predQ99=forec$upper[,3])
 			sqlSave(fchannel, save_df, tablename='M4Stan', append=T, rownames=F,verbose=F)
 		}
 		
 		data.frame(series=series, sMAPE=sMAPE, 
-			q025Loss=q025Loss, q975Loss=q975Loss, q99Loss=q99Loss,
-			numOfCases99pExceeded=sum(actuals>forec$upper[,2]),
-			numOfCases975pExceeded=sum(actuals>forec$upper[,1]),
-			numOfCases025pExceeded=sum(actuals<forec$lower[,1]))
+		  q05Loss=q05Loss, q95Loss=q95Loss, 
+			q025Loss=q025Loss, q975Loss=q975Loss, 
+			q01Loss=q01Loss, q99Loss=q99Loss,
+			numOfCases05pExceeded=sum(actuals<forec$lower[,1]),
+			numOfCases95pExceeded=sum(actuals>forec$upper[,1]),
+			numOfCases025pExceeded=sum(actuals<forec$lower[,2]),
+			numOfCases975pExceeded=sum(actuals>forec$upper[,2]),
+			numOfCases01pExceeded=sum(actuals<forec$lower[,3]),
+			numOfCases99pExceeded=sum(actuals>forec$upper[,3]))
 	} else {
 		#doneAlready_df
 	  if (sum(abs(actuals-doneAlready_df$actual))>1e-4*mean(actuals))  {
 			stop(paste0("error, diffs between db and new actuals for ",series))
 		}
 		sMAPE=mean(abs(doneAlready_df$predQ50-actuals)/(doneAlready_df$predQ50+actuals))*200
-		q975Loss=quantileLoss(doneAlready_df$predQ97_5, actuals, 0.975)	
-		q99Loss=quantileLoss(doneAlready_df$predQ99, actuals, 0.99)
+		q05Loss=quantileLoss(doneAlready_df$predQ5, actuals, 0.05)
+		q95Loss=quantileLoss(doneAlready_df$predQ95, actuals, 0.95)	
 		q025Loss=quantileLoss(doneAlready_df$predQ2_5, actuals, 0.025)
+		q975Loss=quantileLoss(doneAlready_df$predQ97_5, actuals, 0.975)	
+		q01Loss=quantileLoss(doneAlready_df$predQ1, actuals, 0.01)
+		q99Loss=quantileLoss(doneAlready_df$predQ99, actuals, 0.99)
 		
 		data.frame(series=series, sMAPE=sMAPE, 
-				q025Loss=q025Loss, q975Loss=q975Loss, q99Loss=q99Loss,
-				numOfCases99pExceeded=sum(actuals>doneAlready_df$predQ99),
-				numOfCases975pExceeded=sum(actuals>doneAlready_df$predQ97_5),
-				numOfCases025pExceeded=sum(actuals<doneAlready_df$predQ2_5))
-	}
-}	
+		           q05Loss=q05Loss, q95Loss=q95Loss, 
+		           q025Loss=q025Loss, q975Loss=q975Loss, 
+		           q01Loss=q01Loss, q99Loss=q99Loss,
+		           numOfCases05pExceeded=sum(actuals<doneAlready_df$predQ5),
+		           numOfCases95pExceeded=sum(actuals>doneAlready_df$predQ95),
+		           numOfCases025pExceeded=sum(actuals<doneAlready_df$predQ2_5),
+		           numOfCases975pExceeded=sum(actuals>doneAlready_df$predQ97_5),
+		           numOfCases01pExceeded=sum(actuals<doneAlready_df$predQ1),
+		           numOfCases99pExceeded=sum(actuals>doneAlready_df$predQ99)
+		          )
+	} #done already
+}	#through cases
+
 sMAPE=mean(ret_df$sMAPE)
-q975Loss=mean(ret_df$q975Loss)
-q99Loss=mean(ret_df$q99Loss)
+q05Loss=mean(ret_df$q05Loss)
+q95Loss=mean(ret_df$q95Loss)
 q025Loss=mean(ret_df$q025Loss)
-exceed99=mean(ret_df$numOfCases99pExceeded)/H*100
-exceed975=mean(ret_df$numOfCases975pExceeded)/H*100
+q975Loss=mean(ret_df$q975Loss)
+q01Loss=mean(ret_df$q01Loss)
+q99Loss=mean(ret_df$q99Loss)
+
+exceed05=mean(ret_df$numOfCases05pExceeded)/H*100
+exceed95=mean(ret_df$numOfCases95pExceeded)/H*100
 exceed025=mean(ret_df$numOfCases025pExceeded)/H*100
+exceed975=mean(ret_df$numOfCases975pExceeded)/H*100
+exceed01=mean(ret_df$numOfCases01pExceeded)/H*100
+exceed99=mean(ret_df$numOfCases99pExceeded)/H*100
+
 print(paste0("SUMMARY: Num of cases:", nrow(ret_df), ", sMAPE:",signif(sMAPE,4),
-	', % of time 99p exceeded:',signif(exceed99,4),
-  ', % of time 97.5p exceeded:',signif(exceed975,4), ', % of time 2.5p exceeded:',signif(exceed025,4)
-	,', q99Loss:',signif(q99Loss,4),
-	', q2.5Loss:',signif(q025Loss,4),', q95Loss:',signif(q975Loss,4) ))
+  ', % of time exceeded 1p:',signif(exceed01,4),
+  ', 2.5p:',signif(exceed025,4),
+  ', 5p:',signif(exceed05,4),
+  ', 95p:',signif(exceed95,4), 
+  ', 97.5p:',signif(exceed975,4), 
+	', 99p:',signif(exceed99,4),
+  ', qLoss 1p:',signif(q01Loss,4),
+  ', 2.5p:',signif(q025Loss,4),
+  ', 5p:',signif(q05Loss,4),
+  ', 95p:',signif(q95Loss,4),
+  ', 97.5p:',signif(q975Loss,4),
+	', 99p:',signif(q99Loss,4)
+   ))
 
 
-#CREATE TABLE [dbo].[M4StanModels](
+#CREATE TABLE [dbo].[MStanModels](
 #		[run] [varchar](164) NOT NULL,
 #		[LBack] [tinyint] NOT NULL,
 #		[variable] [varchar](20) NOT NULL,
 #		[dateTimeOfPrediction] [datetime] NOT NULL,
 #		[comments] [varchar](300) NULL,
-#		CONSTRAINT [M4StanModels_pk] PRIMARY KEY CLUSTERED 
+#		CONSTRAINT [MStanModels_pk] PRIMARY KEY CLUSTERED 
 #				(
 #				[run] ASC,
 #				[LBack] ASC,
@@ -221,20 +264,22 @@ print(paste0("SUMMARY: Num of cases:", nrow(ret_df), ", sMAPE:",signif(sMAPE,4),
 #       [dateTimeOfPrediction] asc
 #		)
 #) 
-#CREATE TABLE [dbo].[M4Stan](
-#		[dateTimeOfPrediction] [datetime] NOT NULL,
-#		[series] [varchar](50) NOT NULL,
-#		[horizon] [tinyint] NOT NULL,
-#		[actual] [real] NOT NULL,
-#		[predQ50] [real] NOT NULL,
-#		[predQ2_5] [real] NOT NULL,
-#		[predQ97_5] [real] NOT NULL,
-#		[predQ99] [real] NOT NULL,
-#		CONSTRAINT [M4py_PK] PRIMARY KEY CLUSTERED 
-#				(
-#				[dateTimeOfPrediction] ASC,
-#				[series] ASC,
-#				[horizon] ASC
-#		)
-#)
+#CREATE TABLE [dbo].[MStan](
+#[dateTimeOfPrediction] [datetime] NOT NULL,
+#[series] [varchar](50) NOT NULL,
+#[horizon] [tinyint] NOT NULL,
+#[actual] [real] NOT NULL,
+#[predQ50] [real] NOT NULL,
+#[predQ5] [real] NOT NULL,
+#[predQ95] [real] NOT NULL,
+#[predQ2_5] [real] NOT NULL,
+#[predQ97_5] [real] NOT NULL,
+#[predQ1] [real] NOT NULL,
+#[predQ99] [real] NOT NULL,
+#CONSTRAINT [Mpy_PK] PRIMARY KEY CLUSTERED 
+#(
+#  [dateTimeOfPrediction] ASC,
+#  [series] ASC,
+#  [horizon] ASC
+#))
 
