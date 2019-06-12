@@ -32,6 +32,3 @@ clean:
 	rm -rf ./$(rPackageName)/man/*.Rd
 	rm -rf ./tmp_roxy.R ./tmp_roxy.Rout
 
-	rm -rf ./$(rPackageName)/man/*.Rd
-	rm -rf ./tmp_roxy.R ./tmp_roxy.Rout
->>>>>>> 9b9696f9764ba271e4fce67c2d0312e82160041f
