@@ -1,6 +1,6 @@
 rPackageName=Rlgt
 newDate=$(shell date +%Y-%m-%d)
-rPackageVersion=0.1-2
+rPackageVersion=0.1-3
 
 fixPermissions:
 #sed running on Windows screws up permissions
@@ -21,6 +21,7 @@ roxy:
 	rm -f ./$(rPackageName)/man/*.Rd
 	echo "library(roxygen2)"> tmp_roxy.R
 	echo "path <- \"./$(rPackageName)\"" >> tmp_roxy.R
+	echo "pkgbuild::compile_dll(path=path)" >> tmp_roxy.R
 	echo "roxygenize(package.dir=path)" >> tmp_roxy.R
 	R CMD BATCH tmp_roxy.R
 	cd ./$(rPackageName) && sed -i 's/\(Date: \).*/Date: '"$(newDate)"'/' DESCRIPTION
@@ -30,3 +31,4 @@ clean:
 	rm -rf $(rPackageName)_$(rPackageVersion).tar.gz $(rPackageName).Rcheck
 	rm -rf ./$(rPackageName)/man/*.Rd
 	rm -rf ./tmp_roxy.R ./tmp_roxy.Rout
+

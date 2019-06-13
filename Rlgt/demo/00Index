@@ -7,6 +7,7 @@ S2GT_M4Hourly_parallel Parallel implementation of S2GT (and occasionally SGT) mo
 SGT_M3 It uses quarterly subset of M3 data to demo ways of passing seasonal data.
 SGT_M3parallel Parallel implementation of SGT model on monthly time-series data from M3-competition dataset.
 SGT_M4Weekly_parallel Parallel implementation of SGT model with non-integer seasonality on weekly time-series data from M4-competition dataset.
+M4Hourly_parallelDB Parallel experiments on hourly time-series data from M4-competition dataset.
 basicDemos Runs some basic examples, that are also used in the vignette.
 lynx demo with the lynx dataset.
 GT_M3parallelDB Runs SGT on the M3 data, in parallel.
