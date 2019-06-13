@@ -81,7 +81,7 @@ unlink(stanOutputPath)
 now=Sys.time()
 if (USE_DB) { #check in meta table if this is the continuation run
 	#fchannel<- odbcConnect(ODBC_SOURCE_NAME)
-  fchannel= odbcConnect(ODBC_SOURCE_NAME, uid='SA',pwd='bumbarA88*')
+  fchannel= odbcConnect(ODBC_SOURCE_NAME, uid='SA',pwd='your_pwd')
 	odbcGetInfo(fchannel)
 	doneAlready_query=paste0("select dateTimeOfPrediction from M4StanModels",
  			" where run='",runName,  
@@ -101,7 +101,7 @@ firstTime=TRUE; i=1
 ret_df=foreach(i=1:NUM_OF_CASES, .combine=rbind, .inorder=FALSE, .packages=c("Rlgt","RODBC")) %dopar% { # the long loop :-)	
 	if (firstTime==TRUE) { #needs to be done inside every new slave process
 		#fchannel<- odbcConnect(ODBC_SOURCE_NAME)
-	  fchannel= odbcConnect(ODBC_SOURCE_NAME, uid='SA',pwd='bumbarA88*')
+	  fchannel= odbcConnect(ODBC_SOURCE_NAME, uid='SA',pwd='your_pwd')
 		odbcGetInfo(fchannel)
 		sink(file=stanOutputPath, append=TRUE, split=TRUE)
 		firstTime=FALSE
