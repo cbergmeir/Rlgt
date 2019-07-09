@@ -73,12 +73,17 @@ model {
 	
 	if(USE_SMOOTHED_ERROR)
 		innovSizeInit~ cauchy(y[1]/100,CAUCHY_SD) T[0,];
-		
+	else
+    innovSizeInit~ normal(0, 1) T[0,];
+	
 	if (USE_REGRESSION) {
 		regCoef ~ cauchy(0, REG_CAUCHY_SD);
 		regOffset ~ cauchy(0, reg0CauchySd);
-	}	
-  	bInit ~ cauchy(0,CAUCHY_SD);
+	}	else {
+		regCoef ~ normal(0, 1);
+		regOffset ~ normal(0, 1);
+	}
+  bInit ~ cauchy(0,CAUCHY_SD);
 	
 	for (t in 2:N) {
 	  if (USE_SMOOTHED_ERROR==0)
