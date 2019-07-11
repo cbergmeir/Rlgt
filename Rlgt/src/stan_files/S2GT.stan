@@ -201,12 +201,17 @@ model {
 	levSm ~ beta(1, 2);
 	
 	if(USE_SMOOTHED_ERROR)
-		innovSizeInit~ cauchy(y[1]/100,CAUCHY_SD) T[0,];
+		innovSizeInit ~ cauchy(y[1]/100,CAUCHY_SD) T[0,];
+	else
+	  innovSizeInit ~ normal(0, 1) T[0,];
 		
 	if (USE_REGRESSION) {
 		regCoef ~ cauchy(0, REG_CAUCHY_SD);
 		regOffset ~ cauchy(0, reg0CauchySd);
-	}		
+	}	else {
+		regCoef ~ normal(0, 1);
+		regOffset ~ normal(0, 1);
+	}
 	
 	if (SEASONALITY_TYPE==0) {//HW
 		for (t in 1:SEASONALITY) 
