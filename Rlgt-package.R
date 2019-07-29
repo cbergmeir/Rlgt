@@ -160,11 +160,11 @@
 
  #' \(  \beta  \) \tab : smoothing parameter for the local trend\par
 
- #' \(  \sigma  \) \tab : coefficient of the heteroscedastic standard deviation\par
+ #' \(  \sigma  \) \tab : coefficient of the heteroscedastic size of error function\par
 
- #' \(  \tau \) \tab : power coefficient of the heteroscedastic standard deviation\par
+ #' \(  \tau \) \tab : power coefficient of the heteroscedastic size of error function\par
 
- #' \(  \varsigma  \) \tab : base/ minimum value of the standard deviation\par
+ #' \(  \varsigma  \) \tab : base/ minimum value of the size of error function\par
 
 #' \setlength{\parskip}{9.96pt}
 #' The rationale of each individual equation of the model is discussed below.\par

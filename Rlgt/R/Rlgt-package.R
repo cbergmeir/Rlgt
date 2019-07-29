@@ -67,9 +67,9 @@
 #' \item{\eqn{\lambda}}{damping coefficient of the local trend}
 #' \item{\eqn{\alpha}}{smoothing parameter for the level term}
 #' \item{\eqn{\beta}}{smoothing parameter for the local trend term}
-#' \item{\eqn{\sigma}}{coefficient of the heteroscedastic standard deviation}
-#' \item{\eqn{\tau}}{power coefficient of the heteroscedastic standard deviation}
-#' \item{\eqn{\xi}}{base or minimum value of the standard deviation}
+#' \item{\eqn{\sigma}}{coefficient of the size of error function}
+#' \item{\eqn{\tau}}{power coefficient of the size of error function}
+#' \item{\eqn{\xi}}{base or minimum value of the size of error function}
 #' }
 #' }
 #' 
