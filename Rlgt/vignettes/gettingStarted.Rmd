@@ -76,7 +76,7 @@ After several minutes, we can proceed with the forecasting.
 forec = forecast(model, h = horizon)
 print(forec)
 ```
-The object returned by the "forecast" function is compatible with the "forecast"" package, and when printed looks like this:
+The object returned by the _forecast_ function is compatible with the _forecast_ package, and when printed looks like this:
 ```
    Point Forecast    Lo 80    Hi 80    Lo 95    Hi 95
 1        257.7863 256.0380 259.4647 255.1516 260.5123
@@ -149,29 +149,29 @@ regModel = rlgt(train, xreg = regTrain,
 we get something like this:   
 ```
 Warning messages:
-		1: There were 18293 divergent transitions after warmup. Increasing adapt_delta above 0.9 may help. See
+		1: There were 93 divergent transitions after warmup. Increasing adapt_delta above 0.9 may help. See
 http://mc-stan.org/misc/warnings.html#divergent-transitions-after-warmup 
 ```
 
-We are running on `r Rlgt::rlgt.control()$NUM_OF_CHAINS` concurrent chains, here each executing 5000 warmup and 5000 sampling iterations, so together 20K sampling iterations, therefore 18K of divergent transitions are certainly too many. But checking the main parameters (Stan's dignostic printout is enabled when verbose=TRUE)
+We are running on `r Rlgt::rlgt.control()$NUM_OF_CHAINS` concurrent chains, here each executing 5000 warmup and 5000 sampling iterations,  together 20K sampling iterations, so it is not a large percentage. Additionally when we check the main parameters (Stan's dignostic printout is enabled when verbose=TRUE)
 ```
-                mean se_mean   sd   2.5%    25%    50%    75%  97.5% n_eff Rhat
+                mean se_mean   sd   2.5%    25%    50%    75%  97.5% n_eff   Rhat
                 .........................................................
-coefTrend       0.82    0.02 0.58   0.05   0.35   0.71   1.17   2.17   927 1.00
-powTrend       -0.29    0.01 0.17  -0.49  -0.42  -0.34  -0.20   0.16   993 1.00
-locTrendFract   0.69    0.00 0.11   0.52   0.61   0.68   0.76   0.92   909 1.00
-sigma           0.11    0.00 0.10   0.00   0.03   0.09   0.17   0.34  1026 1.00
-offsetSigma     0.23    0.00 0.12   0.02   0.12   0.22   0.33   0.44  1037 1.00
-levSm           0.93    0.00 0.05   0.80   0.90   0.94   0.97   1.00   824 1.01
-bSm             0.93    0.00 0.06   0.79   0.89   0.94   0.97   1.00  1998 1.00
-nu              2.46    0.01 0.38   2.02   2.17   2.36   2.64   3.44  2478 1.00
-powx            0.16    0.00 0.15   0.00   0.05   0.11   0.23   0.59  1161 1.00
-regCoef[1]      3.81    0.00 0.15   3.52   3.71   3.82   3.91   4.10  1122 1.00
-regCoef[2]      1.79    0.00 0.16   1.46   1.69   1.80   1.90   2.08   983 1.00
-regOffset      -0.08    0.24 5.79 -12.09  -1.26   0.00   1.31  11.15   604 1.00   
+coefTrend       0.81    0.01  0.57    0.04    0.35   0.71   1.17   2.11  5764    1
+powTrend       -0.29    0.00  0.18   -0.49   -0.43  -0.34  -0.21   0.18  1484    1
+locTrendFract   0.68    0.00  0.11    0.51    0.60   0.67   0.75   0.92  6133    1
+sigma           0.11    0.00  0.10    0.00    0.03   0.09   0.17   0.34  7698    1
+offsetSigma     0.22    0.00  0.12    0.01    0.11   0.22   0.32   0.43  9506    1
+levSm           0.93    0.00  0.06    0.80    0.90   0.95   0.98   1.00  5045    1
+bSm             0.93    0.00  0.06    0.79    0.90   0.95   0.98   1.00 15279    1
+nu              2.42    0.00  0.35    2.01    2.15   2.33   2.60   3.33 17726    1
+powx            0.16    0.00  0.15    0.00    0.05   0.11   0.22   0.58 10322    1
+regCoef[1]      3.84    0.00  0.15    3.55    3.75   3.84   3.94   4.13 11977    1
+regCoef[2]      1.81    0.00  0.15    1.49    1.71   1.81   1.91   2.08  7061    1
+regOffset      -0.42    0.33 12.79  -17.52   -1.30  -0.01   1.30  15.42  1501    1
+........................................................................
 ```
-we can see that n_eff (effective sample size) and Rhat (1 except for LevSm) look quite good. The avg Rhat in this example was 1.004.   
-
+we can see that n_eff (effective sample size) and Rhat look good. The avg Rhat in this example was 1.002. So, this kind of warnings may be ignored.   
 As suggested, we can try to run with a higher adapt_delta, e.g. very high 0.99
 ```
 regModel = rlgt(train, xreg = regTrain, 
@@ -194,8 +194,8 @@ Compare to above image of LGT forecast without benefits of regression. And the e
 sMAPE: 0.373 %
 
 ## SGT (Seasonal model with Global Trend)
-It generalizes the Holt-Winters method, so it is meant to be used on seasonal series, like monthly series for example. The local linear trend of LGT is removed and replaced with multiplicative (by default) or generalized seasonality. The generalized seasonality has an adaptive behavior, spanning additive and multiplicative seasonalities, but it takes longer to fit.   
-Let's forecast the last 24 observations of the monthly Airline Passenger Numbers in the AirPassengers time series. First, prepare the data:
+SGT generalizes the Holt-Winters method, so it is meant to be used on seasonal series, like monthly series for example. The local linear trend of LGT is removed and replaced with multiplicative (by default) or generalized seasonality. The generalized seasonality has an adaptive behavior, spanning additive and multiplicative seasonalities, but it takes longer to fit.   
+Let's forecast the last 24 observations of the monthly Airline Passenger Numbers in the AirPassengers time series, using the default, multiplicative seasonality. First, prepare the data:
 ```
 theDataSet=AirPassengers
 frequency(theDataSet)
@@ -216,7 +216,7 @@ lines(xs,actuals, col=1, type='b')
 ```
 <img src="airPassengersNumeric.png" style="width:450px;"/>  
 
-Note that we needed to supply the *seasonality* bacause although AirPassengers is an object of class ts(), with frequency 12, any subsetting, as done above to get train and actuals, converts the data into pure numeric vectors. Let's make them time series again and run the whole cycle:
+Note that we needed to supply the *seasonality* bacause although AirPassengers is an object of class ts(), with frequency 12, any subsetting, as done above to get train and actuals, converts the data into pure numeric vectors. Let's convert them back into time series and run the whole cycle again:
 ```
 tspOrg = tsp(theDataSet)
 train=ts(train, start=tspOrg[1], frequency=tspOrg[3])
@@ -235,7 +235,7 @@ lines(actuals, lwd=2)
 Now we do not need to specify *seasonality* - it can be extracted from the input time series. Also, plots are easier to produce and look nicer:
 
 <img src="airPassengers.png" style="width:450px;"/>     
-In both cases we used "seasAvg" method for calculating the level. It is a good alternative to the default Holt-Winters-style formula for the level update in situations, where the trend is stable or changing in a stable manner. It can speed up calculations without reducing accuracy. In the second run we also used the generalized seasonality, for description see the GT_models vignette. Generalized seasonality is likely to provide a bit more accurate results, but it is slower, so here, we set MAX_NUM_OF_REPEATS=1 (although generally it is not a good idea).
+In both cases we used "seasAvg" method for calculating the level. It is a good alternative to the default Holt-Winters-style formula for the level update in situations, where the trend is stable or changing in a stable manner. It can speed up calculations without reducing accuracy. In the second run we also used the generalized seasonality, for description see the GT_models vignette. 
 
 ## SGT applied to dual-seasonality time series
 Multi-seasonal time series, for example half-hourly data of electricity usage that has both daily (48) and weekly seasonalities (48\*7), can be modelled with SGT using *seasonality* equal to the largest frequency of the series, here 336. We will demonstrate the method by using the Taylor data set and forecasting one week ahead:

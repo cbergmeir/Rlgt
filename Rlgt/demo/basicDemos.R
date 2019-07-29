@@ -5,7 +5,7 @@
 
 library(Rlgt)
 
-options(width=180)
+options(width=180, max.print=20000)
 if (.Platform$OS.type=="windows")  memory.limit(10000)
 
 
@@ -57,6 +57,7 @@ lines(xs,actuals, col=1, type='b',lwd=2)
 
 sMAPE=mean(abs(forec$mean-actuals)/(forec$mean+actuals))*200
 print(paste("sMAPE:",signif(sMAPE,3),"%"))
+
 
 ################### SGT, time series input and forecast
 theDataSet=AirPassengers
