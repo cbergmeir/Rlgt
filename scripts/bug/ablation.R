@@ -61,7 +61,7 @@ for(i in 1:length(data)) {
 }
 
 results
-saveRDS(results, file = "results_bug_fixed.rds")
+saveRDS(results, file = "results_bug_fixed_another_way_plus_other_changes.rds")
 
 
 df = NULL
@@ -95,3 +95,20 @@ print(df)
 # with bug fixed
 # sMAPE     MASE     MAPE     TIME
 # LGT (RLGT pkg) 15.29431 2.503083 19.75226 37.26857
+
+# with the bug fixed in LGT.stan
+# // b[t] = bSm*(l[t]-l[t-1]) + (1-bSm)*b[t-1] ;
+# b[t] = bSm*(l[t]-l[t-1]) + (1-bSm)*locTrendFract*b[t-1] ;
+# sMAPE     MASE     MAPE     TIME
+# LGT (RLGT pkg) 15.15063 2.480465 19.56943 42.94946
+
+# With the change:
+# l[t] = levSm*(y[t]-r[t]) + (1-levSm)*(expVal[t]-r[t]) ;
+# sMAPE     MASE     MAPE    TIME
+# LGT (RLGT pkg) 15.61546 2.564389 20.16579 41.0796
+
+
+# With the change:
+#	l[t] = levSm*(y[t]-r[t]) + (1-levSm)*(l[t-1]+locTrendFract*b[t-1]) ;
+# sMAPE    MASE    MAPE     TIME
+# LGT (RLGT pkg) 15.55677 2.56444 20.0642 40.72133
