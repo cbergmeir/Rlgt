@@ -23,7 +23,7 @@ forecastAndMeasure = function(ts, type="") {
   } else if(type == "forecast_lgt") {
     model = ets(ts$x, lgt=TRUE)
     forecast = forecast(model, h=h, simulate=TRUE, npaths=0)$mean
-  } else if(type %in% c("lgt", "trend", "nohet", "noglobal", "ets")){
+  } else if(type %in% c("lgt", "nostudent", "nohet", "noglobal", "ets")){
     rlgt_model <- rlgt(ts$x,
                        control=rlgt.control(MAX_NUM_OF_REPEATS=1, NUM_OF_ITER=3000, NUM_OF_CHAINS=4, NUM_OF_CORES=4),
                        verbose=F,
