@@ -50,7 +50,8 @@ rlgt <- function(   #y=trainData; seasonality=12; seasonality2=1; seasonality.ty
  	level.method=c("HW", "seasAvg","HW_sAvg"),
  	xreg = NULL,
  	control=rlgt.control(), 
- 	verbose=FALSE) {
+ 	verbose=FALSE,
+	experimental="") {
 
   oldWidth=options("width")
   options(width=180)
@@ -108,6 +109,21 @@ rlgt <- function(   #y=trainData; seasonality=12; seasonality2=1; seasonality.ty
     model.type <- "LGT"
   }
   
+
+  if (experimental == "nostudent") {
+    model.type = "nostudent"
+  }
+  if (experimental == "noglobal") {
+    model.type = "noglobal"
+  }
+  if (experimental == "nohet") {
+    model.type = "nohet"
+  }
+  if (experimental == "ets") {
+    model.type = "ets"
+  }
+
+
   if (seasonality <= 1 && levelMethodId != 0) {
     print("Warning: nonstandard level methods implemented only for seasonality models")
   }  
