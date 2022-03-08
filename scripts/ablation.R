@@ -85,8 +85,8 @@ end_time = Sys.time()
 print(end_time - start_time)
 
 results
-saveRDS(results, file = "results_M3_yearly_with_bug_fixed.rds")
-
+# saveRDS(results, file = "results_M3_yearly_with_bug_fixed.rds")
+# results = readRDS(file = "results_M3_yearly_with_bug_fixed.rds")
 
 df = NULL
 for(name in c("sMAPE", "MASE", "MAPE", "TIME")) {
@@ -125,38 +125,12 @@ xdf = xtable(df)
 xdf
 
 
-
-# print(c(mean(results$RMSE$forecast_ets), mean(results$RMSE$forecast_lgt), mean(results$RMSE$bayesian_ets)))
-# print(c(mean(results$MAE$forecast_ets), mean(results$MAE$forecast_lgt), mean(results$MAE$bayesian_ets)))
-# print(c(mean(results$SMAPE$forecast_ets), mean(results$SMAPE$forecast_lgt), mean(results$SMAPE$bayesian_ets)))
-
-# All ts ets vs lgt-optim_c vs ets-bayesian 
-# [1] 1180.765 1334.218 1336.680
-# [1] 1023.947 1161.244 1159.948
-# [1] 17.24400 17.10807 19.06207
-
-
-# 20 ts (1:20), MAX_NUM_OF_REPEATS=1
-# [1] 1532.047 1834.627 1468.438 1276.862 1378.471 1471.407
-# [1] 1303.563 1520.330 1244.418 1078.893 1167.447 1239.461
-# [1] 19.48781 21.14873 18.25671 15.79901 17.14307 17.62256
-
-# 20 ts (21:40), MAX_NUM_OF_REPEATS=1
-# [1] 1795.730 2253.457 1570.703 1745.291 1494.157 1541.634
-# [1] 1510.224 1944.384 1305.791 1449.456 1238.000 1278.945
-# [1] 22.10774 38.02309 20.08168 25.20936 19.58681 20.11632
-
-# 20 ts (221:240), MAX_NUM_OF_REPEATS=1
-# [1] 684.5877 944.2440 674.7359 678.6479 646.6793 672.1985
-# [1] 609.6987 842.6257 600.2941 599.4939 570.3095 597.7290
-# [1] 13.59033 22.19283 13.85329 13.21668 13.03935 13.60897
-
-# 20 ts (201:220), MAX_NUM_OF_REPEATS=1
-# [1] 1095.0732 1429.4380 1031.1539 1047.4615 1103.3432  998.4857
-# [1]  932.3666 1267.3319  869.4085  880.9428  921.5788  841.1711
-# [1] 17.03815 36.22884 17.49029 16.91098 18.23641 16.88800
-
-# All time series
-# [1] 1180.765 1449.000 1076.315 1103.771 1105.007 1062.305
-# [1] 1023.9474 1273.0357  924.6725  951.3847  951.480  912.3506
-# [1] 17.24400 25.64161 15.48017 16.24636 16.04185 15.20522
+# sMAPE     MASE     MAPE         TIME
+# ETS/ZZZ (forecast pkg)     17.24400 2.839472 20.94054  0.012325581
+# ETS/AAN (forecast pkg)     19.06704 3.057809 23.96589  0.005534884
+# LGT (forecast pkg)         17.10807 2.908374 23.18540  0.006620155
+# LGT (RLGT pkg)             15.18116 2.492097 19.65700 40.297472868
+# LGT w/o student dist       15.39737 2.505321 19.75991 28.451007752
+# LGT w/o heteroscedasticity 15.03690 2.546494 19.83144 36.632279070
+# LGT w/o global trend       16.19220 2.708261 19.66141 25.280387597
+# ETS/AAN (bayesian)         19.03227 3.504452 21.83422 17.736403101
