@@ -1,5 +1,6 @@
 library("Rlgt")
 library("Mcomp")
+library("forecast")
 
 getMeasures = function(ground, forecasted, time, training) {
   result = list()
@@ -21,7 +22,12 @@ forecastAndMeasure = function(ts, type="") {
   } else if(type == "forecast_lgt") {
     model = ets(ts$x, lgt=TRUE)
     forecast = forecast(model, h=h, simulate=TRUE, npaths=0)$mean
-  } else if(type %in% c("lgt", "nostudent", "nohet", "noglobal", "ets")){
+  } else if(type == "lgt_daniel") {
+    train = list(as.numeric(ts$x))
+    fut = list(as.numeric(ts$xx))
+    rv = Rlgt::blgt.multi.forecast(train, fut, n.samples=1e4, parallel=F)
+    forecast = rv$forecast[[1]]$yf.med
+  } else if(type %in% c("lgt", "nostudent", "nohet", "noglobal", "ets")) {
     rlgt_model <- rlgt(ts$x,
                        control=rlgt.control(MAX_NUM_OF_REPEATS=1, NUM_OF_ITER=3000, NUM_OF_CHAINS=4, NUM_OF_CORES=4),
                        verbose=F,
@@ -50,8 +56,9 @@ results$MAPE = results$MASE = results$sMAPE = results$TIME = list()
 start_time = Sys.time()
 
 for(i in 1:length(data)) {
-  # for(i in 201:220) {
-  # for(i in 1:32) {
+# for(i in 201:220) {
+# for(i in 1:32) {
+# for(i in 1:3) {
   print(paste("************ Timeseries:", i, "/", length(data)))
   start_time_ = proc.time()
   ts = data[[i]]
@@ -68,16 +75,19 @@ for(i in 1:length(data)) {
   
   result = forecastAndMeasure(ts, type="lgt")
   results =  appendToResults(results, result, "lgt")
+
+  result = forecastAndMeasure(ts, type="lgt_daniel")
+  results =  appendToResults(results, result, "lgt_daniel")
   
   result = forecastAndMeasure(ts, type="nostudent")
   results =  appendToResults(results, result, "lgt_no_student")
-  
+
   result = forecastAndMeasure(ts, type="nohet")
   results =  appendToResults(results, result, "nohet")
-  
+
   result = forecastAndMeasure(ts, type="noglobal")
   results =  appendToResults(results, result, "noglobal")
-  
+
   result = forecastAndMeasure(ts, type="ets")
   results =  appendToResults(results, result, "bayesian_ets")
 }
@@ -85,11 +95,12 @@ end_time = Sys.time()
 print(end_time - start_time)
 
 results
-# saveRDS(results, file = "results_M3_yearly_with_bug_fixed.rds")
-# results = readRDS(file = "results_M3_yearly_with_bug_fixed.rds")
+saveRDS(results, file = "results_M3_yearly_with_daniels_sampler.rds")
+# results = readRDS(file = "results_M3_yearly_with_daniels_sampler.rds")
 
 df = NULL
-for(name in c("sMAPE", "MASE", "MAPE", "TIME")) {
+# for(name in c("sMAPE", "MASE", "MAPE", "TIME")) {
+for(name in c("sMAPE", "MASE", "TIME")) {
   # print(name)
   row = cn = NULL
   for(method in names(results[[name]])) {
@@ -104,11 +115,13 @@ for(name in c("sMAPE", "MASE", "MAPE", "TIME")) {
   colnames(df_) = name
   df = rbind(df, data.frame(t(df_)))
 }
+
 library(plyr)
 ren = c("forecast_ets"="ETS/ZZZ (forecast pkg)",
         "forecast_aan"="ETS/AAN (forecast pkg)",
         "forecast_lgt"="LGT (forecast pkg)",
-        "lgt"="LGT (RLGT pkg)",
+        "lgt"="LGT (RLGT pkg, STAN sampler)",
+        "lgt_daniel"="LGT (RLGT pkg, new sampler)",
         "lgt_no_student"="LGT w/o student dist",
         "nohet"="LGT w/o heteroscedasticity",
         "noglobal"="LGT w/o global trend",

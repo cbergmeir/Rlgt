@@ -58,7 +58,8 @@ transformed parameters {
 	for (t in 2:N) {
 		expVal[t] = l[t-1] + locTrendFract*b[t-1] + r[t];
 		l[t] = levSm*(y[t]-r[t]) + (1-levSm)*l[t-1] ;
-		b[t] = bSm*(l[t]-l[t-1]) + (1-bSm)*b[t-1] ;
+		b[t] = bSm*(l[t]-l[t-1]) + (1-bSm)*locTrendFract*b[t-1] ;
+
 		if (USE_SMOOTHED_ERROR)
 			smoothedInnovSize[t] = innovSm * fabs(y[t] - expVal[t]) + (1-innovSm) * smoothedInnovSize[t-1];
 		else	
