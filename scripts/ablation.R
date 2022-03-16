@@ -95,7 +95,7 @@ end_time = Sys.time()
 print(end_time - start_time)
 
 results
-saveRDS(results, file = "results_M3_yearly_with_daniels_sampler.rds")
+# saveRDS(results, file = "results_M3_yearly_with_daniels_sampler.rds")
 # results = readRDS(file = "results_M3_yearly_with_daniels_sampler.rds")
 
 df = NULL
@@ -137,7 +137,19 @@ options(xtable.timestamp = "")
 xdf = xtable(df)
 xdf
 
+# With new sampler and bugs fixed
+# sMAPE     MASE         TIME
+# ETS/ZZZ (forecast pkg)       17.24400 2.839472  0.012589147
+# ETS/AAN (forecast pkg)       19.06704 3.057809  0.005596899
+# LGT (forecast pkg)           17.10807 2.908374  0.005441860
+# LGT (RLGT pkg, STAN sampler) 15.17822 2.488689 41.072992248
+# LGT (RLGT pkg, new sampler)  14.99662 2.534608  4.506682171
+# LGT w/o student dist         15.33969 2.500897 27.891162791
+# LGT w/o heteroscedasticity   15.06496 2.581932 35.890542636
+# LGT w/o global trend         16.21114 2.715059 23.522992248
+# ETS/AAN (bayesian)           15.93463 2.815171 16.958682171
 
+# Old results
 # sMAPE     MASE     MAPE         TIME
 # ETS/ZZZ (forecast pkg)     17.24400 2.839472 20.94054  0.012325581
 # ETS/AAN (forecast pkg)     19.06704 3.057809 23.96589  0.005534884
