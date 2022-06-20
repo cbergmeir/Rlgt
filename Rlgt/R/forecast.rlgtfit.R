@@ -44,6 +44,49 @@ forecast.rlgtfit <- function(object,
                              level=c(80,95),
                              NUM_OF_TRIALS=2000, ...) {
   
+  if (any(level>100) || any(level<0)) {
+    message("Warning: levels must be between 0 and 100. Assuming defaults.")
+    level=c(80,95)
+  }
+  
+  if (length(level)==1 && level==50) {
+    percentiles=level
+    indexOfMedian=1
+  } else {
+    if (50 %in% level) {
+      level=level[level!=50]
+    } 
+    lowerPercentiles=(100-level)/2
+    indexOfMedian=length(lowerPercentiles)+1
+    upperPercentiles=100-lowerPercentiles
+    percentiles=c(lowerPercentiles,50,upperPercentiles) #this follows convention of forecast package where forecast$lower are from higher to lower
+  }
+  
+  quantiles=percentiles/100.
+
+  if(!is.null(object$method) && object$method == "Schmidt") {
+    fcast = blgt.forecast(object, h, NUM_OF_TRIALS)
+    # Presenting Schmidt's result as a forecast package object
+    result = list()
+    result$model = object
+    result$x = object$x
+    result$yf = fcast$yf
+
+    #' @importFrom stats quantile
+    avgYfs <- apply(result$yf,2,quantile,probs=quantiles)
+    #out$mean <- apply(result$yf, 2, mean)
+    result$mean <- avgYfs[indexOfMedian,]  # Median is safer. We want to be compatible with Forecast package, but there Point Forecast==mean
+    if (indexOfMedian > 1) {
+      result$lower <- t(avgYfs[1:(indexOfMedian-1),])
+      result$upper <- t(avgYfs[(indexOfMedian+1):(indexOfMedian+length(upperPercentiles)),])
+    }
+
+    result$level <- level
+    class(result) <- "forecast"
+    
+    return(result)
+  }
+
   if (!is.null(xreg) && is.null(dim(xreg))) { # convert non-matrix to matrix
     xreg <- as.matrix(xreg)
   }												 
@@ -66,26 +109,6 @@ forecast.rlgtfit <- function(object,
       stop("Model expects a regression component.")
     }
   } 
-  
-  if (any(level>100) || any(level<0)) {
-    message("Warning: levels must be between 0 and 100. Assuming defaults.")
-    level=c(80,95)
-  }
-  
-  if (length(level)==1 && level==50) {
-    percentiles=level
-    indexOfMedian=1
-  } else {
-    if (50 %in% level) {
-      level=level[level!=50]
-    } 
-    lowerPercentiles=(100-level)/2
-    indexOfMedian=length(lowerPercentiles)+1
-    upperPercentiles=100-lowerPercentiles
-    percentiles=c(lowerPercentiles,50,upperPercentiles) #this follows convention of forecast package where forecast$lower are from higher to lower
-  }
-  
-  quantiles=percentiles/100.
   
   seasonality <- object$seasonality
   seasonality_int=as.integer(seasonality)

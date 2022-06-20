@@ -17,6 +17,7 @@
 #' @param xreg Optionally, a vector or matrix of external regressors, which must have the same number of rows as y. 
 #' @param control list of control parameters, e.g. hyperparameter values for the model's prior distributions, number of fitting interations etc.  
 #' @param verbose whether verbose information should be printed (Boolean value only), default \code{FALSE}.
+#' @param method Sampling method, default \code{Smyl}.
 #' @return \code{\link{rlgtfit}} object
 #' @examples
 # \dontrun{
@@ -50,10 +51,28 @@ rlgt <- function(   #y=trainData; seasonality=12; seasonality2=1; seasonality.ty
  	level.method=c("HW", "seasAvg","HW_sAvg"),
  	xreg = NULL,
  	control=rlgt.control(), 
- 	verbose=FALSE) {
+ 	verbose=FALSE,
+	method=c("Smyl", "Schmidt"),
+	experimental="") {
 
   oldWidth=options("width")
   options(width=180)
+  
+  if(method[1] == "Schmidt") {
+    # Some checks of the input parameters
+    if(seasonality != 1 || seasonality2 != 1) {
+      print('"Schmidt" method is not seasonal')
+      return(NULL)
+    }
+    # Calling Schmidt's method
+    result = blgt(y, burnin = control$NUM_OF_ITER%/%2, n.samples = control$NUM_OF_ITER%/%2)
+    result$method = "Schmidt"
+    attr(result, "class") <- "rlgtfit"
+    return(result)
+  } else if(method[1] != "Smyl") {
+    print('Only "Smyl" and "Schmidt" are valid values for the "method" parameter')
+    return(NULL)
+  } 
   
   # for safety
   #model.type <- model.type[1]
@@ -281,5 +300,6 @@ rlgt <- function(   #y=trainData; seasonality=12; seasonality2=1; seasonality.ty
       useSmoothingMethodForError=useSmoothingMethodForError,
       seasonality=seasonality, seasonality2=seasonality2,   
       model, params, control, samples)
+  out$method = "Smyl"
   out
 }
