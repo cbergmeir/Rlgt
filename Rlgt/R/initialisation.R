@@ -34,7 +34,7 @@ initModel <- function(model.type=NULL, use.regression=FALSE,
 			model[["parameters"]] <- c("l", "b",
 					"coefTrend",  "powTrend", "locTrendFract", "sigma", "offsetSigma",
 					"levSm", "bSm", "nu", "powx")	
-		}	
+		}
 		model[["model"]] <- stanmodels$LGT
 		class(model) <- c("RlgtStanModelLGT")
   }	
