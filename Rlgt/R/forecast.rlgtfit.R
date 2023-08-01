@@ -355,7 +355,11 @@ forecast.rlgtfit <- function(object,
       # yf[irun,]
     } else { #nonseasonal
       for (t in 1:h) {
-        expVal <- prevLevel + coefTrendS*(abs(prevLevel)) ^ powTrendS + locTrendFractS * bS + r[t]
+        if(object$model.type == "noglobal" || object$model.type == "ets") {
+          expVal <- prevLevel + locTrendFractS * bS + r[t]
+        } else {
+          expVal <- prevLevel + coefTrendS*(abs(prevLevel)) ^ powTrendS + locTrendFractS * bS + r[t]
+        }
         if (!is.null(powx)) {
           omega <- sigmaS*(abs(expVal))^powxS+offsetsigmaS
         } else if (!is.null(lastSmoothedInnovSize)) {
@@ -363,7 +367,15 @@ forecast.rlgtfit <- function(object,
         } else {
           omega <- sigmaS
         }
-        error <- rst(n=1, xi=0, omega=omega, alpha=0, nu=nuS)
+        if(object$model.type == "nostudent") {
+          error <- rnorm(n=1, mean=0, sd=omega)
+        } else if(object$model.type == "nohet") {
+          error <- rst(n=1, xi=0, omega=offsetsigmaS, alpha=0, nu=nuS)
+        } else if(object$model.type == "ets") {
+          error <- rnorm(n=1, mean=0, sd=offsetsigmaS)
+        } else {
+          error <- rst(n=1, xi=0, omega=omega, alpha=0, nu=nuS)
+        }
         
         yf[irun,t] <- min(MAX_VAL,max(MIN_VAL, expVal + error))
         
