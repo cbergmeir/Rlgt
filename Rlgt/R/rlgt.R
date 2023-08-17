@@ -52,25 +52,25 @@ rlgt <- function(   #y=trainData; seasonality=12; seasonality2=1; seasonality.ty
  	xreg = NULL,
  	control=rlgt.control(), 
  	verbose=FALSE,
-	method=c("Smyl", "Schmidt"), # needs renaming
+	method="Stan", # needs renaming
 	experimental="") {
 
   oldWidth=options("width")
   options(width=180)
   
-  if(method[1] == "Schmidt") {
+  if(method == "Custom_Gibbs") {
     # Some checks of the input parameters
     if(seasonality != 1 || seasonality2 != 1) {
-      print('"Schmidt" method is not seasonal')
+      print('The current "Custom_Gibbs" method is not seasonal')
       return(NULL)
     }
-    # Calling Schmidt's method
+    # Calling Custom_Gibbs method
     result = blgt(y, burnin = control$NUM_OF_ITER%/%2, n.samples = control$NUM_OF_ITER%/%2)
-    result$method = "Schmidt"
+    result$method = "Custom_Gibbs"
     attr(result, "class") <- "rlgtfit"
     return(result)
-  } else if(method[1] != "Smyl") {
-    print('Only "Smyl" and "Schmidt" are valid values for the "method" parameter')
+  } else if(method != "Stan") {
+    print('Only "Stan" and "Custom_Gibbs" are valid values for the "method" parameter')
     return(NULL)
   } 
   
@@ -315,6 +315,6 @@ rlgt <- function(   #y=trainData; seasonality=12; seasonality2=1; seasonality.ty
       useSmoothingMethodForError=useSmoothingMethodForError,
       seasonality=seasonality, seasonality2=seasonality2,   
       model, params, control, samples)
-  out$method = "Smyl"
+  out$method = "Stan"
   out
 }
