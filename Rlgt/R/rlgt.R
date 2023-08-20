@@ -67,6 +67,7 @@ rlgt <- function(   #y=trainData; seasonality=12; seasonality2=1; seasonality.ty
     # Calling Custom_Gibbs method
     result = blgt(y, burnin = control$NUM_OF_ITER%/%2, n.samples = control$NUM_OF_ITER%/%2)
     result$method = "Custom_Gibbs"
+    result$x <- y
     attr(result, "class") <- "rlgtfit"
     return(result)
   } else if(method != "Stan") {
