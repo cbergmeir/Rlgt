@@ -1,4 +1,5 @@
 LGT_M3 Runs through a subset of M3 yearly data, showing two methods of passing the non-seasonal series data.
+LGT_Gibbs_M3 Runs the yearly subset of the M3 data with the bespoke Gibbs sampler.
 LGT&SGT_REG Runs LGT and SGT forecast with and without a regression component.
 LGT&SGT_M3 Using M3 series, it demos several possibilities or sub-versions of seasonal and non-seasonal models.
 LGT&SGT	Implementation of LGT and SGT models on the R buit-in datasets.
