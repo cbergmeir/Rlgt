@@ -17,7 +17,8 @@
 #' @param xreg Optionally, a vector or matrix of external regressors, which must have the same number of rows as y. 
 #' @param control list of control parameters, e.g. hyperparameter values for the model's prior distributions, number of fitting interations etc.  
 #' @param verbose whether verbose information should be printed (Boolean value only), default \code{FALSE}.
-#' @param method Sampling method, default \code{Smyl}.
+#' @param method Sampling method, default \code{Stan}.
+#' @param experimental Run different versions ("nostudent", "noglobal", "nohet", "ets") for ablation studies
 #' @return \code{\link{rlgtfit}} object
 #' @examples
 # \dontrun{

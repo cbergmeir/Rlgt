@@ -6,7 +6,7 @@
 #' @param type currently only central is available
 #' @param ... currently not in use
 #' @return confidence interval
-#' @S3method posterior_interval rlgtfit
+#' @exportS3Method posterior_interval rlgtfit
 #' @method posterior_interval rlgtfit
 #' @importFrom rstantools posterior_interval 
 #' @examples 

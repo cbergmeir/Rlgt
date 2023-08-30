@@ -8,7 +8,7 @@
 #' to be higher for good coverage for very high levels, e.g. 99.8. 
 #' @param ... currently not used
 #' @return returns a forecast object compatible with the forecast package in R
-#' @S3method forecast rlgtfit
+#' @exportS3Method forecast rlgtfit
 #' @method forecast rlgtfit
 #' @importFrom forecast forecast 
 #' @examples 

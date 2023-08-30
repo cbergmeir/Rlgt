@@ -28,7 +28,7 @@
 #' @references 
 #' Scott, S. L. and Varian, H. R. (2014). Predicting the Present with Bayesian Structural Time Series.
 #' International Journal of Mathematical Modeling and Optimization 5 4–23.
-#' \url{https://people.ischool.berkeley.edu/~hal/Papers/2013/pred-present-with-bsts.pdf} 
+# \url{https://people.ischool.berkeley.edu/~hal/Papers/2013/pred-present-with-bsts.pdf} 
 #' 
 NULL
 

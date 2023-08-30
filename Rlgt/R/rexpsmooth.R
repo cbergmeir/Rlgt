@@ -9,35 +9,38 @@
 #' 
 #' @return An object containing the results of the sampling process, plus some additional information.
 #' 
-#' @examples 
-#' \dontrun{
+#' @importFrom truncnorm rtruncnorm
+#' @importFrom stats binomial glm predict rgamma rmultinom rt
+#' 
+# @examples 
+# \dontrun{
 ## Build data and test
-#' library(Mcomp)
-#' M3.data <- subset(M3,"yearly")
-#' 
-#' train.data = list()
-#' future.data = list()
-#' for (i in 1:645)
-#' {
-#'   train.data[[i]] = as.numeric(M3.data[[i]]$x)
-#'   future.data[[i]] = as.numeric(M3.data[[i]]$xx)  
-#' }
-#' 
-#' ## Test -- change below to test more series
-#' w.series = 1:20
-#' # w.series = 1:645        # uncomment to test all series
-#' 
-#' # use 10,000 posterior samples; change n.samples to 20,000 to test that as well if you want
-#' s = system.time({rv=blgt.multi.forecast(train.data[w.series], future.data[w.series], n.samples=1e4)})
-#' 
-#' s                         # overall timing info
-#' s[[3]] / length(w.series) # per series time
-#' 
-#' mean(rv$sMAPE)            # performance in terms of mean sMAPE
-#' mean(rv$InCI)/6           # coverage of prediction intervals -- should be close to 95%
-#' }
-#' 
-#' @export
+# library(Mcomp)
+# M3.data <- subset(M3,"yearly")
+# 
+# train.data = list()
+# future.data = list()
+# for (i in 1:645)
+# {
+#   train.data[[i]] = as.numeric(M3.data[[i]]$x)
+#   future.data[[i]] = as.numeric(M3.data[[i]]$xx)  
+# }
+# 
+# ## Test -- change below to test more series
+# w.series = 1:20
+# # w.series = 1:645        # uncomment to test all series
+# 
+# # use 10,000 posterior samples; change n.samples to 20,000 to test that as well if you want
+# s = system.time({rv=blgt.multi.forecast(train.data[w.series], future.data[w.series], n.samples=1e4)})
+# 
+# s                         # overall timing info
+# s[[3]] / length(w.series) # per series time
+# 
+# mean(rv$sMAPE)            # performance in terms of mean sMAPE
+# mean(rv$InCI)/6           # coverage of prediction intervals -- should be close to 95%
+# }
+# 
+# @export
 blgt <- function(y.full, burnin = 1e4, n.samples = 1e4, nu.prop = c(0.47,0.53,0.6,0.68,0.77,0.875,1,1.15,1.35,1.6,1.95, 2.4, 3, 4, 5.6, 8.84, 18.63, 1e3))
 {
   # Process data
@@ -324,7 +327,7 @@ bayes.exp.grid.sample <- function(theta.prop, L.prop)
 
 ########################################################################
 # Likelihood for alpha & beta
-#' @export
+# @export
 bayes.exp.L.mh <- function(theta, y.full, L.stats, aux.stats, w, sigma2, xi2, omega2, nu, tau, b1, rho, ar, e1, approx.mu)
 {
   n.full = length(y.full)
@@ -390,7 +393,7 @@ bayes.exp.L.mh <- function(theta, y.full, L.stats, aux.stats, w, sigma2, xi2, om
 
 ########################################################################
 # Prior for alpha & beta
-#' @export
+# @export
 bayes.exp.h.mh <- function(theta)
 {
   # Beta prior on (alpha,beta)
@@ -402,7 +405,7 @@ bayes.exp.h.mh <- function(theta)
 
 ########################################################################
 # Forecast
-#' @export
+# @export
 blgt.forecast <- function(rv, h, ns = 1e6)
 {
   # Sample
@@ -444,133 +447,133 @@ blgt.forecast <- function(rv, h, ns = 1e6)
 
 ########################################################################
 # Compute the sMAPE
-#' @export
+# @export
 blgt.sMAPE <- function(yp, yt)
 {
   mean( abs(yp - yt)/(yp + yt) )*200
 }
 
 ########################################################################
-#' @export
-blgt.multi.forecast <- function(train, future, n.samples = 2e4, burnin = 1e4, parallel = T, nu.prop = c(0.47,0.53,0.6,0.68,0.77,0.875,1,1.15,1.35,1.6,1.95,2.4,3,4,5.6,8.84,18.63,1e3))
-{
-  # 
-  n.cores = Inf
-  n.series = length(train)
-  
-  # If parallel 
-  if (parallel)
-  {
-    # Find out how many cores are available
-    n.available.cores = parallel::detectCores()[1] - 1
-    if (is.na(n.cores))
-    {
-      n.cores = n.available.cores
-    }
-    n.cores = min(n.available.cores, n.cores)
-    
-    # If more than one core available
-    if (n.cores > 1)
-    {
-      #n.samples = ceiling(n.samples/n.cores)
-      ix = list()
-      q = ceiling(n.series/n.cores)
-      
-      j = 1
-      for (i in 1:n.cores)
-      {
-        if (i < n.cores)
-        {
-          ix[[i]] = (j:(j+q-1))
-        }
-        else
-        {
-          ix[[i]] = (j:n.series)
-        }
-        j = j +q;
-      }
-    }
-    else
-    {
-      warning('Only 1 additional core available -- no parallelisation will occur')
-    }
-  }
-  else
-  {
-    n.cores = 1
-  }
-  
-  # Main sampling loop
-  if (n.cores > 1)
-  {  
-    # Register a cluster 
-    cores   = parallel::detectCores()
-    cluster = parallel::makeCluster(n.cores)
-    doParallel::registerDoParallel(cluster)
-    
-    # Sample each chain    
-    rv.p = foreach::foreach(i=1:n.cores, .packages=c("rexpsmooth","truncnorm")) %dopar%
-      {
-        rv = vector("list", length(ix[[i]]))
-        rv$sMAPE = rep(0, length(ix[[i]]))
-        rv$InCI  = rep(0, length(ix[[i]]))
-        for (j in 1:length(ix[[i]]))
-        {
-          k = ix[[i]][j]
-          rv[[j]] = list()
-          rv[[j]]$model    = blgt(train[[k]], burnin = burnin, n.samples = n.samples, nu.prop = nu.prop)
-          rv[[j]]$forecast = blgt.forecast(rv[[j]]$model,length(future[[k]]),1e5)
-          rv[[j]]$sMAPE    = blgt.sMAPE(rv[[j]]$forecast$yf.med, future[[k]])
-          rv[[j]]$InCI     = sum( (future[[k]] > rv[[j]]$forecast$yf.CI05) & (future[[k]] < rv[[j]]$forecast$yf.CI95) )
-        }
-        rv
-      }
-    
-    # Done -- close the cluster
-    parallel::stopCluster(cluster)
-  } 
-  
-  ## Single core
-  else
-  {
-    rv = list()
-    rv$model = vector("list", n.series)
-    rv$forecast = vector("list", n.series)
-    rv$sMAPE = rep(0, n.series)
-    rv$InCI  = rep(0, n.series)
-    
-    for (j in 1:n.series)
-    {
-      rv$model[[j]]    = blgt(train[[j]], burnin = burnin, n.samples = n.samples, nu.prop = nu.prop)
-      rv$forecast[[j]] = blgt.forecast(rv$model[[j]],length(future[[j]]),1e5)
-      rv$sMAPE[j]      = blgt.sMAPE(rv$forecast[[j]]$yf.med, future[[j]])
-      rv$InCI[j]       = sum( (future[[j]] > rv$forecast[[j]]$yf.CI05) & (future[[j]] < rv$forecast[[j]]$yf.CI95) )
-    }
-  }  
-  
-  # If multiple cores, repack into one list
-  if (n.cores > 1)
-  {
-    rv = list()
-    rv$model = vector("list", n.series)
-    rv$forecast = vector("list", n.series)
-    rv$sMAPE = rep(0, n.series)
-    rv$InCI  = rep(0, n.series)
-    for (i in 1:n.cores)
-    {
-      for (j in 1:length(ix[[i]]))
-      {
-        k = ix[[i]][j]
-        rv$model[[k]] = rv.p[[i]][[j]]$model
-        rv$forecast[[k]] = rv.p[[i]][[j]]$forecast
-        rv$sMAPE[k] = rv.p[[i]][[j]]$sMAPE
-        rv$InCI[k] = rv.p[[i]][[j]]$InCI
-      }
-    }
-  }
-  
-  rv
-}
+# @export
+# blgt.multi.forecast <- function(train, future, n.samples = 2e4, burnin = 1e4, parallel = T, nu.prop = c(0.47,0.53,0.6,0.68,0.77,0.875,1,1.15,1.35,1.6,1.95,2.4,3,4,5.6,8.84,18.63,1e3))
+# {
+#   # 
+#   n.cores = Inf
+#   n.series = length(train)
+#   
+#   # If parallel 
+#   if (parallel)
+#   {
+#     # Find out how many cores are available
+#     n.available.cores = parallel::detectCores()[1] - 1
+#     if (is.na(n.cores))
+#     {
+#       n.cores = n.available.cores
+#     }
+#     n.cores = min(n.available.cores, n.cores)
+#     
+#     # If more than one core available
+#     if (n.cores > 1)
+#     {
+#       #n.samples = ceiling(n.samples/n.cores)
+#       ix = list()
+#       q = ceiling(n.series/n.cores)
+#       
+#       j = 1
+#       for (i in 1:n.cores)
+#       {
+#         if (i < n.cores)
+#         {
+#           ix[[i]] = (j:(j+q-1))
+#         }
+#         else
+#         {
+#           ix[[i]] = (j:n.series)
+#         }
+#         j = j +q;
+#       }
+#     }
+#     else
+#     {
+#       warning('Only 1 additional core available -- no parallelisation will occur')
+#     }
+#   }
+#   else
+#   {
+#     n.cores = 1
+#   }
+#   
+#   # Main sampling loop
+#   if (n.cores > 1)
+#   {  
+#     # Register a cluster 
+#     cores   = parallel::detectCores()
+#     cluster = parallel::makeCluster(n.cores)
+#     doParallel::registerDoParallel(cluster)
+#     
+#     # Sample each chain    
+#     rv.p = foreach::foreach(i=1:n.cores, .packages=c("rexpsmooth","truncnorm")) %dopar%
+#       {
+#         rv = vector("list", length(ix[[i]]))
+#         rv$sMAPE = rep(0, length(ix[[i]]))
+#         rv$InCI  = rep(0, length(ix[[i]]))
+#         for (j in 1:length(ix[[i]]))
+#         {
+#           k = ix[[i]][j]
+#           rv[[j]] = list()
+#           rv[[j]]$model    = blgt(train[[k]], burnin = burnin, n.samples = n.samples, nu.prop = nu.prop)
+#           rv[[j]]$forecast = blgt.forecast(rv[[j]]$model,length(future[[k]]),1e5)
+#           rv[[j]]$sMAPE    = blgt.sMAPE(rv[[j]]$forecast$yf.med, future[[k]])
+#           rv[[j]]$InCI     = sum( (future[[k]] > rv[[j]]$forecast$yf.CI05) & (future[[k]] < rv[[j]]$forecast$yf.CI95) )
+#         }
+#         rv
+#       }
+#     
+#     # Done -- close the cluster
+#     parallel::stopCluster(cluster)
+#   } 
+#   
+#   ## Single core
+#   else
+#   {
+#     rv = list()
+#     rv$model = vector("list", n.series)
+#     rv$forecast = vector("list", n.series)
+#     rv$sMAPE = rep(0, n.series)
+#     rv$InCI  = rep(0, n.series)
+#     
+#     for (j in 1:n.series)
+#     {
+#       rv$model[[j]]    = blgt(train[[j]], burnin = burnin, n.samples = n.samples, nu.prop = nu.prop)
+#       rv$forecast[[j]] = blgt.forecast(rv$model[[j]],length(future[[j]]),1e5)
+#       rv$sMAPE[j]      = blgt.sMAPE(rv$forecast[[j]]$yf.med, future[[j]])
+#       rv$InCI[j]       = sum( (future[[j]] > rv$forecast[[j]]$yf.CI05) & (future[[j]] < rv$forecast[[j]]$yf.CI95) )
+#     }
+#   }  
+#   
+#   # If multiple cores, repack into one list
+#   if (n.cores > 1)
+#   {
+#     rv = list()
+#     rv$model = vector("list", n.series)
+#     rv$forecast = vector("list", n.series)
+#     rv$sMAPE = rep(0, n.series)
+#     rv$InCI  = rep(0, n.series)
+#     for (i in 1:n.cores)
+#     {
+#       for (j in 1:length(ix[[i]]))
+#       {
+#         k = ix[[i]][j]
+#         rv$model[[k]] = rv.p[[i]][[j]]$model
+#         rv$forecast[[k]] = rv.p[[i]][[j]]$forecast
+#         rv$sMAPE[k] = rv.p[[i]][[j]]$sMAPE
+#         rv$InCI[k] = rv.p[[i]][[j]]$InCI
+#       }
+#     }
+#   }
+#   
+#   rv
+# }
 
 
 #function tune = mgrad_Initialise(p, L, h, window, delta_min, delta_max, nsamples, burnin, display)

@@ -6,7 +6,7 @@
 #' @aliases summary.rlgt
 #' @importFrom stats median
 #' @export
-#' @S3method print rlgtfit
+#' @exportS3Method print rlgtfit
 #' @method print rlgtfit
 #' @rdname lgt
 print.rlgtfit <- function(x, ...) {

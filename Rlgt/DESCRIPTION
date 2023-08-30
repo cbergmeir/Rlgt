@@ -3,7 +3,7 @@ Type: Package
 Title: Bayesian Exponential Smoothing Models with Trend Modifications
 Version: 0.1-5
 URL: https://github.com/cbergmeir/Rlgt
-Date: 2022-05-17
+Date: 2023-08-30
 Authors@R: c(
     person("Slawek", "Smyl", email = "slaweks@hotmail.co.uk", role = "aut"),
     person("Christoph", "Bergmeir", email = "christoph.bergmeir@monash.edu", role = c("aut", "cre")),
@@ -35,7 +35,7 @@ LinkingTo: StanHeaders (>= 2.18.0), rstan (>= 2.18.1), BH (>= 1.66.0), Rcpp
     (>= 0.12.0), RcppEigen (>= 0.3.3.3.0), RcppParallel (>= 5.0.2)
 SystemRequirements: GNU make
 NeedsCompilation: yes
-RoxygenNote: 7.1.2
+RoxygenNote: 7.2.3
 Suggests:
     knitr,
     rmarkdown
