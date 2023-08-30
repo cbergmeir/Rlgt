@@ -1,7 +1,7 @@
 Package: Rlgt
 Type: Package
 Title: Bayesian Exponential Smoothing Models with Trend Modifications
-Version: 0.1-5
+Version: 0.2-0
 URL: https://github.com/cbergmeir/Rlgt
 Date: 2023-08-30
 Authors@R: c(
@@ -9,6 +9,9 @@ Authors@R: c(
     person("Christoph", "Bergmeir", email = "christoph.bergmeir@monash.edu", role = c("aut", "cre")),
     person("Erwin", "Wibowo", email = "rwinwibowo@gmail.com", role = "aut"),
     person("To Wang", "Ng", email = "edwinnglabs@gmail.com", role = "aut"),
+    person("Xueying", "Long", email = "xueying.long@monash.edu", role = "aut"),
+    person("Alexander", "Dokumentov", email = "alexander.dokumentov@gmail.com", role = "aut"),
+    person("Daniel", "Schmidt", email = "daniel.schmidt@monash.edu", role = "aut"),
     person("Trustees of Columbia University", "", role = c("cph"), comment= "tools/make_cpp.R, R/stanmodels.R"))
 Description: An implementation of a number of Global Trend models for time series forecasting 
     that are Bayesian generalizations and extensions of some Exponential Smoothing models. 

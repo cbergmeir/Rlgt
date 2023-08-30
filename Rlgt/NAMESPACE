@@ -3,7 +3,6 @@
 S3method(forecast,rlgtfit)
 S3method(posterior_interval,rlgtfit)
 S3method(print,rlgtfit)
-export(blgt.expsmooth)
 export(initModel)
 export(rlgt)
 export(rlgt.control)

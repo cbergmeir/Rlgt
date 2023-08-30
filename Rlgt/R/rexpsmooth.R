@@ -1,17 +1,17 @@
-#' Bayesian exponential smoothing -- R/C++ implementation (no Stan needed)
-#'
-#' @title Fit a Bayesian exponential smoothing model
-#' @param y.full A vector containing the time series to smooth
-#' @param n.samples Number of posterior samples to generate.
-#' @param burnin Number of burn-in samples.
-#' @section Details:
-#' Draws a series of samples from the posterior distribution of a Bayesian exponential smoothing model.
-#' 
-#' @return An object containing the results of the sampling process, plus some additional information.
-#' 
+# Bayesian exponential smoothing -- R/C++ implementation (no Stan needed)
+#
+# @title Fit a Bayesian exponential smoothing model
+# @param y.full A vector containing the time series to smooth
+# @param n.samples Number of posterior samples to generate.
+# @param burnin Number of burn-in samples.
+# @section Details:
+# Draws a series of samples from the posterior distribution of a Bayesian exponential smoothing model.
+# 
+# @return An object containing the results of the sampling process, plus some additional information.
+# 
 #' @importFrom truncnorm rtruncnorm
 #' @importFrom stats binomial glm predict rgamma rmultinom rt
-#' 
+# 
 # @examples 
 # \dontrun{
 ## Build data and test
@@ -868,7 +868,7 @@ mgrad.ilogit <- function(x, bnds)
   rv
 }
 
-#' @export
+# @export
 blgt.expsmooth <- function(y, alpha, beta, l1, b1)
 {
   rcpp_expsmooth(y,alpha,beta,l1,b1)
