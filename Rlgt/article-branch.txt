@@ -1,1 +1,0 @@
-The new branch to work on the article: Local and Global Trend Bayesian Exponential Smoothing Model.
