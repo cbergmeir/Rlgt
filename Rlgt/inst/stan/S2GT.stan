@@ -188,7 +188,7 @@ transformed parameters {
     		
     	//size of error	
 		if (USE_SMOOTHED_ERROR)
-			smoothedInnovSize[t]=innovSm*fabs(y[t]-expVal[t])+(1-innovSm)*smoothedInnovSize[t-1];
+			smoothedInnovSize[t]=innovSm*abs(y[t]-expVal[t])+(1-innovSm)*smoothedInnovSize[t-1];
 		else	
 			smoothedInnovSize[t]=1;  //has to have some value, not NA 
 	}
