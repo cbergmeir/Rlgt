@@ -61,7 +61,7 @@ transformed parameters {
 		b[t] = bSm*(l[t]-l[t-1]) + (1-bSm)*locTrendFract*b[t-1] ;
 
 		if (USE_SMOOTHED_ERROR)
-			smoothedInnovSize[t] = innovSm * fabs(y[t] - expVal[t]) + (1-innovSm) * smoothedInnovSize[t-1];
+			smoothedInnovSize[t] = innovSm * abs(y[t] - expVal[t]) + (1-innovSm) * smoothedInnovSize[t-1];
 		else	
 			smoothedInnovSize[t]=1;
 	}
@@ -88,8 +88,8 @@ model {
 	
 	for (t in 2:N) {
 	  if (USE_SMOOTHED_ERROR==0)
-	  	y[t] ~ student_t(nu, expVal[t], sigma*expVal[t]^powx + offsetSigma);
+	  	y[t] ~ normal(expVal[t], sigma*expVal[t]^powx + offsetSigma);
 	  else
-	  	y[t] ~ student_t(nu, expVal[t], sigma*smoothedInnovSize[t-1] + offsetSigma);
+	  	y[t] ~ normal(expVal[t], sigma*smoothedInnovSize[t-1] + offsetSigma);
 	}
 }
