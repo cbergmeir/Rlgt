@@ -14,3 +14,7 @@ stanOutput.txt
 *.DS_Store
 *.Rproj
 .Rproj.user
+Rlgt/src/stanExports_*
+Rlgt/src/RcppExports.cpp
+Rlgt/src/Makevars
+Rlgt/R/stanmodels.R

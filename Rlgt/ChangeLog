@@ -1,4 +1,8 @@
-version 0.1-4 (25-08-2023):
+version 0.2-1 (11-09-2023):
+
+- update to modern rstantools structure
+
+version 0.2-0 (25-08-2023):
 
 - add different variants of the proposed LGT approach
 - LGT with custom Gibbs sampler
