@@ -41,7 +41,7 @@
 # }
 # 
 # @export
-blgt <- function(y.full, burnin = 1e4, n.samples = 1e4, nu.prop = c(0.47,0.53,0.6,0.68,0.77,0.875,1,1.15,1.35,1.6,1.95, 2.4, 3, 4, 5.6, 8.84, 18.63, 1e3))
+blgt <- function(y.full, burnin = 1e4, n.samples = 1e4, nu.prop = c(0.47,0.53,0.6,0.68,0.77,0.875,1,1.15,1.35,1.6,1.95, 2.4, 3, 4, 5.6, 8.84, 18.63, 1e3), m = 0)
 {
   # Process data
   max.y  = max(y.full)
@@ -49,6 +49,11 @@ blgt <- function(y.full, burnin = 1e4, n.samples = 1e4, nu.prop = c(0.47,0.53,0.
   y      = y.full[2:length(y.full)]
   y.diff = y.full[2:length(y.full)] - y[1:(length(y.full)-1)] # TODO: Tell Daniel about probable error here
   n      = length(y)
+  
+  # add seasonal flag
+  if (m > 1) {
+    seasonal = T
+  }
   
   # Initialise variables
   b1        = y.diff[1]
