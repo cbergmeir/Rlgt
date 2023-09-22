@@ -219,6 +219,8 @@ List rcpp_expsmooth(NumericVector y, NumericVector alphaV, NumericVector betaV, 
   // Allocate variables
   NumericVector l(n);
   NumericVector b(n);
+  NumericVector s(n);
+  NumericVector log_s(n);
   NumericVector dl_dalpha(n);
   NumericVector db_dalpha(n);
   NumericVector db_dbeta(n);
@@ -236,10 +238,16 @@ List rcpp_expsmooth(NumericVector y, NumericVector alphaV, NumericVector betaV, 
   l[0]      = l1[0];
   b[0]      = b1[0];
   
+  s[0] = 1;
+  log_s[0] = 0;
+  
   // Exponential smoothing step
   int i;
   for (i = 1; i<n; i++)
   {
+    s[i] = 1;
+    log_s[i] = 0;
+    
     // Update the smoothed curves
     l[i] = alpha*y[i] + (1-alpha)*l[i-1];
     b[i] = beta*(l[i] - l[i-1]) + (1-beta)*b[i-1];
@@ -257,7 +265,9 @@ List rcpp_expsmooth(NumericVector y, NumericVector alphaV, NumericVector betaV, 
   
   // Return results as a list
   List rv = List::create(Named("l") = l, 
-                         Named("b") = b, 
+                         Named("b") = b,
+                         Named("s") = s,
+                         Named("log_s") = log_s,
                          Named("dl_dalpha") = dl_dalpha,
                          Named("db_dalpha") = db_dalpha,
                          Named("db_dbeta") = db_dbeta,
@@ -272,4 +282,100 @@ List rcpp_expsmooth(NumericVector y, NumericVector alphaV, NumericVector betaV, 
 // [[Rcpp::init]]
 void rstan_additional_init(DllInfo *dll){
   R_useDynamicSymbols(dll, TRUE); // necessary for .onLoad() to work
+}
+
+// [[Rcpp::export]]
+List rcpp_sexpsmooth(NumericVector y, NumericVector alphaV, NumericVector betaV, NumericVector zetaV, NumericVector l1, NumericVector b1, NumericVector log_s1)
+{
+  int n = y.size();
+  int m = log_s1.size();
+  
+  double alpha = alphaV[0];
+  double beta  = betaV[0];
+  double zeta  = zetaV[0];
+  
+  // Allocate variables
+  NumericVector l(n);
+  NumericVector b(n);
+  NumericVector s(n);
+  NumericVector log_s(n);
+  
+  NumericMatrix dlogs_ds(n,m-1);
+  NumericMatrix dl_ds(n, m-1);
+  
+  //NumericVector b(n);
+  //NumericVector dl_dalpha(n);
+  //NumericVector db_dalpha(n);
+  //NumericVector db_dbeta(n);
+  
+  //NumericVector dl_dl1(n);
+  //NumericVector db_dl1(n);
+  //NumericVector db_db1(n);
+  
+  //NumericMatrix dl_ds(n, m-1);
+  //NumericMatrix db_ds(n, m-1);
+  
+  // Initialise
+  l1        = y[0] / exp(log_s1[0]);
+  b[0]      = b1[0];
+  l[0]      = l1[0];
+  //s[0]      = s1[0];
+  log_s[0] = log_s1[0];
+  s[0] = exp(log_s1[0]);
+  
+  // Initialise gradients
+  int i, j;
+  for (i = 0; i<(m-1); i++)
+  {
+    dlogs_ds(i,i) = 1;
+    dlogs_ds(m-1, i) = -1;
+  }
+  
+  dl_ds(0,0) = -y[0]/exp(log_s1[0]);
+  
+  // Exponential smoothing step
+  for (i = 1; i<n; i++)
+  {
+    // Update the seasonal adjustments
+    if (i < m)
+    {
+      log_s[i] = log_s1[i];
+    }
+    else
+    {
+      log_s[i] = zeta*log(y[i-m]/l[i-m]) + (1-zeta)*log_s[i-m]; 
+    }
+    s[i] = exp(log_s[i]);
+    
+    // Update the smoothed curves
+    l[i] = alpha*y[i]/s[i] + (1-alpha)*l[i-1];
+    
+    b[i] = beta*(l[i] - l[i-1]) + (1-beta)*b[i-1];
+    
+    // Update gradients for log.s
+    if (i >= m)
+    {
+      for (j = 0; j<(m-1); j++)
+      {
+        dlogs_ds(i,j) = -zeta/l[i-m]*dl_ds(i-m,j) + (1-zeta)*dlogs_ds(i-m,j);
+      }
+    }
+    
+    // Update gradients for local trend
+    for (j = 0; j<(m-1); j++)
+    {
+      dl_ds(i,j) = -alpha*y[i]/s[i]*dlogs_ds(i,j) + (1-alpha)*dl_ds(i-1,j);
+    }
+  }
+  
+  // Return results as a list
+  List rv = List::create(Named("l") = l, 
+                         Named("b") = b,
+                         Named("log_s") = log_s,
+                         Named("s") = s,
+                         Named("dlogs_ds") = dlogs_ds,
+                         Named("dl_ds") = dl_ds
+  );
+  
+  return rv;
 }

@@ -41,7 +41,7 @@
 # }
 # 
 # @export
-blgt <- function(y.full, burnin = 1e4, n.samples = 1e4, nu.prop = c(0.47,0.53,0.6,0.68,0.77,0.875,1,1.15,1.35,1.6,1.95, 2.4, 3, 4, 5.6, 8.84, 18.63, 1e3), m = 0)
+blgt <- function(y.full, burnin = 1e4, n.samples = 1e4, nu.prop = c(0.47,0.53,0.6,0.68,0.77,0.875,1,1.15,1.35,1.6,1.95, 2.4, 3, 4, 5.6, 8.84, 18.63, 1e3), m = 1, seasonal = F)
 {
   # Process data
   max.y  = max(y.full)
@@ -53,18 +53,43 @@ blgt <- function(y.full, burnin = 1e4, n.samples = 1e4, nu.prop = c(0.47,0.53,0.
   # add seasonal flag
   if (m > 1) {
     seasonal = T
+    print("Fitting a seasonal model...")
+  } else {
+    if (seasonal) {
+      print("Seasonality m should be at least 2, fitting a non-seasonal model now...")
+    } else {
+      print("Fitting a non-seasonal model...")
+    }
+    seasonal = F
   }
   
   # Initialise variables
   b1        = y.diff[1]
   
+  log.s         = rep(0,m)
+  s.ix          = ((0:(n)) %% m) + 1
+  s.ix          = s.ix[2:(n+1)]
+  lambda2.log.s = rep(1, m-1)
+  nu.log.s      = rep(1, m-1)
+  tau2.log.s    = 10
+  xi.log.s      = 1  
+  
   alpha     = 0.7
+  zeta      = 0.7
   beta      = 0.7
   rho       = 0.5
-  rv.smooth = blgt.expsmooth(y.full, alpha, beta, y.full[1], 0)
+  
+  if (seasonal) {
+    rv.smooth     = blgt.sexpsmooth(y.full, alpha, beta, zeta, y.full[1], b1, log.s)
+  } else {
+    rv.smooth = blgt.expsmooth(y.full, alpha, beta, y.full[1], 0)
+  }
+
   l         = rv.smooth$l[1:n]
   b         = rv.smooth$b[1:n]
-  
+  # blgt.expsmooth will return s = 1 for non-seasonal version
+  s         = rv.smooth$s[2:(n+1)]
+
   lambda2.w1 = 1
   lambda2.w2 = 1
   lambda2.b1 = 1
@@ -78,20 +103,22 @@ blgt <- function(y.full, burnin = 1e4, n.samples = 1e4, nu.prop = c(0.47,0.53,0.
   omega2     = matrix(1, n, 1)
   ar         = 0
   e1         = 0
-  
+
   l1         = y[1]
   
   e          = matrix(0, n, 1)
   
   # Hyperparameters
   max.y.diff = max(abs(y.diff))
-  
+
   # Initialise weights with least-squares solution
   X     = matrix(0, n, 2)
   X[,1] = l^rho
   X[,2] = b
   w     = solve(t(X) %*% X, t(X) %*% (y-l))
-  mu    = l + X %*% w
+  mu    = s*(l + X %*% w)
+
+  w.s   = 1
   
   # Sample storage
   rv = list()
@@ -103,6 +130,7 @@ blgt <- function(y.full, burnin = 1e4, n.samples = 1e4, nu.prop = c(0.47,0.53,0.
   rv$w         = matrix(0, n.samples, 2)
   rv$alpha     = matrix(0, n.samples, 1)
   rv$beta      = matrix(0, n.samples, 1)
+  rv$zeta      = matrix(0, n.samples, 1)
   rv$rho       = matrix(0, n.samples, 1)
   rv$tau       = matrix(0, n.samples, 1)
   rv$nu        = matrix(0, n.samples, 1)
@@ -111,6 +139,15 @@ blgt <- function(y.full, burnin = 1e4, n.samples = 1e4, nu.prop = c(0.47,0.53,0.
   rv$lt        = matrix(0, n.samples, 1)
   rv$bt        = matrix(0, n.samples, 1)
   rv$et        = matrix(0, n.samples, 1)
+  rv$log.s     = matrix(0, n.samples, m)
+  rv$y.on.l    = matrix(0, n.samples, m)
+  rv$L         = matrix(0, n.samples, 1)
+  rv$log.s1    = matrix(0, n.samples, m)
+  rv$w.s       = matrix(0, n.samples, 1)
+  rv$l2.log.s  = matrix(0, n.samples, m-1)
+  rv$t2.log.s  = matrix(0, n.samples, 1)
+  rv$s.ix      = s.ix
+  rv$m         = m
   rv$L         = matrix(0, n.samples, 1)
   rv$y         = y.full
   
@@ -118,11 +155,17 @@ blgt <- function(y.full, burnin = 1e4, n.samples = 1e4, nu.prop = c(0.47,0.53,0.
   l.hat        = matrix(0, n, 1)
   b.hat        = matrix(0, n, 1)
   
-  theta        = c(mgrad.logit(alpha,c(0,1)), mgrad.logit(beta,c(0,1)));  
+  if (seasonal) {
+    theta      = c(mgrad.logit(alpha,c(0,1)), mgrad.logit(zeta,c(0,1)));  
+  } else {
+    theta      = c(mgrad.logit(alpha,c(0,1)), mgrad.logit(beta,c(0,1)));  
+  }
   
   # Sampling setup
   #theta = ...
   mh.tune.theta = mgrad.initialise(2, bayes.exp.L.mh, bayes.exp.h.mh, 75, 1e-20, 1e20, n.samples, burnin, F)
+  if (seasonal)
+    mh.tune.log.s = mgrad.initialise(m-1, bayes.exp.L.s.mh, bayes.exp.h.s.mh, 75, 1e-20, 1e20, n.samples, burnin, F)
   
   #nu.prop  = seq(from = 4, to = 30, length.out = 20)
   #nu.prop = c(4, 5.6, 8.84, 18.63, 1e3)
@@ -147,13 +190,13 @@ blgt <- function(y.full, burnin = 1e4, n.samples = 1e4, nu.prop = c(0.47,0.53,0.
   w2.scale     = 1
   w1.delta     = 1
   w2.delta     = 1
-  
+
   b1.scale     = max.y/100
   b1.delta     = 1
   
   sample.tau = F
   sample.phi = F
-  
+
   # Precompute random variables
   rng.gam = matrix(0, burnin+n.samples, 5)
   rng.gam[,1] = rgamma(burnin + n.samples, shape = (w1.delta+1)/2, rate = 1)
@@ -169,13 +212,13 @@ blgt <- function(y.full, burnin = 1e4, n.samples = 1e4, nu.prop = c(0.47,0.53,0.
     e[1]   = y[1] - mu[1] + ar*e1
     e[2:n] = (y[2:n] - mu[2:n]) + ar*(y[1:n-1]-mu[1:n-1])
     l2.tau = l^(2*tau)
-    
+
     # Sample chi2
     v2   = phi^2 + (1-phi)^2*l2.tau
     V    = sum(e^2/v2/omega2)/2 + sigma2.B/2
     chi2 = V / rng.gam[iter+1,4]
     #chi2 = V / stats::rgamma(1, shape=n/2, scale=1)
-    
+
     # If using half-Cauchy ...    
     #V = sum(e^2/v2/omega2)/2 + 1/sigma2.lv
     #chi2 = V / rng.gam[iter+1,4]
@@ -192,7 +235,7 @@ blgt <- function(y.full, burnin = 1e4, n.samples = 1e4, nu.prop = c(0.47,0.53,0.
     # Convert to xi2/sigma2
     xi2    = chi2*phi^2
     sigma2 = chi2*(1-phi)^2
-    
+
     ## Sample nu
     logOmega2 = sum(log(omega2))
     OneOverOmega2 = sum(1/omega2)
@@ -202,74 +245,102 @@ blgt <- function(y.full, burnin = 1e4, n.samples = 1e4, nu.prop = c(0.47,0.53,0.
     #L.prop = L.prop - (1/2)*log( psigamma(nu.prop/2,1) 
     #                - psigamma((nu.prop+1)/2, 1) - 2*(nu.prop+5)/nu.prop/(nu.prop+1)/(nu.prop+3) ); 
     nu = bayes.exp.grid.sample(nu.prop, L.prop)
-    
+
     ## Linear combination model
     #l2.tau = l^(2*tau)
     v2 = omega2*(xi2 + l2.tau*sigma2)
-    e  = y - l - w[2]*b
     l.rho = l^rho
     
     # Sample w(2)
-    Q2 = lambda2.w1*w1.scale^2
-    XY = sum(e*l.rho/v2)
-    X2 = sum(l.rho^2/v2)
-    
-    mu.w = (Q2*XY)/(Q2*X2+1);
-    s2.w = 1/(X2 + 1/Q2);
-    w[1] = rnorm(1, mu.w, sqrt(s2.w))
-    
-    ## Sample w(2)
-    e = y - l - l.rho*w[1]
-    
-    Q2 = lambda2.w2*w2.scale^2
-    XY = sum(e*b/v2)
-    X2 = sum(b^2/v2)
-    
-    mu.w = (Q2*XY)/(Q2*X2+1);
-    s2.w = 1/(X2+1/Q2);
-    w[2] = rtruncnorm(1, a=-100, b=1, mean=mu.w, sd=sqrt(s2.w))
-    
+    e  = y - s*(l + w[2]*b)
+    w[1] = bayes.exp.sample.w(e, s*l.rho, v2, lambda2.w1*w1.scale^2)
+
+    # Sample w(2)
+    e = y - s*(l + l.rho*w[1])
+    w[2] = bayes.exp.sample.w(e, s*b, v2, lambda2.w2*w2.scale^2, range = c(-100,1))
+    if (seasonal) {
+      w[2] = 0
+    }
+
     # Form mu
-    mu   = l + l.rho*w[1] + b*w[2]
+    mu   = w.s*s*(l + l.rho*w[1] + b*w[2])
     
     # Cauchy for w(1) and w(2)
     lambda2.w1 = (w[1]^2/2/w1.scale^2 + w1.delta/2) / rng.gam[iter+1,1]
     lambda2.w2 = (w[2]^2/2/w2.scale^2 + w2.delta/2) / rng.gam[iter+1,2]
-    
+
     ## Sample b1
-    db.db1  = (1-beta)^(0:(n-1))
-    dmu.db1 = w[2]*db.db1
-    g       = sum(-(y-mu)*dmu.db1/v2)
-    H       = sum(dmu.db1^2/v2)
-    Q2      = lambda2.b1*b1.scale^2
-    
-    mu.b1   = Q2*(H*b1 - g)/(H*Q2 + 1)
-    s2.b1   = 1/(H + 1/Q2)
-    
-    # Sample b1 & lambda2.b1
-    b1 = rnorm(1, mu.b1, sd=sqrt(s2.b1))
-    lambda2.b1 = ((b1^2/b1.scale^2 + b1.delta)/2) / rng.gam[iter+1,3]
-    
+    if (seasonal) {
+      b1 = 0
+    } else {
+      db.db1  = (1-beta)^(0:(n-1))
+      dmu.db1 = w[2]*db.db1
+      g       = sum(-(y-mu)*dmu.db1/v2)
+      H       = sum(dmu.db1^2/v2)
+      Q2      = lambda2.b1*b1.scale^2
+      
+      mu.b1   = Q2*(H*b1 - g)/(H*Q2 + 1)
+      s2.b1   = 1/(H + 1/Q2)
+      
+      # Sample b1 & lambda2.b1
+      b1 = rnorm(1, mu.b1, sd=sqrt(s2.b1))
+      lambda2.b1 = ((b1^2/b1.scale^2 + b1.delta)/2) / rng.gam[iter+1,3]
+    }
+
     ## Sample alpha/beta
     approx.c  = c(1,1) * 12
     approx.mu = 0
-    rv.sample = mgrad.Sample(theta, approx.c, y.full, mh.tune.theta, w, sigma2, xi2, omega2, nu, tau, b1, rho, ar, e1, approx.mu)
+    rv.sample = mgrad.Sample(theta, approx.c, y.full, mh.tune.theta, w, sigma2, xi2, omega2, nu, tau, b1, rho, ar, e1, log.s, seasonal)
     
     if (rv.sample$accept)    
     {
-      
+
       alpha = mgrad.ilogit(rv.sample$theta[1]+approx.mu,c(0,1))$x
-      beta  = mgrad.ilogit(rv.sample$theta[2]+approx.mu,c(0,1))$x
+      if (seasonal) {
+        zeta = mgrad.ilogit(rv.sample$theta[2]+approx.mu,c(0,1))$x
+      } else {
+        beta  = mgrad.ilogit(rv.sample$theta[2]+approx.mu,c(0,1))$x 
+      }
     }
     mh.tune.theta = rv.sample$tune
     theta   = rv.sample$theta
     
+    if (seasonal)
+    {
+      approx.c  = lambda2.log.s*tau2.log.s
+      #approx.c = rep(2.5,m-1)
+      #rv.sample = mgrad.Sample(log.s[1:(m-1)], approx.c, y.full, mh.tune.log.s, alpha, beta, w, sigma2, xi2, omega2, nu, tau, b1, rho, ar, e1, c(1,s.ix), w.s)
+      rv.sample = mgrad.Sample(log.s[1:(m-1)], approx.c, y.full, mh.tune.log.s, alpha, beta, zeta, w, sigma2, xi2, omega2, nu, tau, b1, rho, ar, e1, seasonal)
+
+      mh.tune.log.s = rv.sample$tune
+      log.s         = c(rv.sample$theta, -sum(rv.sample$theta))
+      #s             = exp(log.s)[s.ix]
+
+
+      # Sample the horseshoe stuff
+      rv.hs = blgt.horseshoe.lambda2(log.s[1:(m-1)], tau2.log.s, nu.log.s)
+      
+      lambda2.log.s = rv.hs$lambda2
+      nu.log.s      = rv.hs$nu
+      
+      rv.hs = blgt.horseshoe.tau2(log.s[1:(m-1)], lambda2.log.s, xi.log.s)
+      tau2.log.s    = rv.hs$tau2
+      xi.log.s      = rv.hs$xi
+    }
+    
     # Update
-    rv.smooth = blgt.expsmooth(y.full, alpha, beta, l1, b1)
+    if (seasonal) {
+      print("check seasonal b1...")
+      print(b1)
+      rv.smooth = blgt.sexpsmooth(y.full, alpha, 0, zeta, l1, 0, log.s)
+    } else {
+      rv.smooth = blgt.expsmooth(y.full, alpha, beta, l1, b1)
+    }
     lt = rv.smooth$l[n.full]
     bt = rv.smooth$b[n.full]
     l  = rv.smooth$l[1:n]
     b  = rv.smooth$b[1:n]
+    s  = rv.smooth$s[2:n.full]
     
     # Sample tau
     log.l = log(l)
@@ -293,8 +364,8 @@ blgt <- function(y.full, burnin = 1e4, n.samples = 1e4, nu.prop = c(0.47,0.53,0.
     
     ## Sample rho
     log.l   = log(l)
-    rho = rexpsmooth.grid.sample.rho(rho.prop, y-l-w[2]*b, xi2+sigma2*exp(log.l*2*tau), log.l, w[1], nu)$theta
-    
+    rho = rexpsmooth.grid.sample.rho(rho.prop, y - s*(l+w[2]*b), xi2+sigma2*exp(log.l*2*tau), log.l, w[1], nu)$theta
+
     ## Store sample
     iter = iter+1
     if (iter > burnin)
@@ -307,6 +378,7 @@ blgt <- function(y.full, burnin = 1e4, n.samples = 1e4, nu.prop = c(0.47,0.53,0.
       rv$w[k,]     = w
       rv$alpha[k]  = alpha
       rv$beta[k]   = beta
+      rv$zeta[k]   = zeta
       rv$rho[k]    = rho
       rv$tau[k]    = tau
       rv$nu[k]     = nu
@@ -316,11 +388,76 @@ blgt <- function(y.full, burnin = 1e4, n.samples = 1e4, nu.prop = c(0.47,0.53,0.
       rv$lt[k]     = lt
       rv$bt[k]     = bt
       rv$et[k]     = e[n]
+      rv$log.s1[k,] = log.s
+      rv$log.s[k,]  = rv.smooth$log_s[(n.full-m+1):n.full]
+      if (seasonal)
+        rv$y.on.l[k,] = log( y[(n-m+1):n] / c(l[(n-m+2):n],lt) )
+
+      rv$l2.log.s[k,] = lambda2.log.s
+      rv$t2.log.s[k]  = tau2.log.s
     }
   }
   
   rv
 }
+
+########################################################################
+# Sample a regression coefficient
+bayes.exp.sample.w <- function(y, x, v2, lambda2, range = NULL)
+{
+  Q2 = lambda2
+  XY = sum(y*x/v2)
+  X2 = sum(x^2/v2)
+  
+  mu.w = (Q2*XY)/(Q2*X2+1);
+  s2.w = 1/(X2 + 1/Q2);
+  
+  if (!is.null(range))
+  {
+    w = rtruncnorm(1, a=range[1], b=range[2], mean=mu.w, sd=sqrt(s2.w))
+  }
+  else
+  {
+    w = rnorm(1, mu.w, sqrt(s2.w)) 
+  }
+  
+  w
+}
+
+
+########################################################################
+# Sample horseshoe L.V.s
+blgt.horseshoe.lambda2 <- function(b, tau2, nu)
+{
+  p = length(b)
+  
+  # Sample lambda2
+  scale   = 1/nu + b^2 / 2 / tau2
+  lambda2 = scale / stats::rexp(p)
+  
+  scale = 1 + 1/lambda2
+  nu    = scale / stats::rexp(p)  
+  
+  return(list(lambda2=lambda2,nu=nu))
+}
+
+########################################################################
+# Sample tau2
+blgt.horseshoe.tau2 <- function(b, lambda2, xi)
+{
+  p = length(b)
+
+  shape = (p+1)/2
+  scale = 1/xi + sum(b^2 / lambda2) / 2
+  tau2  = 1 / stats::rgamma(1, shape=shape, scale=1/scale)
+  
+  # Sample xi
+  scale = 1 + 1/tau2
+  xi    = scale / stats::rexp(1)
+  
+  return(list(tau2=tau2,xi=xi))
+}
+
 
 ########################################################################
 # Simple grid sample
@@ -333,28 +470,39 @@ bayes.exp.grid.sample <- function(theta.prop, L.prop)
 ########################################################################
 # Likelihood for alpha & beta
 # @export
-bayes.exp.L.mh <- function(theta, y.full, L.stats, aux.stats, w, sigma2, xi2, omega2, nu, tau, b1, rho, ar, e1, approx.mu)
+bayes.exp.L.mh <- function(theta, y.full, L.stats, aux.stats, w, sigma2, xi2, omega2, nu, tau, b1, rho, ar, e1, log.s, seasonal)
 {
   n.full = length(y.full)
   n      = n.full-1
   
   # Extract parameters
-  alpha = mgrad.ilogit(theta[1]+approx.mu,c(0,1))$x
-  beta  = mgrad.ilogit(theta[2]+approx.mu,c(0,1))$x
+  alpha = mgrad.ilogit(theta[1],c(0,1))$x
+  if (seasonal) {
+    zeta = mgrad.ilogit(theta[2],c(0,1))$x
+  } else {
+    beta  = mgrad.ilogit(theta[2],c(0,1))$x 
+  }
   
   l1 = y.full[1]
   y  = y.full[2:n.full]
-  rv = blgt.expsmooth(y.full, alpha, beta, l1, b1)
+  if (!seasonal) {
+    rv = blgt.expsmooth(y.full, alpha, beta, l1, b1)
+  } else {
+    rv = blgt.sexpsmooth(y.full, alpha, 0, zeta, l1, 0, log.s)
+
+  }
+  
   
   # Compute the likelihood of the new model
   l = rv$l[1:n]
   b = rv$b[1:n]
-  mu = l + l^rho*w[1] + b*w[2]
+  s = rv$s[2:n.full]
+  mu = s*(l + l^rho*w[1] + b*w[2])
   e = y - mu
   
   v2 = xi2 + sigma2*l^(2*tau)
   #E = [e(1) + e1*ar(1); e(2:end) + e(1:end-1)*ar(1)];
-  
+
   E = matrix(0,length(l),1)
   E[1]   = e[1] + e1*ar
   E[2:n] = e[2:n] + e[1:n-1]*ar
@@ -407,6 +555,82 @@ bayes.exp.h.mh <- function(theta)
   
   sum((b+a)*log(exp(theta[1:2])+1) - a*theta[1:2])
 }
+########################################################################
+# Likelihood for seasonal adjustments
+bayes.exp.L.s.mh <- function(theta, y.full, L.stats, aux.stats, alpha, beta, zeta, w, sigma2, xi2, omega2, nu, tau, b1, rho, ar, e1)
+{
+  n.full = length(y.full)
+  n      = n.full-1
+  m      = length(theta)
+ 
+  #t = theta[1:m]
+  #t = t - mean(t)
+  #t = exp(t)
+  t = exp(c(theta[1:m], -sum(theta[1:m])))
+  t = pmin(t,1e6)
+  t = pmax(t,1/1e6)
+  
+  # Seasonal adjustments
+  #s = exp(theta[1:m])[s.ix]
+  l1 = y.full[1]
+  y  = y.full[2:n.full]
+  rv = blgt.sexpsmooth(y.full, alpha, 0, zeta, l1, 0, log(t))
+  
+  s = rv$s[2:n.full]
+  
+  # Compute the likelihood of the new model
+  l = rv$l[1:n]
+  b = rv$b[1:n]
+  mu = s*(l + l^rho*w[1] + b*w[2])
+  e = y - mu
+  
+  v2 = xi2 + sigma2*l^(2*tau)
+
+  E = matrix(0,length(l),1)
+  E[1]   = e[1] + e1*ar
+  E[2:n] = e[2:n] + e[1:n-1]*ar
+  
+  q = e^2/nu/v2 + 1
+  L = (nu+1)/2*sum(log(q)) + (1/2)*sum(log(v2))
+
+  # Compute gradients
+  dL.ds = matrix(0, n, m)
+  mu = rv$l + w[1]*rv$l^rho
+  mu.s = mu[1:(n.full-1)] * s
+  l.rho.2 = rho*w[1]*rv$l^(rho-1)
+  E2 = (y-mu.s)^2
+  for (j in 1:m)
+  {
+    dmu = rv$dl_ds[,j] + l.rho.2*rv$dl_ds[,j]
+    dmu.s = s*dmu[1:(n.full-1)] + mu[1:(n.full-1)]*rv$dlogs_ds[2:n.full,j]*s
+    dE2 = -2*(y - mu.s)*dmu.s
+    dL.ds[,j] = (nu+1)*dE2 / (2*nu*xi2*(E2/nu/xi2+1))
+  }    
+
+  g = colSums(dL.ds)
+
+  #
+  list(L = L, g = colSums(dL.ds), L.stats = rv, aux.stats = NULL)
+}
+
+########################################################################
+# Prior for seasonal adjusters
+bayes.exp.h.s.mh <- function(theta, c)
+{
+  # Normal prior on log-seasonal adjusters
+  m = length(theta)
+  #theta = theta-mean(theta)
+  sum(theta[1:m]^2/c)/2
+  
+  #sum(-theta + log(exp(2*theta)+1))
+  
+  
+  #a = 1;
+  #b = 1/2;
+  
+  #sum((b+a)*log(exp(theta[1:2])+1) - a*theta[1:2])
+}
+
 
 ########################################################################
 # Forecast
@@ -416,6 +640,7 @@ blgt.forecast <- function(rv, h, ns = 1e6)
   # Sample
   n = length(rv$y)
   n.samples = rv$n.samples
+  m = rv$m
   I = sample(n.samples, ns, replace=T)
   
   yp = matrix(rv$y[n], ns, 1)
@@ -425,20 +650,42 @@ blgt.forecast <- function(rv, h, ns = 1e6)
   bS = rv$bt[I]
   prev.level = rv$lt[I]
   error = rv$et[I]
+
+  seasonal = F
+  if (m > 1) {
+    seasonal = T
+    log.s = matrix(0, ns, m + h)
+    log.s[,1:m] = rv$log.s[I,]
   
+    y.on.l = matrix(0, ns, m + h)
+    y.on.l[,1:m] = rv$y.on.l[I,]
+  }
   # Forecast
   for (i in 1:h)
   {
+    # Update s
+    if (seasonal)
+      log.s[,i+m] = rv$zeta[I]*y.on.l[,i] + (1-rv$zeta[I])*log.s[,i]
+
     l = prev.level
-    exp.val = l + rv$w[I,1]*l^rv$rho[I] + rv$w[I,2]*bS
+    if (seasonal) {
+      exp.val = exp(log.s[,i+m])*(l + rv$w[I,1]*l^rv$rho[I] + rv$w[I,2]*bS)
+    } else {
+      exp.val = l + rv$w[I,1]*l^rv$rho[I] + rv$w[I,2]*bS
+    }
+    
     scale = sqrt(rv$xi2[I] + rv$sigma2[I]*l^(2*rv$tau[I]))
     
     e = rt(ns, rv$nu[I]) * scale
-    
+
     yf[,i] = pmax(pmin(exp.val + e, 1e38), 1e-30)    
     
-    cur.level = pmax(1e-30, rv$alpha[I]*yf[,i] + (1-rv$alpha[I])*prev.level)
-    
+    if (seasonal) {
+      cur.level = pmax(1e-30, rv$alpha[I]*yf[,i]/exp(log.s[,i+m]) + (1-rv$alpha[I])*prev.level)
+      y.on.l[,i+m] = log(yf[,i]/cur.level)
+    } else {
+      cur.level = pmax(1e-30, rv$alpha[I]*yf[,i] + (1-rv$alpha[I])*prev.level)
+    }
     bS = rv$beta[I]*(cur.level-prev.level) + (1-rv$beta[I])*bS
     prev.level = cur.level
   }
@@ -877,6 +1124,11 @@ mgrad.ilogit <- function(x, bnds)
 blgt.expsmooth <- function(y, alpha, beta, l1, b1)
 {
   rcpp_expsmooth(y,alpha,beta,l1,b1)
+}
+
+blgt.sexpsmooth <- function(y, alpha, beta, zeta, l1, b1, log.s)
+{
+  rcpp_sexpsmooth(y,alpha,beta,zeta,l1,b1,log.s)
 }
 
 # #' @export
