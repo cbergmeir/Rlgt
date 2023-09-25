@@ -61,12 +61,12 @@ rlgt <- function(   #y=trainData; seasonality=12; seasonality2=1; seasonality.ty
   
   if(method == "Custom_Gibbs") {
     # Some checks of the input parameters
-    if(seasonality != 1 || seasonality2 != 1) {
-      print('The current "Custom_Gibbs" method is not seasonal')
+    if(seasonality2 != 1) {
+      print('The current "Custom_Gibbs" method is not dual-seasonal')
       return(NULL)
     }
     # Calling Custom_Gibbs method
-    result = blgt(y, burnin = control$NUM_OF_ITER%/%2, n.samples = control$NUM_OF_ITER%/%2)
+    result = blgt(y, burnin = control$NUM_OF_ITER%/%2, n.samples = control$NUM_OF_ITER%/%2, m = seasonality)
     result$method = "Custom_Gibbs"
     result$x <- y
     attr(result, "class") <- "rlgtfit"

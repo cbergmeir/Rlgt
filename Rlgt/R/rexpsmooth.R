@@ -4,6 +4,7 @@
 # @param y.full A vector containing the time series to smooth
 # @param n.samples Number of posterior samples to generate.
 # @param burnin Number of burn-in samples.
+# @param m The frequency of seasonality. For seasonal model, m (seasonality) > 1. A non-seasonal model will be fitted by default.
 # @section Details:
 # Draws a series of samples from the posterior distribution of a Bayesian exponential smoothing model.
 # 
@@ -41,7 +42,7 @@
 # }
 # 
 # @export
-blgt <- function(y.full, burnin = 1e4, n.samples = 1e4, nu.prop = c(0.47,0.53,0.6,0.68,0.77,0.875,1,1.15,1.35,1.6,1.95, 2.4, 3, 4, 5.6, 8.84, 18.63, 1e3), m = 1, seasonal = F)
+blgt <- function(y.full, burnin = 1e4, n.samples = 1e4, nu.prop = c(0.47,0.53,0.6,0.68,0.77,0.875,1,1.15,1.35,1.6,1.95, 2.4, 3, 4, 5.6, 8.84, 18.63, 1e3), m = 1)
 {
   # Process data
   max.y  = max(y.full)
@@ -55,11 +56,8 @@ blgt <- function(y.full, burnin = 1e4, n.samples = 1e4, nu.prop = c(0.47,0.53,0.
     seasonal = T
     print("Fitting a seasonal model...")
   } else {
-    if (seasonal) {
-      print("Seasonality m should be at least 2, fitting a non-seasonal model now...")
-    } else {
-      print("Fitting a non-seasonal model...")
-    }
+    print("Fitting a non-seasonal model now...")
+    print("If you want to fit a seasonal model, set Seasonality to be at least 2.")
     seasonal = F
   }
   
@@ -330,8 +328,6 @@ blgt <- function(y.full, burnin = 1e4, n.samples = 1e4, nu.prop = c(0.47,0.53,0.
     
     # Update
     if (seasonal) {
-      print("check seasonal b1...")
-      print(b1)
       rv.smooth = blgt.sexpsmooth(y.full, alpha, 0, zeta, l1, 0, log.s)
     } else {
       rv.smooth = blgt.expsmooth(y.full, alpha, beta, l1, b1)
@@ -547,7 +543,7 @@ bayes.exp.L.mh <- function(theta, y.full, L.stats, aux.stats, w, sigma2, xi2, om
 ########################################################################
 # Prior for alpha & beta
 # @export
-bayes.exp.h.mh <- function(theta)
+bayes.exp.h.mh <- function(theta, c)
 {
   # Beta prior on (alpha,beta)
   a = 1;
@@ -557,7 +553,7 @@ bayes.exp.h.mh <- function(theta)
 }
 ########################################################################
 # Likelihood for seasonal adjustments
-bayes.exp.L.s.mh <- function(theta, y.full, L.stats, aux.stats, alpha, beta, zeta, w, sigma2, xi2, omega2, nu, tau, b1, rho, ar, e1)
+bayes.exp.L.s.mh <- function(theta, y.full, L.stats, aux.stats, alpha, beta, zeta, w, sigma2, xi2, omega2, nu, tau, b1, rho, ar, e1, seasonal)
 {
   n.full = length(y.full)
   n      = n.full-1
@@ -1034,8 +1030,8 @@ mgrad.Sample <- function(theta, c, data, tune, ...)
   
   # Accept/reject?
   # Log-priors
-  L.h     = tune$h(theta)
-  L.h.new = tune$h(theta.new)
+  L.h     = tune$h(theta, c)
+  L.h.new = tune$h(theta.new, c)
   
   # Log-proposals
   L.prop = sum( (theta.new - prop.mu)^2/2/prop.v );

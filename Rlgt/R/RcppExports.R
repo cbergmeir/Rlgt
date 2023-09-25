@@ -21,3 +21,7 @@ rcpp_expsmooth <- function(y, alphaV, betaV, l1, b1) {
     .Call(`_Rlgt_rcpp_expsmooth`, y, alphaV, betaV, l1, b1)
 }
 
+rcpp_sexpsmooth <- function(y, alphaV, betaV, zetaV, l1, b1, log_s1) {
+    .Call(`_Rlgt_rcpp_sexpsmooth`, y, alphaV, betaV, zetaV, l1, b1, log_s1)
+}
+
