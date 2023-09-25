@@ -1,6 +1,6 @@
 # SGT with custom Gibbs sampler
 library(Mcomp)
-library(Rlgt)
+# library(Rlgt)
 set.seed(12345)
 
 quantileLoss<-function(forec, actual, tau) {
@@ -33,9 +33,9 @@ for (i in 1:w.series) {
   
   forec <- forecast(model, h = H, level=c(90,98))
   
-  plot(forec, main=series)
-  xs <- seq(from=length(trainData)+1,to=length(trainData)+ length(actuals))
-  lines(xs,actuals, col=1, type='b',lwd=2)
+  # plot(forec, main=series)
+  # xs <- seq(from=length(trainData)+1,to=length(trainData)+ length(actuals))
+  # lines(xs,actuals, col=1, type='b',lwd=2)
   
   sMAPE <- mean(abs(forec$mean-actuals)/(forec$mean+actuals))*200
   sumSMAPE=sumSMAPE+sMAPE
