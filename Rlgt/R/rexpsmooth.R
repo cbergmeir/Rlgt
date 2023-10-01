@@ -340,7 +340,7 @@ blgt <- function(y.full, burnin = 1e4, n.samples = 1e4, nu.prop = c(0.47,0.53,0.
     
     # Sample tau
     log.l = log(l)
-    e = y - l - l^rho*w[1] - b*w[2]
+    e = y - s*(l + l.rho*w[1] + b*w[2])
     if (sample.tau)
     {
       P = matrix(0, length(tau.prop), 2)
