@@ -801,6 +801,7 @@ blgt.multi.forecast <- function(train, future, n.samples = 2e4, burnin = 1e4, pa
           rv[[j]]$forecast = blgt.forecast(rv[[j]]$model,length(future[[k]]),1e5)
           rv[[j]]$sMAPE    = blgt.sMAPE(rv[[j]]$forecast$yf.med, future[[k]])
           rv[[j]]$InCI     = sum( (future[[k]] > rv[[j]]$forecast$yf.CI05) & (future[[k]] < rv[[j]]$forecast$yf.CI95) )
+          rv[[j]]$model    = NULL
         }
         rv
       }
@@ -824,6 +825,7 @@ blgt.multi.forecast <- function(train, future, n.samples = 2e4, burnin = 1e4, pa
       rv$forecast[[j]] = blgt.forecast(rv$model[[j]],length(future[[j]]),1e5)
       rv$sMAPE[j]      = blgt.sMAPE(rv$forecast[[j]]$yf.med, future[[j]])
       rv$InCI[j]       = sum( (future[[j]] > rv$forecast[[j]]$yf.CI05) & (future[[j]] < rv$forecast[[j]]$yf.CI95) )
+      rv$model[[j]]    = NULL
     }
   }
 
@@ -831,7 +833,7 @@ blgt.multi.forecast <- function(train, future, n.samples = 2e4, burnin = 1e4, pa
   if (n.cores > 1)
   {
     rv = list()
-    rv$model = vector("list", n.series)
+    # rv$model = vector("list", n.series)
     rv$forecast = vector("list", n.series)
     rv$sMAPE = rep(0, n.series)
     rv$InCI  = rep(0, n.series)
@@ -840,7 +842,7 @@ blgt.multi.forecast <- function(train, future, n.samples = 2e4, burnin = 1e4, pa
       for (j in 1:length(ix[[i]]))
       {
         k = ix[[i]][j]
-        rv$model[[k]] = rv.p[[i]][[j]]$model
+        # rv$model[[k]] = rv.p[[i]][[j]]$model
         rv$forecast[[k]] = rv.p[[i]][[j]]$forecast
         rv$sMAPE[k] = rv.p[[i]][[j]]$sMAPE
         rv$InCI[k] = rv.p[[i]][[j]]$InCI
