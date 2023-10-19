@@ -624,9 +624,11 @@ bayes.exp.L.s.mh <- function(theta, y.full, L.stats, aux.stats, alpha, beta, zet
   }    
 
   g = colSums(dL.ds)
+  # v2 can be small when phi = 0, tau = -1
+  g[which(is.nan(g))] = 0
 
   #
-  list(L = L, g = colSums(dL.ds), L.stats = rv, aux.stats = NULL)
+  list(L = L, g = g, L.stats = rv, aux.stats = NULL)
 }
 
 ########################################################################
