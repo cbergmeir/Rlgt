@@ -45,8 +45,8 @@
 blgt <- function(y.full, burnin = 1e4, n.samples = 1e4, m = 1, homoscedastic = T)
 {
   # nu proposal
-  nu.prop = c(0.1,0.2,0.4,0.6,0.8,1,1.15,1.35,1.6,1.95, 2.4, 3, 4, 5.6, 8.84, 18.63, 1e3)
-  # nu.prop = c(0.47,0.53,0.6,0.68,0.77,0.875,1,1.15,1.35,1.6,1.95, 2.4, 3, 4, 5.6, 8.84, 18.63, 1e3)
+  # nu.prop = c(0.1,0.2,0.4,0.6,0.8,1,1.15,1.35,1.6,1.95, 2.4, 3, 4, 5.6, 8.84, 18.63, 1e3)
+  nu.prop = c(0.47,0.53,0.6,0.68,0.77,0.875,1,1.15,1.35,1.6,1.95, 2.4, 3, 4, 5.6, 8.84, 18.63, 1e3)
   
   # Process data
   max.y  = max(y.full)
@@ -174,7 +174,7 @@ blgt <- function(y.full, burnin = 1e4, n.samples = 1e4, m = 1, homoscedastic = T
   
   #nu.prop  = seq(from = 4, to = 30, length.out = 20)
   #nu.prop = c(4, 5.6, 8.84, 18.63, 1e3)
-  rho.prop = seq(from = -2, to = 0.9, length.out = 10)
+  rho.prop = seq(from = -0.5, to = 1, length.out = 30)
   tau.prop = seq(from=-1, to=1, length.out=30)
   #tau.prop = -1
   #tau.prop = exp(seq(from=-3,to=0,length.out=30))
@@ -687,7 +687,10 @@ blgt.forecast <- function(rv, h, ns = 1e6)
     if (seasonal) {
       log.s[,i+m] = rv$zeta[I]*y.on.l[,i] + (1-rv$zeta[I])*log.s[,i]
       # bound log.s within (-2,2)
-      log.s[,i+m] = pmax(pmin(log.s[,i+m], 2), -2)
+      log.s[,i+m] = 4 * 1 / (1 + exp(-log.s[,i+m])) - 2
+      # or take the original value
+      # idx <- which(log.s[,i+m] < -0.5 | log.s[,i+m] > 0.5)
+      # log.s[idx, i+m] <- log.s[idx, i]
     }
 
     l = prev.level
@@ -728,6 +731,14 @@ blgt.sMAPE <- function(yp, yt)
   mean( abs(yp - yt)/(yp + yt) )*200
 }
 
+blgt.MASE <- function(yp, yt, train, m) {
+  mae <- mean( abs(yp - yt) )
+  
+  n <- length(train)
+  sNaive <- mean( abs( train[1:(n-m)] - train[(m+1):n] ))
+  
+  mae / sNaive
+}
 
 ########################################################################
 #' @export
@@ -802,6 +813,7 @@ blgt.multi.forecast <- function(train, future, n.samples = 2e4, burnin = 1e4, pa
           rv[[j]]$model    = blgt(train[[k]], burnin = burnin, n.samples = n.samples, m = m, homoscedastic = homoscedastic)
           rv[[j]]$forecast = blgt.forecast(rv[[j]]$model,length(future[[k]]),1e5)
           rv[[j]]$sMAPE    = blgt.sMAPE(rv[[j]]$forecast$yf.med, future[[k]])
+          rv[[j]]$MASE    = blgt.MASE(rv[[j]]$forecast$yf.med, future[[k]], train[[k]], m)
           rv[[j]]$InCI     = sum( (future[[k]] > rv[[j]]$forecast$yf.CI05) & (future[[k]] < rv[[j]]$forecast$yf.CI95) )
           rv[[j]]$model    = NULL
         }
@@ -819,6 +831,7 @@ blgt.multi.forecast <- function(train, future, n.samples = 2e4, burnin = 1e4, pa
     rv$model = vector("list", n.series)
     rv$forecast = vector("list", n.series)
     rv$sMAPE = rep(0, n.series)
+    rv$MASE = rep(0, n.series)
     rv$InCI  = rep(0, n.series)
 
     for (j in 1:n.series)
@@ -826,6 +839,7 @@ blgt.multi.forecast <- function(train, future, n.samples = 2e4, burnin = 1e4, pa
       rv$model[[j]]    = blgt(train[[j]], burnin = burnin, n.samples = n.samples, m = m, homoscedastic = homoscedastic)
       rv$forecast[[j]] = blgt.forecast(rv$model[[j]],length(future[[j]]),1e5)
       rv$sMAPE[j]      = blgt.sMAPE(rv$forecast[[j]]$yf.med, future[[j]])
+      rv$MASE[j]      = blgt.MASE(rv$forecast[[j]]$yf.med, future[[j]], train[[j]], m)
       rv$InCI[j]       = sum( (future[[j]] > rv$forecast[[j]]$yf.CI05) & (future[[j]] < rv$forecast[[j]]$yf.CI95) )
       rv$model[[j]]    = NULL
     }
@@ -838,6 +852,7 @@ blgt.multi.forecast <- function(train, future, n.samples = 2e4, burnin = 1e4, pa
     # rv$model = vector("list", n.series)
     rv$forecast = vector("list", n.series)
     rv$sMAPE = rep(0, n.series)
+    rv$MASE = rep(0, n.series)
     rv$InCI  = rep(0, n.series)
     for (i in 1:n.cores)
     {
@@ -847,6 +862,7 @@ blgt.multi.forecast <- function(train, future, n.samples = 2e4, burnin = 1e4, pa
         # rv$model[[k]] = rv.p[[i]][[j]]$model
         rv$forecast[[k]] = rv.p[[i]][[j]]$forecast
         rv$sMAPE[k] = rv.p[[i]][[j]]$sMAPE
+        rv$MASE[k] = rv.p[[i]][[j]]$MASE
         rv$InCI[k] = rv.p[[i]][[j]]$InCI
       }
     }
