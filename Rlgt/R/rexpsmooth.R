@@ -175,7 +175,7 @@ blgt <- function(y.full, burnin = 1e4, n.samples = 1e4, m = 1, homoscedastic = T
   #nu.prop  = seq(from = 4, to = 30, length.out = 20)
   #nu.prop = c(4, 5.6, 8.84, 18.63, 1e3)
   rho.prop = seq(from = -0.5, to = 1, length.out = 30)
-  tau.prop = seq(from=-1, to=1, length.out=30)
+  tau.prop = seq(from=0, to=1, length.out=30)
   #tau.prop = -1
   #tau.prop = exp(seq(from=-3,to=0,length.out=30))
   phi.prop = seq(from=0, to=1, length.out=30)
