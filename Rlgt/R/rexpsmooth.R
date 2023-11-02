@@ -777,7 +777,10 @@ blgt.multi.forecast <- function(train, future, n.samples = 2e4, burnin = 1e4, pa
         }
         else
         {
-          ix[[i]] = (j:n.series)
+          if (j <= n.series)
+            ix[[i]] = (j:n.series)
+          else
+            n.cores = n.cores - 1
         }
         j = j +q;
       }
