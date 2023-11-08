@@ -43,30 +43,92 @@ blgt.MASE <- function(yp, yt, train, m) {
 ############################################################################
 # yearly series
 # non-seasonal series
-H <- 6
-sMAPE <- rep(0, length(yearly.data))
-MASE <- rep(0, length(yearly.data))
+# H <- 6
+# sMAPE <- rep(0, length(yearly.data))
+# MASE <- rep(0, length(yearly.data))
+# 
+# start.time <- Sys.time()
+# for (i in 1:length(yearly.data)) {
+#   print(paste("I'm currently working on....", i))
+#   series <- yearly.data[[i]]
+#   n <- length(series)
+#   trainData <- series[1:(n-H)]
+#   actuals <- series[(n-H+1):n]
+#   rstanmodel <- rlgt(trainData,
+#                      control=rlgt.control(NUM_OF_ITER=4000),
+#                      verbose=FALSE)
+# 
+#   forec <- forecast(rstanmodel, h = H, level=c(90,98))
+# 
+#   # plot(forec, type = "l")
+#   # xs <- seq(from=length(trainData)+1,to=length(trainData)+ length(actuals))
+#   # lines(xs,actuals, col=1, type='b',lwd=2)
+# 
+#   sMAPE[i] <- mean(abs(forec$mean-actuals)/(forec$mean+actuals))*200
+#   MASE[i] <- blgt.MASE(forec$mean, actuals, trainData, 1)
+# }
+# end.time <- Sys.time()
+# print(paste("time difference:", end.time-start.time))
+# print(paste("sMAPE:", mean(sMAPE), ", MASE:", mean(MASE)))
+
+############################################################################
+# monthly series
+print("monthly series====")
+H <- 18
+sMAPE <- rep(0, length(monthly.data))
+MASE <- rep(0, length(monthly.data))
 
 start.time <- Sys.time()
-for (i in 1:length(yearly.data)) {
-  series <- yearly.data[[i]]
+for (i in 1:length(monthly.data)) {
+  print(paste("I'm currently working on....", i))
+  series <- monthly.data[[i]]
   n <- length(series)
   trainData <- series[1:(n-H)]
   actuals <- series[(n-H+1):n]
   rstanmodel <- rlgt(trainData,
                      control=rlgt.control(NUM_OF_ITER=4000),
                      verbose=FALSE)
-
+  
   forec <- forecast(rstanmodel, h = H, level=c(90,98))
-
+  
   # plot(forec, type = "l")
   # xs <- seq(from=length(trainData)+1,to=length(trainData)+ length(actuals))
   # lines(xs,actuals, col=1, type='b',lwd=2)
-
+  
   sMAPE[i] <- mean(abs(forec$mean-actuals)/(forec$mean+actuals))*200
   MASE[i] <- blgt.MASE(forec$mean, actuals, trainData, 1)
 }
 end.time <- Sys.time()
-print(paste("time difference:", end.time-start.time))
 print(paste("sMAPE:", mean(sMAPE), ", MASE:", mean(MASE)))
+print(paste("time difference:", end.time-start.time, attr(end.time-start.time, "units")))
 
+############################################################################
+# quarterly series
+print("quarterly series====")
+H <- 8
+sMAPE <- rep(0, length(quarterly.data))
+MASE <- rep(0, length(quarterly.data))
+
+start.time <- Sys.time()
+for (i in 1:length(quarterly.data)) {
+  print(paste("I'm currently working on....", i))
+  series <- quarterly.data[[i]]
+  n <- length(series)
+  trainData <- series[1:(n-H)]
+  actuals <- series[(n-H+1):n]
+  rstanmodel <- rlgt(trainData,
+                     control=rlgt.control(NUM_OF_ITER=4000),
+                     verbose=FALSE)
+  
+  forec <- forecast(rstanmodel, h = H, level=c(90,98))
+  
+  # plot(forec, type = "l")
+  # xs <- seq(from=length(trainData)+1,to=length(trainData)+ length(actuals))
+  # lines(xs,actuals, col=1, type='b',lwd=2)
+  
+  sMAPE[i] <- mean(abs(forec$mean-actuals)/(forec$mean+actuals))*200
+  MASE[i] <- blgt.MASE(forec$mean, actuals, trainData, 1)
+}
+end.time <- Sys.time()
+print(paste("sMAPE:", mean(sMAPE), ", MASE:", mean(MASE)))
+print(paste("time difference:", end.time-start.time, attr(end.time-start.time, "units")))
