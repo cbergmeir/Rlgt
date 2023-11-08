@@ -37,11 +37,13 @@ for (i in 1:length(dataset)) {
 H <- 6
 train.data = list()
 future.data = list()
+series.length = rep(0, length(yearly.data))
 for (i in 1:length(yearly.data))
 {
   n <- length(yearly.data[[i]])
   train.data[[i]] = as.numeric(yearly.data[[i]][1:(n-H)])
   future.data[[i]] = as.numeric(yearly.data[[i]][(n-H+1):n])
+  series.length[i] = n-H
 }
 w.series = 1:length(yearly.data)
 
@@ -82,11 +84,13 @@ saveRDS(rv, "tsdl.yearly.hetero.rds")
 H <- 18
 train.data = list()
 future.data = list()
+series.length = rep(0, length(monthly.data))
 for (i in 1:length(monthly.data))
 {
   n <- length(monthly.data[[i]])
   train.data[[i]] = as.numeric(monthly.data[[i]][1:(n-H)])
   future.data[[i]] = as.numeric(monthly.data[[i]][(n-H+1):n])
+  series.length[i] = n-H
 }
 w.series = 1:length(monthly.data)
 
@@ -128,11 +132,13 @@ saveRDS(rv, "tsdl.monthly.hetero.rds")
 H <- 8
 train.data = list()
 future.data = list()
+series.length = rep(0, length(quarterly.data))
 for (i in 1:length(quarterly.data))
 {
   n <- length(quarterly.data[[i]])
   train.data[[i]] = as.numeric(quarterly.data[[i]][1:(n-H)])
   future.data[[i]] = as.numeric(quarterly.data[[i]][(n-H+1):n])
+  series.length[i] = n-H
 }
 w.series = 1:length(quarterly.data)
 
