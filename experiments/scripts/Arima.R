@@ -89,7 +89,7 @@ for (i in 1:length(monthly.data)) {
   n <- length(series)
   trainData <- series[1:(n-H)]
   actuals <- series[(n-H+1):n]
-  model <- auto.arima(trainData)
+  model <- auto.arima(ts(trainData, frequency = 12))
   
   forec <- forecast(model, h = H, level=c(90,98))
   forecasts[[i]] <- forec
@@ -122,7 +122,7 @@ for (i in 1:length(quarterly.data)) {
   n <- length(series)
   trainData <- series[1:(n-H)]
   actuals <- series[(n-H+1):n]
-  model <- auto.arima(trainData)
+  model <- auto.arima(ts(trainData, frequency = 4))
   
   forec <- forecast(model, h = H, level=c(90,98))
   forecasts[[i]] <- forec

@@ -88,7 +88,7 @@ for (i in 1:length(monthly.data)) {
   n <- length(series)
   trainData <- series[1:(n-H)]
   actuals <- series[(n-H+1):n]
-  forec <- thetaf(trainData, h = H, level=c(90,98))
+  forec <- thetaf(ts(trainData, frequency = 12), h = H, level=c(90,98))
   
   forecasts[[i]] <- forec
   # plot(forec, type = "l")
@@ -120,7 +120,7 @@ for (i in 1:length(quarterly.data)) {
   n <- length(series)
   trainData <- series[1:(n-H)]
   actuals <- series[(n-H+1):n]
-  forec <- thetaf(trainData, h = H, level=c(90,98))
+  forec <- thetaf(ts(trainData, frequency = 4), h = H, level=c(90,98))
   
   forecasts[[i]] <- forec
   # plot(forec, type = "l")

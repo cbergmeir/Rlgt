@@ -89,7 +89,7 @@ for (i in 1:length(monthly.data)) {
   n <- length(series)
   trainData <- series[1:(n-H)]
   actuals <- series[(n-H+1):n]
-  forec <- mapa(ts(trainData), fh = H, conf.lvl=c(0.9,0.95))
+  forec <- mapa(ts(trainData, frequency = 12), fh = H, conf.lvl=c(0.9,0.95))
   
   forecasts[[i]] <- forec
   # plot(forec, type = "l")
@@ -121,7 +121,7 @@ for (i in 1:length(quarterly.data)) {
   n <- length(series)
   trainData <- series[1:(n-H)]
   actuals <- series[(n-H+1):n]
-  forec <- mapa(ts(trainData), fh = H, conf.lvl=c(0.9,0.95))
+  forec <- mapa(ts(trainData, frequency = 4), fh = H, conf.lvl=c(0.9,0.95))
   
   forecasts[[i]] <- forec
   # plot(forec, type = "l")
