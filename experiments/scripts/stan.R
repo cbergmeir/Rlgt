@@ -87,6 +87,7 @@ for (i in 1:length(monthly.data)) {
   trainData <- series[1:(n-H)]
   actuals <- series[(n-H+1):n]
   rstanmodel <- rlgt(trainData,
+                     seasonality=seasonality,
                      control=rlgt.control(NUM_OF_ITER=4000),
                      verbose=FALSE)
   
@@ -122,6 +123,7 @@ for (i in 1:length(quarterly.data)) {
   trainData <- series[1:(n-H)]
   actuals <- series[(n-H+1):n]
   rstanmodel <- rlgt(trainData,
+                     seasonality=seasonality,
                      control=rlgt.control(NUM_OF_ITER=4000),
                      verbose=FALSE)
   
