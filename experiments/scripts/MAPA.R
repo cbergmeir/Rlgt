@@ -58,7 +58,7 @@ for (i in 1:length(yearly.data)) {
   actuals <- series[(n-H+1):n]
   forec <- mapa(ts(trainData), fh = H, conf.lvl=c(0.9,0.95))
   
-  forecasts[[i]] <- forec
+  forecasts[[i]] <- forec$mean
   
   # plot(forec, type = "l")
   # xs <- seq(from=length(trainData)+1,to=length(trainData)+ length(actuals))
@@ -72,7 +72,7 @@ print(paste("time difference:", end.time-start.time, attr(end.time-start.time, "
 print(paste("sMAPE:", mean(sMAPE), ", MASE:", mean(MASE)))
 saveRDS(sMAPE, "results/MAPA - sMAPE.yearly.rds")
 saveRDS(MASE, "results/MAPA - MASE.yearly.rds")
-# saveRDS(forecasts, "results/MAPA - forecasts.yearly.rds")
+saveRDS(forecasts, "results/MAPA - forecasts.yearly.rds")
 
 ############################################################################
 # monthly series
@@ -91,20 +91,20 @@ for (i in 1:length(monthly.data)) {
   actuals <- series[(n-H+1):n]
   forec <- mapa(ts(trainData, frequency = 12), fh = H, conf.lvl=c(0.9,0.95))
   
-  forecasts[[i]] <- forec
+  forecasts[[i]] <- forec$mean
   # plot(forec, type = "l")
   # xs <- seq(from=length(trainData)+1,to=length(trainData)+ length(actuals))
   # lines(xs,actuals, col=1, type='b',lwd=2)
   
   sMAPE[i] <- mean(abs(forec$outfor-actuals)/(forec$outfor+actuals))*200
-  MASE[i] <- blgt.MASE(forec$outfor, actuals, trainData, 1)
+  MASE[i] <- blgt.MASE(forec$outfor, actuals, trainData, 12)
 }
 end.time <- Sys.time()
 print(paste("sMAPE:", mean(sMAPE), ", MASE:", mean(MASE)))
 print(paste("time difference:", end.time-start.time, attr(end.time-start.time, "units")))
 saveRDS(sMAPE, "results/MAPA - sMAPE.monthly.rds")
 saveRDS(MASE, "results/MAPA - MASE.monthly.rds")
-# saveRDS(forecasts, "results/MAPA - forecasts.monthly.rds")
+saveRDS(forecasts, "results/MAPA - forecasts.monthly.rds")
 
 ############################################################################
 # quarterly series
@@ -123,17 +123,17 @@ for (i in 1:length(quarterly.data)) {
   actuals <- series[(n-H+1):n]
   forec <- mapa(ts(trainData, frequency = 4), fh = H, conf.lvl=c(0.9,0.95))
   
-  forecasts[[i]] <- forec
+  forecasts[[i]] <- forec$mean
   # plot(forec, type = "l")
   # xs <- seq(from=length(trainData)+1,to=length(trainData)+ length(actuals))
   # lines(xs,actuals, col=1, type='b',lwd=2)
   
   sMAPE[i] <- mean(abs(forec$outfor-actuals)/(forec$outfor+actuals))*200
-  MASE[i] <- blgt.MASE(forec$outfor, actuals, trainData, 1)
+  MASE[i] <- blgt.MASE(forec$outfor, actuals, trainData, 4)
 }
 end.time <- Sys.time()
 print(paste("sMAPE:", mean(sMAPE), ", MASE:", mean(MASE)))
 print(paste("time difference:", end.time-start.time, attr(end.time-start.time, "units")))
 saveRDS(sMAPE, "results/MAPA - sMAPE.quarterly.rds")
 saveRDS(MASE, "results/MAPA - MASE.quarterly.rds")
-# saveRDS(forecasts, "results/MAPA - forecasts.quarterly.rds")
+saveRDS(forecasts, "results/MAPA - forecasts.quarterly.rds")
