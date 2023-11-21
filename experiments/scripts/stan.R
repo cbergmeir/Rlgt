@@ -87,7 +87,7 @@ for (i in 1:length(monthly.data)) {
   trainData <- series[1:(n-H)]
   actuals <- series[(n-H+1):n]
   rstanmodel <- rlgt(trainData,
-                     seasonality=seasonality,
+                     seasonality=12,
                      control=rlgt.control(NUM_OF_ITER=4000),
                      verbose=FALSE)
   
@@ -98,7 +98,7 @@ for (i in 1:length(monthly.data)) {
   # lines(xs,actuals, col=1, type='b',lwd=2)
   
   sMAPE[i] <- mean(abs(forec$mean-actuals)/(forec$mean+actuals))*200
-  MASE[i] <- blgt.MASE(forec$mean, actuals, trainData, 1)
+  MASE[i] <- blgt.MASE(forec$mean, actuals, trainData, 12)
 }
 end.time <- Sys.time()
 print(paste("sMAPE:", mean(sMAPE), ", MASE:", mean(MASE)))
@@ -123,7 +123,7 @@ for (i in 1:length(quarterly.data)) {
   trainData <- series[1:(n-H)]
   actuals <- series[(n-H+1):n]
   rstanmodel <- rlgt(trainData,
-                     seasonality=seasonality,
+                     seasonality=4,
                      control=rlgt.control(NUM_OF_ITER=4000),
                      verbose=FALSE)
   
@@ -134,7 +134,7 @@ for (i in 1:length(quarterly.data)) {
   # lines(xs,actuals, col=1, type='b',lwd=2)
   
   sMAPE[i] <- mean(abs(forec$mean-actuals)/(forec$mean+actuals))*200
-  MASE[i] <- blgt.MASE(forec$mean, actuals, trainData, 1)
+  MASE[i] <- blgt.MASE(forec$mean, actuals, trainData, 4)
 }
 end.time <- Sys.time()
 print(paste("sMAPE:", mean(sMAPE), ", MASE:", mean(MASE)))
