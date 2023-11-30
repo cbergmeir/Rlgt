@@ -67,7 +67,7 @@ rlgt <- function(   #y=trainData; seasonality=12; seasonality2=1; seasonality.ty
       return(NULL)
     }
     # Calling Custom_Gibbs method
-    result = blgt(y, burnin = control$NUM_OF_ITER%/%2, n.samples = control$NUM_OF_ITER%/%2, m = seasonality, homoscedastic = homoscedastic)
+    result = blgt(y, burnin = ceiling(control$NUM_OF_ITER), n.samples = ceiling(control$NUM_OF_ITER), m = seasonality, homoscedastic = homoscedastic)
     result$method = "Custom_Gibbs"
     result$x <- y
     attr(result, "class") <- "rlgtfit"
