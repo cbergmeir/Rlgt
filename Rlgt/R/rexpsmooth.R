@@ -704,14 +704,21 @@ blgt.forecast <- function(rv, h, ns = 1e6)
     
     e = rt(ns, rv$nu[I]) * scale
 
-    yf[,i] = pmax(pmin(exp.val + e, 1e38), 1e-30)    
+    yf[,i] = pmax(pmin(exp.val + e, 1e38), 1e-3)    
     
     if (seasonal) {
-      cur.level = pmax(1e-30, rv$alpha[I]*yf[,i]/exp(log.s[,i+m]) + (1-rv$alpha[I])*prev.level)
-      y.on.l[,i+m] = log(yf[,i]/cur.level)
+      cur.level = pmax(1e-3, rv$alpha[I]*yf[,i]/exp(log.s[,i+m]) + (1-rv$alpha[I])*prev.level)
     } else {
-      cur.level = pmax(1e-30, rv$alpha[I]*yf[,i] + (1-rv$alpha[I])*prev.level)
+      cur.level = pmax(1e-3, rv$alpha[I]*yf[,i] + (1-rv$alpha[I])*prev.level)
     }
+    idx <- which(yf[,i] <= 1e-3)
+    cur.level[idx] <- prev.level[idx]
+    
+    if (seasonal) {
+      y.on.l[,i+m] = log(yf[,i]/cur.level)
+      y.on.l[idx,i+m] <- y.on.l[idx,i]
+    }
+    
     bS = rv$beta[I]*(cur.level-prev.level) + (1-rv$beta[I])*bS
     prev.level = cur.level
   }
