@@ -143,6 +143,16 @@ rlgt <- function(   #y=trainData; seasonality=12; seasonality2=1; seasonality.ty
   if (experimental == "ets") {
     model.type = "ets"
   }
+  if (experimental == "nostudentSGT") {
+    model.type = "nostudentSGT"
+  }
+  if (experimental == "noglobalSGT") {
+    model.type = "noglobalSGT"
+  }
+  if (experimental == "nohetSGT") {
+    model.type = "nohetSGT"
+  }
+  
 
 
   if (seasonality <= 1 && levelMethodId != 0) {

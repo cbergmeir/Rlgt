@@ -83,6 +83,20 @@ initModel <- function(model.type=NULL, use.regression=FALSE,
     model[["model"]] <- stanmodels[[model.type]]
     class(model) <- c(paste0("RlgtStanModel", model.type))
     # stop("Stopping here!")
+  } 
+  else if (model.type %in% c("nostudentSGT", "noglobalSGT", "nohetSGT")) {
+    print(paste("model.type:", model.type))
+    if (useSmoothingMethodForError) {
+      model[["parameters"]] <- c("l", "s", "smoothedInnovSize", "innovSm",
+                                 "coefTrend", "powTrend", "sigma", "offsetSigma",
+                                 "levSm", "sSm", "nu")
+    } else {
+      model[["parameters"]] <- c("l", "s", 
+                                 "coefTrend", "powTrend", "sigma", "offsetSigma",
+                                 "levSm", "sSm", "nu", "powx")
+    }
+    model[["model"]] <- stanmodels[[model.type]]
+    class(model) <- c(paste0("RlgtStanModel", model.type))
   }
 
   if (use.regression) {
