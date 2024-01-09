@@ -823,7 +823,7 @@ blgt.multi.forecast <- function(train, future, n.samples = 2e4, burnin = 1e4, pa
           rv[[j]]$model    = blgt(train[[k]], burnin = burnin, n.samples = n.samples, m = m, homoscedastic = homoscedastic)
           rv[[j]]$forecast = blgt.forecast(rv[[j]]$model,length(future[[k]]),1e5)
           rv[[j]]$sMAPE    = blgt.sMAPE(rv[[j]]$forecast$yf.med, future[[k]])
-          rv[[j]]$MASE    = blgt.MASE(rv[[j]]$forecast$yf.med, future[[k]], train[[k]], m)
+          rv[[j]]$MASE     = blgt.MASE(rv[[j]]$forecast$yf.med, future[[k]], train[[k]], m)
           rv[[j]]$InCI     = sum( (future[[k]] > rv[[j]]$forecast$yf.CI05) & (future[[k]] < rv[[j]]$forecast$yf.CI95) )
           rv[[j]]$model    = NULL
         }
@@ -849,7 +849,7 @@ blgt.multi.forecast <- function(train, future, n.samples = 2e4, burnin = 1e4, pa
       rv$model[[j]]    = blgt(train[[j]], burnin = burnin, n.samples = n.samples, m = m, homoscedastic = homoscedastic)
       rv$forecast[[j]] = blgt.forecast(rv$model[[j]],length(future[[j]]),1e5)
       rv$sMAPE[j]      = blgt.sMAPE(rv$forecast[[j]]$yf.med, future[[j]])
-      rv$MASE[j]      = blgt.MASE(rv$forecast[[j]]$yf.med, future[[j]], train[[j]], m)
+      rv$MASE[j]       = blgt.MASE(rv$forecast[[j]]$yf.med, future[[j]], train[[j]], m)
       rv$InCI[j]       = sum( (future[[j]] > rv$forecast[[j]]$yf.CI05) & (future[[j]] < rv$forecast[[j]]$yf.CI95) )
       rv$model[[j]]    = NULL
     }
