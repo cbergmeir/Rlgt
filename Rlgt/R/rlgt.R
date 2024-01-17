@@ -152,6 +152,9 @@ rlgt <- function(   #y=trainData; seasonality=12; seasonality2=1; seasonality.ty
   if (experimental == "nohetSGT") {
     model.type = "nohetSGT"
   }
+  if (experimental == "etsAAM") {
+    model.type = "etsAAM"
+  }
   
 
 

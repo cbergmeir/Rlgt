@@ -260,13 +260,13 @@ forecast.rlgtfit <- function(object,
         }
         
         if (is.null(powSeasonS)) {
-          if (object$model.type == "noglobalSGT") {
+          if (object$model.type == "noglobalSGT" || object$model.type == "etsAAM") {
             expVal <-(prevLevel)* season + r[t];	
           } else {
             expVal <-(prevLevel + coefTrendS*abs(prevLevel)^powTrendS)* season + r[t];	
           }
         } else {#generalized
-          if (object$model.type == "noglobalSGT") {
+          if (object$model.type == "noglobalSGT" || object$model.type == "etsAAM") {
             expVal <- prevLevel + season + r[t];
           } else {
             expVal <- prevLevel + coefTrendS*abs(prevLevel)^powTrendS + season + r[t];
@@ -285,6 +285,8 @@ forecast.rlgtfit <- function(object,
           error <- rnorm(n=1, mean=0, sd=omega)
         } else if(object$model.type == "nohetSGT") {
           error <- rst(n=1, xi=0, omega=offsetsigmaS, alpha=0, nu=nuS)
+        } else if(object$model.type == "etsAAM") {
+          error <- rnorm(n=1, mean=0, sd=offsetsigmaS)
         } else {
           # Generate the t-dist error
           error <- rst(n=1, xi=0 ,omega=omega, alpha=0, nu=nuS)

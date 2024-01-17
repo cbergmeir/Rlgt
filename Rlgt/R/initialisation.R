@@ -84,7 +84,7 @@ initModel <- function(model.type=NULL, use.regression=FALSE,
     class(model) <- c(paste0("RlgtStanModel", model.type))
     # stop("Stopping here!")
   } 
-  else if (model.type %in% c("nostudentSGT", "noglobalSGT", "nohetSGT")) {
+  else if (model.type %in% c("nostudentSGT", "noglobalSGT", "nohetSGT", "etsAAM")) {
     print(paste("model.type:", model.type))
     if (useSmoothingMethodForError) {
       model[["parameters"]] <- c("l", "s", "smoothedInnovSize", "innovSm",
