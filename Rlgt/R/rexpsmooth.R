@@ -374,7 +374,7 @@ blgt <- function(y.full, burnin = 1e4, n.samples = 1e4, m = 1, homoscedastic = T
     
     ## Sample rho
     log.l   = log(l)
-    rho = rexpsmooth.grid.sample.rho(rho.prop, y - s*(l+w[2]*b), xi2+sigma2*exp(log.l*2*tau), log.l, w[1], nu)$theta
+    rho = rexpsmooth.grid.sample.rho(rho.prop, y - s*(l+w[2]*b), xi2+sigma2*exp(log.l*2*tau), log.l, w[1], nu, s)$theta
 
     ## Store sample
     iter = iter+1
@@ -1198,13 +1198,13 @@ rexpsmooth.grid.sample.phi <- function(phi.prop, chi2, tau, e, logl, nu)
 }
 
 # #' @export
-rexpsmooth.grid.sample.rho <- function(rho.prop, ytilde, chi2, log.l, w1, nu, rho.scale = NULL)
+rexpsmooth.grid.sample.rho <- function(rho.prop, ytilde, chi2, log.l, w1, nu, s, rho.scale = NULL)
 {
   if (is.null(rho.scale))
   {
     rho.scale = rep(1, length(rho.prop))
   }
-  rcpp_GridSampleRho(rho.prop, runif(1), ytilde, chi2, log.l, w1, nu, rho.scale)
+  rcpp_GridSampleRho(rho.prop, runif(1), ytilde, chi2, log.l, w1, nu, s, rho.scale)
 }
 
 # #' @export

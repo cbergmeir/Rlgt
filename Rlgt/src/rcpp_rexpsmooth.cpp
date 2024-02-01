@@ -131,7 +131,7 @@ List rcpp_GridSamplePhi(NumericVector T, NumericVector u, NumericVector chi2, Nu
 
 
 // [[Rcpp::export]]
-List rcpp_GridSampleRho(NumericVector R, NumericVector u, NumericVector ytilde, NumericVector v2, NumericVector logl, NumericVector w1, NumericVector nu, NumericVector rhoscale)
+List rcpp_GridSampleRho(NumericVector R, NumericVector u, NumericVector ytilde, NumericVector v2, NumericVector logl, NumericVector w1, NumericVector nu, NumericVector s, NumericVector rhoscale)
 {
   // rho.prop, runif(1), v2, y, l, b, log.l, w)
   int i, j;
@@ -151,7 +151,7 @@ List rcpp_GridSampleRho(NumericVector R, NumericVector u, NumericVector ytilde, 
     {
       //v2 = chi2[0]*(phi*phi + (1-phi)*(1-phi)*exp(logl[j]*2.0*tau))*omega2[j];
       //e = y[j] - l[j] - w[1]*exp(R(i)*logl[j]) - w[2]*b[j];
-      e = ytilde[j] - w1[0]*rhoscale[i]*exp(R(i)*logl[j]);
+      e = ytilde[j] - w1[0]*rhoscale[i]*exp(R(i)*logl[j])*s[j];
       //Lprop[i] = Lprop[i] + 0.5*e*e/v2[j];
       //Lprop[i] = Lprop[i] + (nu[0]+1)/2*log(1 + e*e/chi2[0]/nu[0]);
       Lprop[i] = Lprop[i] + (nu[0]+1)/2*log(1 + e*e/v2[j]/nu[0]);
