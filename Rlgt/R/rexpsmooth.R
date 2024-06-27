@@ -750,7 +750,7 @@ blgt.MASE <- function(yp, yt, train, m) {
 }
 
 ########################################################################
-#' @title Rlgt Gibbs run in parallel
+#' @title Rlgt LSGT Gibbs run in parallel
 #' @description  Fit a list of series and produce forecast, then calculate the accuracy.
 #' @param train A list of training series.
 #' @param future A list of corresponding future values of the series.
@@ -762,28 +762,6 @@ blgt.MASE <- function(yp, yt, train, m) {
 #' @return returns a forecast object compatible with the forecast package in R
 #' @examples 
 # \dontrun{
-#' ## Build data and test
-#' library(Mcomp)
-#' M3.data <- subset(M3,"yearly")
-#' 
-#' train.data = list()
-#' future.data = list()
-#' 
-#' for (i in 1:645) {
-#'    train.data[[i]] = as.numeric(M3.data[[i]]$x)
-#'    future.data[[i]] = as.numeric(M3.data[[i]]$xx) 
-#' }
-#' ## Test -- change below to test more series
-#' w.series = 1:20
-#' # w.series = 1:645        # uncomment to test all series
-#' 
-#' s = system.time({rv=blgt.multi.forecast(train.data[w.series], future.data[w.series], n.samples=1e4)})
-#' 
-#' s                         # overall timing info
-#' s[[3]] / length(w.series) # per series time
-#' 
-#' mean(rv$sMAPE)            # performance in terms of mean sMAPE
-#' mean(rv$InCI)/6           # coverage of prediction intervals -- should be close to 95%
 # }
 #'
 #' @export

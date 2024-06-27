@@ -9,8 +9,8 @@ rcpp_GridSamplePhi <- function(T, u, chi2, tau, e, logl, nu) {
     .Call(`_Rlgt_rcpp_GridSamplePhi`, T, u, chi2, tau, e, logl, nu)
 }
 
-rcpp_GridSampleRho <- function(R, u, ytilde, v2, logl, w1, nu, rhoscale) {
-    .Call(`_Rlgt_rcpp_GridSampleRho`, R, u, ytilde, v2, logl, w1, nu, rhoscale)
+rcpp_GridSampleRho <- function(R, u, ytilde, v2, logl, w1, nu, s, rhoscale) {
+    .Call(`_Rlgt_rcpp_GridSampleRho`, R, u, ytilde, v2, logl, w1, nu, s, rhoscale)
 }
 
 rcpp_GridSampleRhoGaussianMix <- function(R, u, ytilde, v2, logl, w1) {
