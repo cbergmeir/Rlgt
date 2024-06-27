@@ -760,9 +760,34 @@ blgt.MASE <- function(yp, yt, train, m) {
 #' @param m The seasonality period, with default \code{m=1}, i.e., no seasonality specified.
 #' @param homoscedastic Run with homoscedastic or heteroscedastic version of the Gibbs sampler version. By default it is set to \code{FALSE}, i.e., run a heteroscedastic model.
 #' @return returns a forecast object compatible with the forecast package in R
-#' @examples 
+#' @examples
+#' \dontrun{demo(exampleScript)}
 # \dontrun{
-# }
+#' ## Build data and test
+#' library(Mcomp)
+#' M3.data <- subset(M3,"yearly")
+#' 
+#' train.data = list()
+#' future.data = list()
+#' for (i in 1:645)
+#' {
+#'   train.data[[i]] = as.numeric(M3.data[[i]]$x)
+#'   future.data[[i]] = as.numeric(M3.data[[i]]$xx)  
+#' }
+#' 
+#' ## Test -- change below to test more series
+#' w.series = 1:20
+#' # w.series = 1:645        # uncomment to test all series
+#' 
+#' # use 10,000 posterior samples; change n.samples to 20,000 to test that as well if you want
+#' s = system.time({rv=blgt.multi.forecast(train.data[w.series], future.data[w.series], n.samples=1e4)})
+#' 
+#' s                         # overall timing info
+#' s[[3]] / length(w.series) # per series time
+#' 
+#' mean(rv$sMAPE)            # performance in terms of mean sMAPE
+#' mean(rv$InCI)/6           # coverage of prediction intervals -- should be close to 95%
+#}
 #'
 #' @export
 blgt.multi.forecast <- function(train, future, n.samples = 2e4, burnin = 1e4, parallel = T, m = 1, homoscedastic = F)
