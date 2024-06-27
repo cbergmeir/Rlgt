@@ -1,6 +1,6 @@
 # SGT with custom Gibbs sampler
 library(Mcomp)
-# library(Rlgt)
+library(Rlgt)
 set.seed(12345)
 
 quantileLoss<-function(forec, actual, tau) {
