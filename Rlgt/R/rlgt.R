@@ -61,20 +61,20 @@ rlgt <- function(   #y=trainData; seasonality=12; seasonality2=1; seasonality.ty
   oldWidth=options("width")
   options(width=180)
   
-  if(method == "Custom_Gibbs") {
+  if(method == "Gibbs") {
     # Some checks of the input parameters
     if(seasonality2 != 1) {
-      print('The current "Custom_Gibbs" method is not dual-seasonal')
+      print('The current "Gibbs" method is not dual-seasonal')
       return(NULL)
     }
-    # Calling Custom_Gibbs method
+    # Calling Gibbs method
     result = blgt(y, burnin = ceiling(control$NUM_OF_ITER), n.samples = ceiling(control$NUM_OF_ITER), m = seasonality, homoscedastic = homoscedastic)
-    result$method = "Custom_Gibbs"
+    result$method = "Gibbs"
     result$x <- y
     attr(result, "class") <- "rlgtfit"
     return(result)
   } else if(method != "Stan") {
-    print('Only "Stan" and "Custom_Gibbs" are valid values for the "method" parameter')
+    print('Only "Stan" and "Gibbs" are valid values for the "method" parameter')
     return(NULL)
   } 
   

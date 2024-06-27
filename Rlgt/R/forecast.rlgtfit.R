@@ -64,7 +64,7 @@ forecast.rlgtfit <- function(object,
   
   quantiles=percentiles/100.
 
-  if(!is.null(object$method) && object$method == "Custom_Gibbs") {
+  if(!is.null(object$method) && object$method == "Gibbs") {
     fcast = blgt.forecast(object, h, 1e5)
     # Presenting Schmidt's result as a forecast package object
     result = list()
