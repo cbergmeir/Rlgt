@@ -19,6 +19,7 @@
 #' @param verbose whether verbose information should be printed (Boolean value only), default \code{FALSE}.
 #' @param method Sampling method, default \code{Stan}.
 #' @param experimental Run different versions ("nostudent", "noglobal", "nohet", "ets") for ablation studies
+#' @param homoscedastic Run with homoscedastic or heteroscedastic version of the Gibbs sampler version. By default it is set to False, i.e., run a heteroscedastic model.
 #' @return \code{\link{rlgtfit}} object
 #' @examples
 # \dontrun{
@@ -55,7 +56,7 @@ rlgt <- function(   #y=trainData; seasonality=12; seasonality2=1; seasonality.ty
  	verbose=FALSE,
 	method="Stan", # needs renaming
 	experimental="",
-	homoscedastic = T) {
+	homoscedastic = F) {
 
   oldWidth=options("width")
   options(width=180)
