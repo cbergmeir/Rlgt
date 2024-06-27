@@ -750,11 +750,54 @@ blgt.MASE <- function(yp, yt, train, m) {
 }
 
 ########################################################################
+#' @title Rlgt Gibbs run in parallel
+#' @description  Fit a list of series and produce forecast, then calculate the accuracy.
+#' @param train A list of training series.
+#' @param future A list of corresponding future values of the series.
+#' @param n.samples The number of samples to sample from the posterior (the default is 2e4).
+#' @param burnin The number of burn in samples (the default is 1e4).
+#' @param parallel Whether run in parallel or not (Boolean value only, default \code{TRUE}). 
+#' @param m The seasonality period, with default \code{m=1}, i.e., no seasonality specified.
+#' @param homoscedastic Run with homoscedastic or heteroscedastic version of the Gibbs sampler version. By default it is set to \code{FALSE}, i.e., run a heteroscedastic model.
+#' @return returns a forecast object compatible with the forecast package in R
+#' @examples 
+# \dontrun{
+#' ## Build data and test
+#' library(Mcomp)
+#' M3.data <- subset(M3,"yearly")
+#' 
+#' train.data = list()
+#' future.data = list()
+#' 
+#' for (i in 1:645) {
+#'    train.data[[i]] = as.numeric(M3.data[[i]]$x)
+#'    future.data[[i]] = as.numeric(M3.data[[i]]$xx) 
+#' }
+#' ## Test -- change below to test more series
+#' w.series = 1:20
+#' # w.series = 1:645        # uncomment to test all series
+#' 
+#' s = system.time({rv=blgt.multi.forecast(train.data[w.series], future.data[w.series], n.samples=1e4)})
+#' 
+#' s                         # overall timing info
+#' s[[3]] / length(w.series) # per series time
+#' 
+#' mean(rv$sMAPE)            # performance in terms of mean sMAPE
+#' mean(rv$InCI)/6           # coverage of prediction intervals -- should be close to 95%
+# }
+#'
 #' @export
-blgt.multi.forecast <- function(train, future, n.samples = 2e4, burnin = 1e4, parallel = T, m = 1, homoscedastic = T)
+blgt.multi.forecast <- function(train, future, n.samples = 2e4, burnin = 1e4, parallel = T, m = 1, homoscedastic = F)
 {
   # nu.prop = c(0.47,0.53,0.6,0.68,0.77,0.875,1,1.15,1.35,1.6,1.95,2.4,3,4,5.6,8.84,18.63,1e3)
 
+  if (!requireNamespace(c("parallel", "doParallel", "foreach"), quietly = TRUE)) {
+    stop(
+      "Package \"parallel\" must be installed to use this function.",
+      call. = FALSE
+    )
+  }
+  
   #
   n.cores = Inf
   n.series = length(train)

@@ -27,7 +27,7 @@ for (i in 1:w.series) {
   actuals <- as.numeric(M3.data[[i]]$xx)   # class of actuals has to be the same
   model <- rlgt(trainData, 
                 control=rlgt.control(NUM_OF_ITER=4000),
-                method = "Custom_Gibbs",
+                method = "Gibbs",
                 seasonality = seasonality,
                 verbose=FALSE)
   
