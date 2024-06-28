@@ -40,7 +40,6 @@ SystemRequirements: GNU make
 NeedsCompilation: yes
 RoxygenNote: 7.2.3
 Suggests:
-    parallel,
     doParallel,
     foreach,
     knitr,

@@ -762,7 +762,7 @@ blgt.MASE <- function(yp, yt, train, m) {
 #' @return returns a forecast object compatible with the forecast package in R
 #' @examples
 #' \dontrun{demo(exampleScript)}
-# \dontrun{
+#' \dontrun{
 #' ## Build data and test
 #' library(Mcomp)
 #' M3.data <- subset(M3,"yearly")
@@ -780,27 +780,31 @@ blgt.MASE <- function(yp, yt, train, m) {
 #' # w.series = 1:645        # uncomment to test all series
 #' 
 #' # use 10,000 posterior samples; change n.samples to 20,000 to test that as well if you want
-#' s = system.time({rv=blgt.multi.forecast(train.data[w.series], future.data[w.series], n.samples=1e4)})
+#' s = system.time({
+#'   rv=blgt.multi.forecast(train.data[w.series], future.data[w.series], n.samples=1e4)
+#' })
 #' 
 #' s                         # overall timing info
 #' s[[3]] / length(w.series) # per series time
 #' 
 #' mean(rv$sMAPE)            # performance in terms of mean sMAPE
 #' mean(rv$InCI)/6           # coverage of prediction intervals -- should be close to 95%
-#}
-#'
+#' }
 #' @export
 blgt.multi.forecast <- function(train, future, n.samples = 2e4, burnin = 1e4, parallel = T, m = 1, homoscedastic = F)
 {
-  # nu.prop = c(0.47,0.53,0.6,0.68,0.77,0.875,1,1.15,1.35,1.6,1.95,2.4,3,4,5.6,8.84,18.63,1e3)
-
-  if (!requireNamespace(c("parallel", "doParallel", "foreach"), quietly = TRUE)) {
+  if (!requireNamespace("doParallel", quietly = TRUE)) {
     stop(
-      "Package \"parallel\" must be installed to use this function.",
+      "Package \"doParallel\" must be installed to use this function.",
       call. = FALSE
     )
   }
-  
+  if (!requireNamespace("foreach", quietly = TRUE)) {
+    stop(
+      "Package \"foreach\" must be installed to use this function.",
+      call. = FALSE
+    )
+  }
   #
   n.cores = Inf
   n.series = length(train)
@@ -859,7 +863,7 @@ blgt.multi.forecast <- function(train, future, n.samples = 2e4, burnin = 1e4, pa
     doParallel::registerDoParallel(cluster)
 
     # Sample each chain
-    rv.p = foreach::foreach(i=1:n.cores, .packages = "Rlgt") %dopar%
+    rv.p = foreach::`%dopar%` (foreach::foreach(i=1:n.cores, .packages = "Rlgt"),
       {
         rv = vector("list", length(ix[[i]]))
         rv$sMAPE = rep(0, length(ix[[i]]))
@@ -876,7 +880,7 @@ blgt.multi.forecast <- function(train, future, n.samples = 2e4, burnin = 1e4, pa
           rv[[j]]$model    = NULL
         }
         rv
-      }
+      })
 
     # Done -- close the cluster
     parallel::stopCluster(cluster)
