@@ -14,3 +14,4 @@ basicDemos Runs some basic examples, that are also used in the vignette.
 lynx demo with the lynx dataset.
 GT_M3parallelDB Runs SGT on the M3 data, in parallel.
 LSGT_parallel Runs the quarterly subset in parallel of the M3 data with the bespoke Gibbs sampler (LSGT model). A version of running not in parallel is also provided.
+LSGT_parallel_yearly Runs the yearly subset in parallel of the M3 data with the bespoke Gibbs sampler (LSGT model).
