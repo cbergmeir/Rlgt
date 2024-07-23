@@ -42,7 +42,7 @@
 # }
 # 
 # @export
-blgt <- function(y.full, burnin = 1e4, n.samples = 1e4, m = 1, homoscedastic = T)
+blgt <- function(y.full, burnin = 1e4, n.samples = 1e4, m = 1, homoscedastic = F)
 {
   # nu proposal
   # nu.prop = c(0.1,0.2,0.4,0.6,0.8,1,1.15,1.35,1.6,1.95, 2.4, 3, 4, 5.6, 8.84, 18.63, 1e3)
