@@ -185,9 +185,6 @@ blgt <- function(y.full, burnin = 1e4, n.samples = 1e4, m = 1, homoscedastic = F
   iter     = 0
   k        = 0
   
-  tau = 0
-  phi = 1
-  
   # Hyperparameters
   sigma2.B     = 0
   sigma2.lv    = 1
