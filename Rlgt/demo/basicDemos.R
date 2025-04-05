@@ -9,7 +9,7 @@ options(width=180, max.print=20000)
 if (.Platform$OS.type=="windows")  memory.limit(10000)
 
 
-################ LGT
+################ LGT (Gibbs model by default)
 theDataSet=BJsales 
 frequency(theDataSet)
 
@@ -29,7 +29,7 @@ sMAPE=mean(abs(forec$mean-actuals)/(forec$mean+actuals))*200
 print(paste("sMAPE:",signif(sMAPE,3),"%"))
 
 
-################ LGT with regression
+################ LGT with regression (Stan model)
 theDataSet=BJsales 
 regDataSet=BJsales.lead 
 horizon=10
@@ -45,7 +45,7 @@ actuals=theDataSet[(length(theDataSet)+1-horizon):length(theDataSet)]
 regTrain=regMatrix[1:(length(theDataSet)-horizon),]
 regTest=regMatrix[(length(theDataSet)+1-horizon):length(theDataSet),]
 
-regModel <- rlgt(train, xreg = regTrain, 
+regModel <- rlgt(train, xreg = regTrain, method = "Stan",
 		control=rlgt.control(NUM_OF_ITER=10000, MAX_NUM_OF_REPEATS=1),
 		verbose=TRUE)
 
@@ -59,7 +59,7 @@ sMAPE=mean(abs(forec$mean-actuals)/(forec$mean+actuals))*200
 print(paste("sMAPE:",signif(sMAPE,3),"%"))
 
 
-################### SGT, time series input and forecast
+################### SGT, time series input and forecast (Gibbs model by default)
 theDataSet=AirPassengers
 
 #tsdisplay(theDataSet)
@@ -76,11 +76,11 @@ train=ts(train, start=tspOrg[1], frequency=tspOrg[3])
 tspt=tsp(train)
 actuals=ts(actuals, start=tspt[2]+1/tspt[3], frequency=tspt[3])
 
-rstanmodel <- rlgt(train,  
+model <- rlgt(train,  
 		control=rlgt.control(NUM_OF_ITER=10000))  
-#print(rstanmodel$samples)
+#print(model$samples)
 
-forec= forecast(rstanmodel, h = length(actuals))
+forec= forecast(model, h = length(actuals))
 
 plot(forec, main="AirPassengers by SGT")
 lines(actuals, lwd=2)
@@ -89,7 +89,7 @@ sMAPE=mean(abs(forec$mean-actuals)/(forec$mean+actuals))*200
 print(paste("sMAPE:",signif(sMAPE,3),"%"))
 #8.11
 
-################### SGT, numeric input and forecast, generalized seasonality
+################### SGT, numeric input and forecast, generalized seasonality (Stan model)
 theDataSet=AirPassengers
 
 #tsdisplay(theDataSet)
@@ -134,7 +134,7 @@ tspx <- tsp(train)
 actuals=msts(actuals, seasonal.periods=attributes(taylor)$msts, start=tspx[2] + 1/seasonality)
 
 rstanmodel <- rlgt(train,  #because seaonality2 is not specified, a single seasonality model (of seasonality equal to the largest seasonality, 336)  will be used
-		level.method="HW_sAvg",  #c("HW", "seasAvg","HW_sAvg")
+		level.method="HW_sAvg", method = "Stan",  #c("HW", "seasAvg","HW_sAvg")
 		control=rlgt.control(NUM_OF_ITER=10000),
 		verbose=TRUE)   
 
@@ -157,7 +157,7 @@ horizon=seasonality2
 train=theDataSet[(seasonality2+1):(3*seasonality2)]  #using weeks 2 and 3
 actuals=theDataSet[(3*seasonality2+1):(3*seasonality2+horizon)] #to forecast the fourth one
 
-rstanmodel <- rlgt(train,  seasonality2=seasonality2,   
+rstanmodel <- rlgt(train,  seasonality2=seasonality2, method = "Stan",
 		level.method="HW_sAvg",  #c("HW", "seasAvg","HW_sAvg")
 		control=rlgt.control(NUM_OF_ITER=10000),
 		verbose=TRUE)   

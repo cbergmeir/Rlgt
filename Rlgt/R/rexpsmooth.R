@@ -60,10 +60,10 @@ blgt <- function(y.full, burnin = 1e4, n.samples = 1e4, m = 1, homoscedastic = F
   # add seasonal flag
   if (m > 1) {
     seasonal = T
-    print("Fitting a seasonal model...")
+    # print("Fitting a seasonal model...")
   } else {
-    print("Fitting a non-seasonal model now...")
-    print("If you want to fit a seasonal model, set Seasonality to be at least 2.")
+    # print("Fitting a non-seasonal model now...")
+    # print("If you want to fit a seasonal model, set Seasonality to be at least 2.")
     seasonal = F
   }
   

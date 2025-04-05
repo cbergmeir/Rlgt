@@ -54,7 +54,7 @@ rlgt <- function(   #y=trainData; seasonality=12; seasonality2=1; seasonality.ty
  	xreg = NULL,
  	control=rlgt.control(), 
  	verbose=FALSE,
-	method="Stan", # needs renaming
+	method="Gibbs",
 	experimental="",
 	homoscedastic = F) {
 
@@ -62,6 +62,8 @@ rlgt <- function(   #y=trainData; seasonality=12; seasonality2=1; seasonality.ty
   options(width=180)
   
   if(method == "Gibbs") {
+    # make sure seasonality is captured
+    seasonality <- ifelse(seasonality > 1, seasonality, frequency(y))
     # Some checks of the input parameters
     if(seasonality2 != 1) {
       print('The current "Gibbs" method is not dual-seasonal')
