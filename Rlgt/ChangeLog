@@ -1,3 +1,12 @@
+version 0.2-3 (12-04-2025):
+
+- set custom Gibbs sampler as the default sampler
+- some fixes and improvements
+
+version 0.2-2 (16-07-2024):
+
+- some fixes and improvements
+
 version 0.2-1 (11-09-2023):
 
 - update to modern rstantools structure
