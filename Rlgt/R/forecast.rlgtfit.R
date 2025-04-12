@@ -53,9 +53,9 @@ forecast.rlgtfit <- function(object,
     percentiles=level
     indexOfMedian=1
   } else {
-    if (50 %in% level) {
-      level=level[level!=50]
-    } 
+    # if (50 %in% level) {
+    #   level=level[level!=50]
+    # } 
     lowerPercentiles=(100-level)/2
     indexOfMedian=length(lowerPercentiles)+1
     upperPercentiles=100-lowerPercentiles
