@@ -43,5 +43,9 @@ Suggests:
     doParallel,
     foreach,
     knitr,
-    rmarkdown
+    rmarkdown,
+    Mcomp,
+    RODBC,
+    dplyr,
+    ggplot2
 VignetteBuilder: knitr
